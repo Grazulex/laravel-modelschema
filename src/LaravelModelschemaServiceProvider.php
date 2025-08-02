@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Grazulex\LaravelModelschema;
 
-use Grazulex\LaravelModelschema\Console\Commands\MakeSchemaCommand;
 use Grazulex\LaravelModelschema\Support\FieldTypeRegistry;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,11 +24,10 @@ final class LaravelModelschemaServiceProvider extends ServiceProvider
         // Discover custom field types from app
         $this->discoverCustomFieldTypes();
 
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                MakeSchemaCommand::class,
-            ]);
-        }
+        // Publish stubs for other packages to use
+        $this->publishes([
+            __DIR__.'/../stubs' => resource_path('stubs/modelschema'),
+        ], 'modelschema-stubs');
     }
 
     /**
@@ -38,6 +36,9 @@ final class LaravelModelschemaServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/Config/modelschema.php', 'modelschema');
+        
+        // Register the core schema service
+        $this->app->singleton(\Grazulex\LaravelModelschema\Services\SchemaService::class);
     }
 
     /**

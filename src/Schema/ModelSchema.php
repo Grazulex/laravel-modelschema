@@ -6,6 +6,7 @@ namespace Grazulex\LaravelModelschema\Schema;
 
 use InvalidArgumentException;
 use RuntimeException;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Represents a complete model schema with fields, relationships, and metadata
@@ -69,14 +70,10 @@ final class ModelSchema
 
         $content = file_get_contents($filePath);
 
-        if (! function_exists('yaml_parse')) {
-            throw new RuntimeException('YAML extension is required to parse YAML files');
-        }
-
-        $config = yaml_parse($content);
-
-        if ($config === false) {
-            throw new InvalidArgumentException("Invalid YAML in file: {$filePath}");
+        try {
+            $config = Yaml::parse($content);
+        } catch (\Exception $e) {
+            throw new InvalidArgumentException("Invalid YAML in file: {$filePath}. Error: " . $e->getMessage());
         }
 
         // Extract model name from config or filename
@@ -92,14 +89,10 @@ final class ModelSchema
      */
     public static function fromYaml(string $yamlContent, string $name = 'UnknownModel'): self
     {
-        if (! function_exists('yaml_parse')) {
-            throw new RuntimeException('YAML extension is required to parse YAML content');
-        }
-
-        $config = yaml_parse($yamlContent);
-
-        if ($config === false) {
-            throw new InvalidArgumentException('Invalid YAML content');
+        try {
+            $config = Yaml::parse($yamlContent);
+        } catch (\Exception $e) {
+            throw new InvalidArgumentException('Invalid YAML content: ' . $e->getMessage());
         }
 
         // Extract model name from config or use provided name
