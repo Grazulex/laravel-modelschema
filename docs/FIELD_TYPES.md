@@ -1,53 +1,55 @@
 # Field Types System
 
-Le système de Field Types permet aux développeurs de créer des types de champs personnalisés avec leur propre logique de validation, de casting et de migration.
+Laravel ModelSchema provides a comprehensive field type system that allows developers to define model schemas with built-in validation, casting, and migration logic. The system is extensible, allowing custom field types to be added.
 
-## Types de champs intégrés
+## Built-in Field Types
 
-Le package inclut les types de champs suivants inspirés de TurboMaker :
+The package includes the following field types inspired by Laravel migrations and TurboMaker:
 
-### Types de base
-- `string` (aliases: `varchar`, `char`)
-- `text` (aliases: `longtext`, `mediumtext`) 
-- `longText` (alias: `longtext`)
-- `mediumText` (alias: `mediumtext`)
+### Basic Types
+- `string` (aliases: `varchar`, `char`) - Variable length string
+- `text` (aliases: `longtext`, `mediumtext`) - Text field for longer content
+- `longText` (alias: `longtext`) - Large text storage
+- `mediumText` (alias: `mediumtext`) - Medium text storage
 
-### Types numériques
-- `integer` (alias: `int`)
-- `bigInteger` (aliases: `bigint`, `long`)
-- `tinyInteger` (alias: `tinyint`)
-- `smallInteger` (alias: `smallint`)
-- `mediumInteger` (alias: `mediumint`)
-- `unsignedBigInteger` (aliases: `unsigned_big_integer`, `unsigned_bigint`)
-- `decimal` (aliases: `numeric`, `money`)
-- `float` (alias: `real`)
-- `double` (alias: `double_precision`)
+### Numeric Types
+- `integer` (alias: `int`) - Standard integer
+- `bigInteger` (aliases: `bigint`, `long`) - Large integer
+- `tinyInteger` (alias: `tinyint`) - Small integer (0-255)
+- `smallInteger` (alias: `smallint`) - Small integer
+- `mediumInteger` (alias: `mediumint`) - Medium integer
+- `unsignedBigInteger` (aliases: `unsigned_big_integer`, `unsigned_bigint`) - Unsigned large integer
+- `decimal` (aliases: `numeric`, `money`) - Decimal number with precision
+- `float` (alias: `real`) - Floating point number
+- `double` (alias: `double_precision`) - Double precision floating point
 
-### Types de date/heure
-- `date`
-- `datetime` 
-- `time`
-- `timestamp`
+### Date/Time Types
+- `date` - Date only (Y-m-d)
+- `datetime` - Date and time
+- `time` - Time only
+- `timestamp` - Timestamp with timezone
 
-### Types spécialisés
-- `boolean` (alias: `bool`)
-- `json` (alias: `jsonb`)
-- `uuid` (alias: `guid`)
-- `binary` (alias: `blob`)
-- `email` (alias: `email_address`)
-- `foreignId` (aliases: `foreign_id`, `fk`)
-- `morphs` (alias: `polymorphic`)
+### Specialized Types
+- `boolean` (alias: `bool`) - True/false value
+- `json` (alias: `jsonb`) - JSON data storage
+- `uuid` (alias: `guid`) - Universal unique identifier
+- `binary` (alias: `blob`) - Binary data
+- `email` (alias: `email_address`) - Email address with validation
+- `foreignId` (aliases: `foreign_id`, `fk`) - Foreign key reference
+- `morphs` (alias: `polymorphic`) - Polymorphic relation fields
 
-## Utilisation dans les schémas YAML
+## Usage in YAML Schemas
 
+### Basic Field Definition
 ```yaml
-model: User
-table: users
-fields:
-  id:
-    type: uuid
-    nullable: false
-    unique: true
+core:
+  model: User
+  table: users
+  fields:
+    id:
+      type: uuid
+      nullable: false
+      unique: true
   
   name:
     type: string
