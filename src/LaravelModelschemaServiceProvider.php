@@ -36,9 +36,9 @@ final class LaravelModelschemaServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/Config/modelschema.php', 'modelschema');
-        
+
         // Register the core schema service
-        $this->app->singleton(\Grazulex\LaravelModelschema\Services\SchemaService::class);
+        $this->app->singleton(Services\SchemaService::class);
     }
 
     /**

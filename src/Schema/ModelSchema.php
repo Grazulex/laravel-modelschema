@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Grazulex\LaravelModelschema\Schema;
 
+use Exception;
 use InvalidArgumentException;
-use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -72,8 +72,8 @@ final class ModelSchema
 
         try {
             $config = Yaml::parse($content);
-        } catch (\Exception $e) {
-            throw new InvalidArgumentException("Invalid YAML in file: {$filePath}. Error: " . $e->getMessage());
+        } catch (Exception $e) {
+            throw new InvalidArgumentException("Invalid YAML in file: {$filePath}. Error: ".$e->getMessage(), $e->getCode(), $e);
         }
 
         // Extract model name from config or filename
@@ -91,8 +91,8 @@ final class ModelSchema
     {
         try {
             $config = Yaml::parse($yamlContent);
-        } catch (\Exception $e) {
-            throw new InvalidArgumentException('Invalid YAML content: ' . $e->getMessage());
+        } catch (Exception $e) {
+            throw new InvalidArgumentException('Invalid YAML content: '.$e->getMessage(), $e->getCode(), $e);
         }
 
         // Extract model name from config or use provided name

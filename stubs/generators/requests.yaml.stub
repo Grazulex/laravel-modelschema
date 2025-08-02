@@ -1,0 +1,15 @@
+requests:
+  store_request:
+    name: Store{{MODEL_NAME}}Request
+    namespace: {{REQUESTS_NAMESPACE}}
+    validation_rules:
+{{STORE_VALIDATION_RULES_YAML}}
+    messages:
+{{VALIDATION_MESSAGES_YAML}}
+  update_request:
+    name: Update{{MODEL_NAME}}Request
+    namespace: {{REQUESTS_NAMESPACE}}
+    validation_rules:
+{{UPDATE_VALIDATION_RULES_YAML}}
+    messages:
+{{VALIDATION_MESSAGES_YAML}}

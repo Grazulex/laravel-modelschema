@@ -1,0 +1,22 @@
+"requests": {
+  "store_request": {
+    "name": "Store{{MODEL_NAME}}Request",
+    "namespace": "{{REQUESTS_NAMESPACE}}",
+    "validation_rules": {
+      {{STORE_VALIDATION_RULES_JSON}}
+    },
+    "messages": {
+      {{VALIDATION_MESSAGES_JSON}}
+    }
+  },
+  "update_request": {
+    "name": "Update{{MODEL_NAME}}Request",
+    "namespace": "{{REQUESTS_NAMESPACE}}",
+    "validation_rules": {
+      {{UPDATE_VALIDATION_RULES_JSON}}
+    },
+    "messages": {
+      {{VALIDATION_MESSAGES_JSON}}
+    }
+  }
+}

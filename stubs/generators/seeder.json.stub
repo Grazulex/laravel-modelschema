@@ -1,0 +1,13 @@
+"seeder": {
+  "name": "{{MODEL_NAME}}Seeder",
+  "namespace": "{{SEEDER_NAMESPACE}}",
+  "model_class": "{{MODEL_CLASS}}",
+  "factory_class": "{{MODEL_NAME}}Factory",
+  "count": {{SEEDER_COUNT}},
+  "dependencies": [
+    {{SEEDER_DEPENDENCIES_JSON}}
+  ],
+  "data_sets": {
+    {{SEEDER_DATA_SETS_JSON}}
+  }
+}

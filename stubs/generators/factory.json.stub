@@ -1,0 +1,11 @@
+"factory": {
+  "name": "{{MODEL_NAME}}Factory",
+  "namespace": "{{FACTORY_NAMESPACE}}",
+  "model_class": "{{MODEL_CLASS}}",
+  "fields": {
+    {{FACTORY_FIELDS_JSON}}
+  },
+  "states": {
+    {{FACTORY_STATES_JSON}}
+  }
+}

@@ -1,15 +1,17 @@
 <?php
 
-use Grazulex\LaravelModelschema\Services\SchemaService;
-use Grazulex\LaravelModelschema\Schema\ModelSchema;
-use Grazulex\LaravelModelschema\Schema\Field;
-use Grazulex\LaravelModelschema\Schema\Relationship;
+declare(strict_types=1);
+
 use Grazulex\LaravelModelschema\Exceptions\SchemaException;
+use Grazulex\LaravelModelschema\Schema\Field;
+use Grazulex\LaravelModelschema\Schema\ModelSchema;
+use Grazulex\LaravelModelschema\Schema\Relationship;
+use Grazulex\LaravelModelschema\Services\SchemaService;
 use Illuminate\Filesystem\Filesystem;
 
 beforeEach(function () {
     $this->filesystem = new Filesystem();
-    $this->tempDir = sys_get_temp_dir() . '/laravel-modelschema-service-test-' . uniqid();
+    $this->tempDir = sys_get_temp_dir().'/laravel-modelschema-service-test-'.uniqid();
     $this->filesystem->makeDirectory($this->tempDir, 0755, true);
     $this->schemaService = new SchemaService($this->filesystem);
 });
@@ -21,7 +23,7 @@ afterEach(function () {
 });
 
 it('can parse yaml file', function () {
-    $yamlContent = <<<YAML
+    $yamlContent = <<<'YAML'
 model: TestModel
 table: test_models
 fields:
@@ -35,7 +37,7 @@ options:
   timestamps: true
 YAML;
 
-    $filePath = $this->tempDir . '/test.yml';
+    $filePath = $this->tempDir.'/test.yml';
     $this->filesystem->put($filePath, $yamlContent);
 
     $schema = $this->schemaService->parseYamlFile($filePath);
@@ -47,12 +49,12 @@ YAML;
 });
 
 it('throws exception for non-existent file', function () {
-    expect(fn() => $this->schemaService->parseYamlFile('/non/existent/file.yml'))
+    expect(fn () => $this->schemaService->parseYamlFile('/non/existent/file.yml'))
         ->toThrow(SchemaException::class, 'not found');
 });
 
 it('can parse yaml content', function () {
-    $yamlContent = <<<YAML
+    $yamlContent = <<<'YAML'
 model: ContentModel
 table: content_models
 fields:
@@ -132,7 +134,7 @@ it('extracts core schema data', function () {
         'another_extension' => ['data' => 'here'],
     ];
 
-    $coreData = $this->schemaService->extractCoreSchema($yamlData);
+    $coreData = $this->schemaService->extractCoreSchemaData($yamlData);
 
     expect($coreData)->toHaveKey('model');
     expect($coreData)->toHaveKey('table');
@@ -171,7 +173,7 @@ it('handles relations alias for relationships', function () {
         'relations' => ['posts' => ['type' => 'hasMany']],
     ];
 
-    $coreData = $this->schemaService->extractCoreSchema($yamlData);
+    $coreData = $this->schemaService->extractCoreSchemaData($yamlData);
 
     expect($coreData)->toHaveKey('relationships');
     expect($coreData['relationships'])->toBe(['posts' => ['type' => 'hasMany']]);
@@ -193,8 +195,8 @@ it('validates relationship types correctly', function () {
 
 it('returns supported field types', function () {
     // Ensure registry is initialized
-    \Grazulex\LaravelModelschema\Support\FieldTypeRegistry::initialize();
-    
+    Grazulex\LaravelModelschema\Support\FieldTypeRegistry::initialize();
+
     $fieldTypes = $this->schemaService->getSupportedFieldTypes();
 
     expect($fieldTypes)->toBeArray();
@@ -219,7 +221,7 @@ it('can save schema to yaml file', function () {
     ];
 
     $schema = new ModelSchema('SavedModel', 'saved_models', $fields);
-    $filePath = $this->tempDir . '/saved_schema.yml';
+    $filePath = $this->tempDir.'/saved_schema.yml';
 
     $this->schemaService->saveSchemaToYaml($schema, $filePath);
 

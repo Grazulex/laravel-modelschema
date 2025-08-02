@@ -1,0 +1,8 @@
+factory:
+  name: {{MODEL_NAME}}Factory
+  namespace: {{FACTORY_NAMESPACE}}
+  model_class: {{MODEL_CLASS}}
+  fields:
+{{FACTORY_FIELDS_YAML}}
+  states:
+{{FACTORY_STATES_YAML}}

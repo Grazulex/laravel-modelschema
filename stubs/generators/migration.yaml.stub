@@ -1,0 +1,12 @@
+migration:
+  table: {{TABLE_NAME}}
+  class_name: {{MIGRATION_CLASS_NAME}}
+  fields:
+{{MIGRATION_FIELDS_YAML}}
+  indexes:
+{{MIGRATION_INDEXES_YAML}}
+  foreign_keys:
+{{MIGRATION_FOREIGN_KEYS_YAML}}
+  options:
+    timestamps: {{HAS_TIMESTAMPS}}
+    soft_deletes: {{HAS_SOFT_DELETES}}

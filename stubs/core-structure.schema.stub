@@ -1,0 +1,55 @@
+# Core Structure Example: {{MODEL_NAME}}
+# Generated: {{CREATED_AT}}
+
+core:
+  model: {{MODEL_NAME}}
+  table: {{TABLE_NAME}}
+
+  fields:
+    id:
+      type: bigInteger
+      nullable: false
+      primary: true
+
+    name:
+      type: string
+      length: 255
+      nullable: false
+      rules: ['required', 'string', 'max:255']
+      comment: "{{MODEL_NAME}} name"
+
+    created_at:
+      type: timestamp
+      nullable: true
+
+    updated_at:
+      type: timestamp
+      nullable: true
+
+  options:
+    timestamps: true
+    soft_deletes: false
+
+# Extension sections for other packages
+# These will be ignored by core ModelSchema but can be used by other packages
+
+turbomaker:
+  # TurboMaker package configuration
+  crud_enabled: true
+  api_routes: true
+  form_fields:
+    - name
+  list_fields:
+    - id
+    - name
+    - created_at
+
+arc:
+  # Arc package configuration  
+  livewire_components: true
+  admin_panel: true
+  permissions:
+    - create
+    - read
+    - update
+    - delete

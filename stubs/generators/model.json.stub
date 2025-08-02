@@ -1,0 +1,21 @@
+"model": {
+  "name": "{{MODEL_NAME}}",
+  "table": "{{TABLE_NAME}}",
+  "namespace": "{{NAMESPACE}}",
+  "fillable": [
+    {{FILLABLE_FIELDS_JSON}}
+  ],
+  "casts": {
+    {{CASTS_JSON}}
+  },
+  "relationships": [
+    {{RELATIONSHIPS_JSON}}
+  ],
+  "options": {
+    "timestamps": {{HAS_TIMESTAMPS}},
+    "soft_deletes": {{HAS_SOFT_DELETES}}
+  },
+  "validation_rules": {
+    {{VALIDATION_RULES_JSON}}
+  }
+}

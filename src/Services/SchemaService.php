@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Grazulex\LaravelModelschema\Services;
 
-use Grazulex\LaravelModelschema\Schema\ModelSchema;
+use Exception;
 use Grazulex\LaravelModelschema\Exceptions\SchemaException;
+use Grazulex\LaravelModelschema\Schema\ModelSchema;
 use Illuminate\Filesystem\Filesystem;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Core schema service for YAML management
@@ -24,7 +26,7 @@ class SchemaService
      */
     public function parseYamlFile(string $filePath): ModelSchema
     {
-        if (!$this->filesystem->exists($filePath)) {
+        if (! $this->filesystem->exists($filePath)) {
             throw SchemaException::fileNotFound($filePath);
         }
 
@@ -49,20 +51,20 @@ class SchemaService
         $errors = [];
 
         // Core validations that all packages should respect
-        if (empty($schema->fields)) {
+        if ($schema->fields === []) {
             $errors[] = "Schema '{$schema->name}' must have at least one field";
         }
 
         // Validate field types exist in registry
         foreach ($schema->fields as $field) {
-            if (!$this->isValidFieldType($field->type)) {
+            if (! $this->isValidFieldType($field->type)) {
                 $errors[] = "Unknown field type '{$field->type}' in field '{$field->name}'";
             }
         }
 
         // Validate relationship types
         foreach ($schema->relationships as $relationship) {
-            if (!$this->isValidRelationshipType($relationship->type)) {
+            if (! $this->isValidRelationshipType($relationship->type)) {
                 $errors[] = "Unknown relationship type '{$relationship->type}' in relationship '{$relationship->name}'";
             }
         }
@@ -87,11 +89,17 @@ class SchemaService
     }
 
     /**
-     * Extract core schema data from a parsed YAML array
-     * Returns only the parts this package handles
+     * Extract core schema data from full YAML data
+     * Supports both old format (flat) and new format (with 'core' key)
      */
-    public function extractCoreSchema(array $yamlData): array
+    public function extractCoreSchemaData(array $yamlData): array
     {
+        // New format: check if data is wrapped in 'core' key
+        if (isset($yamlData['core']) && is_array($yamlData['core'])) {
+            return $yamlData['core'];
+        }
+
+        // Old format: extract core keys from flat structure
         $coreKeys = $this->getCoreSchemaKeys();
         $coreSchema = [];
 
@@ -102,7 +110,7 @@ class SchemaService
         }
 
         // Handle 'relations' alias for 'relationships'
-        if (isset($yamlData['relations']) && !isset($coreSchema['relationships'])) {
+        if (isset($yamlData['relations']) && ! isset($coreSchema['relationships'])) {
             $coreSchema['relationships'] = $yamlData['relations'];
         }
 
@@ -111,17 +119,27 @@ class SchemaService
 
     /**
      * Extract extension data (data not handled by core)
+     * Supports both old format (flat) and new format (with 'core' key)
      * Other packages can use this to get their custom data
      */
     public function extractExtensionData(array $yamlData): array
     {
+        // New format: everything except 'core' key is extension data
+        if (isset($yamlData['core']) && is_array($yamlData['core'])) {
+            $extensionData = $yamlData;
+            unset($extensionData['core']);
+
+            return $extensionData;
+        }
+
+        // Old format: exclude core keys from flat structure
         $coreKeys = $this->getCoreSchemaKeys();
         $coreKeys[] = 'relations'; // Also exclude the alias
-        
+
         $extensionData = [];
 
         foreach ($yamlData as $key => $value) {
-            if (!in_array($key, $coreKeys, true)) {
+            if (! in_array($key, $coreKeys, true)) {
                 $extensionData[$key] = $value;
             }
         }
@@ -144,7 +162,7 @@ class SchemaService
     {
         $validTypes = [
             'belongsTo',
-            'hasOne', 
+            'hasOne',
             'hasMany',
             'belongsToMany',
             'hasOneThrough',
@@ -153,7 +171,7 @@ class SchemaService
             'morphOne',
             'morphMany',
             'morphToMany',
-            'morphedByMany'
+            'morphedByMany',
         ];
 
         return in_array($type, $validTypes, true);
@@ -174,7 +192,7 @@ class SchemaService
     {
         return [
             'belongsTo' => 'Belongs to a single related model',
-            'hasOne' => 'Has one related model', 
+            'hasOne' => 'Has one related model',
             'hasMany' => 'Has many related models',
             'belongsToMany' => 'Many-to-many relationship',
             'hasOneThrough' => 'Has one through intermediate model',
@@ -183,7 +201,7 @@ class SchemaService
             'morphOne' => 'Polymorphic has one',
             'morphMany' => 'Polymorphic has many',
             'morphToMany' => 'Polymorphic many-to-many',
-            'morphedByMany' => 'Inverse polymorphic many-to-many'
+            'morphedByMany' => 'Inverse polymorphic many-to-many',
         ];
     }
 
@@ -194,7 +212,7 @@ class SchemaService
     public function saveSchemaToYaml(ModelSchema $schema, string $filePath): void
     {
         $directory = dirname($filePath);
-        if (!$this->filesystem->isDirectory($directory)) {
+        if (! $this->filesystem->isDirectory($directory)) {
             $this->filesystem->makeDirectory($directory, 0755, true);
         }
 
@@ -208,13 +226,273 @@ class SchemaService
     public function convertSchemaToYaml(ModelSchema $schema): string
     {
         $data = $schema->toArray();
-        
-        if (!function_exists('yaml_emit')) {
+
+        if (! function_exists('yaml_emit')) {
             // Fallback to simple YAML generation if yaml extension not available
             return $this->generateSimpleYaml($data);
         }
 
         return yaml_emit($data, YAML_UTF8_ENCODING);
+    }
+
+    // ==============================================
+    // NEW API METHODS FOR PACKAGE INTEGRATION
+    // ==============================================
+
+    /**
+     * Parse and separate core schema from complete YAML
+     * This allows other packages to handle the complete YAML while we only process our part
+     */
+    public function parseAndSeparateSchema(string $yamlContent): array
+    {
+        try {
+            $fullData = Yaml::parse($yamlContent);
+        } catch (Exception $e) {
+            throw new SchemaException('Invalid YAML content: '.$e->getMessage());
+        }
+
+        // Extract core data and create core schema
+        $coreData = $this->extractCoreSchemaData($fullData);
+
+        // Create ModelSchema from core data only
+        $modelName = $coreData['model'] ?? $coreData['name'] ?? 'UnknownModel';
+        $coreSchema = ModelSchema::fromArray($modelName, $coreData);
+
+        // Extract extension data for other packages
+        $extensionData = $this->extractExtensionData($fullData);
+
+        return [
+            'core_schema' => $coreSchema,
+            'core_data' => $coreData,
+            'extension_data' => $extensionData,
+            'full_data' => $fullData,
+        ];
+    }
+
+    /**
+     * Validate only the core part of a complete YAML schema
+     * Other packages can validate the complete YAML but only get our validation results
+     */
+    public function validateCoreSchema(string $yamlContent): array
+    {
+        $separated = $this->parseAndSeparateSchema($yamlContent);
+
+        return $this->validateSchema($separated['core_schema']);
+    }
+
+    /**
+     * Extract core content from complete YAML for file generation
+     * Returns structured data needed for generating PHP files
+     */
+    public function extractCoreContentForGeneration(string $yamlContent): array
+    {
+        $separated = $this->parseAndSeparateSchema($yamlContent);
+        $coreSchema = $separated['core_schema'];
+
+        return [
+            'schema' => $coreSchema,
+            'model_name' => $coreSchema->name,
+            'table_name' => $coreSchema->table,
+            'fields' => $coreSchema->fields,
+            'relationships' => $coreSchema->relationships,
+            'all_fields' => $coreSchema->getAllFields(),
+            'fillable_fields' => array_keys($coreSchema->getFillableFields()),
+            'casts' => $coreSchema->getCastableFields(),
+            'validation_rules' => $coreSchema->getValidationRules(),
+            'has_timestamps' => $coreSchema->hasTimestamps(),
+            'has_soft_deletes' => $coreSchema->hasSoftDeletes(),
+            'model_namespace' => $coreSchema->getModelNamespace(),
+            'model_class' => $coreSchema->getModelClass(),
+        ];
+    }
+
+    /**
+     * Get all available stubs/templates for file generation
+     */
+    public function getAvailableStubs(): array
+    {
+        $stubsPath = __DIR__.'/../../stubs';
+        $stubs = [];
+
+        if (! is_dir($stubsPath)) {
+            return $stubs;
+        }
+
+        $files = scandir($stubsPath);
+        foreach ($files as $file) {
+            if (pathinfo($file, PATHINFO_EXTENSION) === 'stub') {
+                $stubName = pathinfo($file, PATHINFO_FILENAME);
+                $stubs[$stubName] = [
+                    'name' => $stubName,
+                    'file' => $file,
+                    'path' => $stubsPath.'/'.$file,
+                    'description' => $this->getStubDescription($stubsPath.'/'.$file),
+                ];
+            }
+        }
+
+        return $stubs;
+    }
+
+    /**
+     * Get content of a specific stub for file generation
+     */
+    public function getStubContent(string $stubName): string
+    {
+        $stubsPath = __DIR__.'/../../stubs';
+        $stubFile = $stubsPath.'/'.$stubName;
+
+        if (! str_ends_with($stubFile, '.stub')) {
+            $stubFile .= '.schema.stub';
+        }
+
+        if (! file_exists($stubFile)) {
+            throw new SchemaException("Stub file not found: {$stubName}");
+        }
+
+        return file_get_contents($stubFile);
+    }
+
+    /**
+     * Process stub content with model data and return core YAML
+     */
+    public function processStubForCore(string $stubName, array $replacements = []): string
+    {
+        $content = $this->getStubContent($stubName);
+
+        // Default replacements for core functionality
+        $defaultReplacements = [
+            '{{MODEL_NAME}}' => $replacements['MODEL_NAME'] ?? 'SampleModel',
+            '{{TABLE_NAME}}' => $replacements['TABLE_NAME'] ?? 'sample_models',
+            '{{CREATED_AT}}' => $replacements['CREATED_AT'] ?? now()->format('Y-m-d H:i:s'),
+            '{{NAMESPACE}}' => $replacements['NAMESPACE'] ?? 'App\\Models',
+        ];
+
+        $allReplacements = array_merge($defaultReplacements, $replacements);
+
+        foreach ($allReplacements as $placeholder => $value) {
+            $content = str_replace($placeholder, $value, $content);
+        }
+
+        return $content;
+    }
+
+    /**
+     * Wrap core schema data in the new "core" structure
+     */
+    public function wrapInCoreStructure(array $coreData, array $extensionData = []): array
+    {
+        $wrappedData = [
+            'core' => $coreData,
+        ];
+
+        // Add extension data at root level
+        foreach ($extensionData as $key => $value) {
+            if ($key !== 'core') {
+                $wrappedData[$key] = $value;
+            }
+        }
+
+        return $wrappedData;
+    }
+
+    /**
+     * Generate complete YAML for app from base stub and core schema
+     * Cette fonction permet à l'app parent de recevoir un YAML de base
+     * et de générer un YAML complet avec toutes les données
+     */
+    public function generateCompleteYamlFromStub(string $stubName, array $replacements = [], array $extensionData = []): string
+    {
+        // 1. Process the stub to get base YAML
+        $baseYamlContent = $this->processStubForCore($stubName, $replacements);
+
+        // 2. Parse the base YAML to get core data
+        $separated = $this->parseAndSeparateSchema($baseYamlContent);
+        $coreData = $separated['core_data'];
+
+        // 3. Wrap in new structure and add extension data
+        $completeData = $this->wrapInCoreStructure($coreData, $extensionData);
+
+        // 4. Convert to YAML string
+        return Yaml::dump($completeData, 4, 2);
+    }
+
+    /**
+     * Merge core schema data with app-specific extension data
+     * Permet à l'app parent de fusionner ses données avec notre core
+     */
+    public function mergeWithAppData(array $coreData, array $appData): array
+    {
+        // Wrap core data in structure
+        $wrappedCore = $this->wrapInCoreStructure($coreData);
+
+        // Merge with app data (app data has priority for non-core keys)
+        $merged = array_merge($wrappedCore, $appData);
+
+        // Ensure core remains intact if app accidentally overwrites it
+        $merged['core'] = $coreData;
+
+        return $merged;
+    }
+
+    /**
+     * Extract and validate only our core part from complete app YAML
+     * L'app parent peut envoyer son YAML complet et on valide juste notre partie
+     */
+    public function validateFromCompleteAppYaml(string $completeYaml): array
+    {
+        try {
+            $fullData = Yaml::parse($completeYaml);
+        } catch (Exception $e) {
+            return ['Invalid YAML format: '.$e->getMessage()];
+        }
+
+        // Extract our core data
+        $coreData = $this->extractCoreSchemaData($fullData);
+
+        if ($coreData === []) {
+            return ['No core schema data found in YAML'];
+        }
+
+        // Create and validate core schema
+        $modelName = $coreData['model'] ?? $coreData['name'] ?? 'UnknownModel';
+        $coreSchema = ModelSchema::fromArray($modelName, $coreData);
+
+        return $this->validateSchema($coreSchema);
+    }
+
+    /**
+     * Get structured generation data from complete app YAML
+     * L'app parent peut envoyer son YAML et recevoir toutes nos données structurées
+     * pour la génération de fichiers
+     */
+    public function getGenerationDataFromCompleteYaml(string $completeYaml): array
+    {
+        $separated = $this->parseAndSeparateSchema($completeYaml);
+        $coreSchema = $separated['core_schema'];
+
+        // Use GenerationService to get all generation data
+        $generationService = new Generation\GenerationService();
+
+        $generationData = [];
+
+        // Get data for each generator type
+        foreach (['model', 'migration', 'requests', 'resources', 'factory', 'seeder'] as $type) {
+            try {
+                $generator = $generationService->getGenerator($type);
+                $result = $generator->generate($coreSchema);
+                $generationData[$type] = $result;
+            } catch (Exception $e) {
+                $generationData[$type] = ['error' => $e->getMessage()];
+            }
+        }
+
+        return [
+            'core_schema' => $coreSchema,
+            'core_data' => $separated['core_data'],
+            'extension_data' => $separated['extension_data'],
+            'generation_data' => $generationData,
+        ];
     }
 
     /**
@@ -224,12 +502,12 @@ class SchemaService
     {
         $modelName = $data['name'] ?? 'UnknownModel';
         $yaml = "# Model Schema: {$modelName}\n";
-        $yaml .= "# Generated: " . now()->format('Y-m-d H:i:s') . "\n\n";
-        
+        $yaml .= '# Generated: '.now()->format('Y-m-d H:i:s')."\n\n";
+
         foreach ($data as $key => $value) {
             $yaml .= $this->convertValueToYaml($key, $value, 0);
         }
-        
+
         return $yaml;
     }
 
@@ -239,23 +517,45 @@ class SchemaService
     protected function convertValueToYaml(string|int $key, mixed $value, int $depth): string
     {
         $indent = str_repeat('  ', $depth);
-        
+
         if (is_array($value)) {
             $yaml = "{$indent}{$key}:\n";
             foreach ($value as $subKey => $subValue) {
                 $yaml .= $this->convertValueToYaml($subKey, $subValue, $depth + 1);
             }
+
             return $yaml;
         }
-        
+
         if (is_bool($value)) {
             $value = $value ? 'true' : 'false';
         } elseif (is_null($value)) {
             $value = 'null';
-        } elseif (is_string($value) && (strpos($value, ':') !== false || strpos($value, '\n') !== false)) {
+        } elseif (is_string($value) && (mb_strpos($value, ':') !== false || mb_strpos($value, '\n') !== false)) {
             $value = "'{$value}'";
         }
-        
+
         return "{$indent}{$key}: {$value}\n";
+    }
+
+    /**
+     * Extract description from stub file comments
+     */
+    protected function getStubDescription(string $stubPath): string
+    {
+        if (! file_exists($stubPath)) {
+            return 'No description available';
+        }
+
+        $content = file_get_contents($stubPath);
+        $lines = explode("\n", $content);
+
+        foreach ($lines as $line) {
+            if (str_starts_with(mb_trim($line), '#') && ! str_starts_with(mb_trim($line), '# Generated:')) {
+                return mb_trim(mb_substr(mb_trim($line), 1));
+            }
+        }
+
+        return 'Template stub';
     }
 }

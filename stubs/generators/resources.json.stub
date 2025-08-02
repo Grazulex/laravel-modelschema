@@ -1,0 +1,20 @@
+"resources": {
+  "resource": {
+    "name": "{{MODEL_NAME}}Resource",
+    "namespace": "{{RESOURCES_NAMESPACE}}",
+    "fields": {
+      {{RESOURCE_FIELDS_JSON}}
+    },
+    "relationships": {
+      {{RESOURCE_RELATIONSHIPS_JSON}}
+    }
+  },
+  "collection": {
+    "name": "{{MODEL_NAME}}Collection",
+    "namespace": "{{RESOURCES_NAMESPACE}}",
+    "resource_class": "{{MODEL_NAME}}Resource",
+    "meta_fields": {
+      {{COLLECTION_META_FIELDS_JSON}}
+    }
+  }
+}
