@@ -247,6 +247,9 @@ class SchemaService
     {
         try {
             $fullData = Yaml::parse($yamlContent);
+            if (!is_array($fullData)) {
+                throw new SchemaException('YAML content must contain an array configuration');
+            }
         } catch (Exception $e) {
             throw new SchemaException('Invalid YAML content: '.$e->getMessage());
         }
@@ -350,7 +353,12 @@ class SchemaService
             throw new SchemaException("Stub file not found: {$stubName}");
         }
 
-        return file_get_contents($stubFile);
+        $content = file_get_contents($stubFile);
+        if ($content === false) {
+            throw new SchemaException("Could not read stub file: {$stubName}");
+        }
+
+        return $content;
     }
 
     /**
@@ -443,6 +451,9 @@ class SchemaService
     {
         try {
             $fullData = Yaml::parse($completeYaml);
+            if (!is_array($fullData)) {
+                return ['YAML content must contain an array configuration'];
+            }
         } catch (Exception $e) {
             return ['Invalid YAML format: '.$e->getMessage()];
         }
@@ -548,6 +559,9 @@ class SchemaService
         }
 
         $content = file_get_contents($stubPath);
+        if ($content === false) {
+            return 'No description available';
+        }
         $lines = explode("\n", $content);
 
         foreach ($lines as $line) {
