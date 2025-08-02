@@ -69,9 +69,15 @@ final class ModelSchema
         }
 
         $content = file_get_contents($filePath);
+        if ($content === false) {
+            throw new InvalidArgumentException("Could not read file: {$filePath}");
+        }
 
         try {
             $config = Yaml::parse($content);
+            if (!is_array($config)) {
+                throw new InvalidArgumentException("YAML file must contain an array configuration: {$filePath}");
+            }
         } catch (Exception $e) {
             throw new InvalidArgumentException("Invalid YAML in file: {$filePath}. Error: ".$e->getMessage(), $e->getCode(), $e);
         }
@@ -91,6 +97,9 @@ final class ModelSchema
     {
         try {
             $config = Yaml::parse($yamlContent);
+            if (!is_array($config)) {
+                throw new InvalidArgumentException('YAML content must contain an array configuration');
+            }
         } catch (Exception $e) {
             throw new InvalidArgumentException('Invalid YAML content: '.$e->getMessage(), $e->getCode(), $e);
         }
@@ -103,6 +112,8 @@ final class ModelSchema
 
     /**
      * Convert to array representation
+     * 
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -121,7 +132,12 @@ final class ModelSchema
      */
     public function toJson(int $flags = JSON_PRETTY_PRINT): string
     {
-        return json_encode($this->toArray(), $flags);
+        $json = json_encode($this->toArray(), $flags);
+        if ($json === false) {
+            throw new \JsonException('Failed to encode schema to JSON');
+        }
+        
+        return $json;
     }
 
     /**
@@ -134,6 +150,8 @@ final class ModelSchema
 
     /**
      * Get all fields including foreign key fields from relationships
+     * 
+     * @return array<string, Field>
      */
     public function getAllFields(): array
     {
@@ -160,6 +178,8 @@ final class ModelSchema
 
     /**
      * Get fillable fields for Laravel model
+     * 
+     * @return array<string, Field>
      */
     public function getFillableFields(): array
     {
@@ -168,6 +188,8 @@ final class ModelSchema
 
     /**
      * Get castable fields for Laravel model
+     * 
+     * @return array<string, string>
      */
     public function getCastableFields(): array
     {
@@ -185,6 +207,8 @@ final class ModelSchema
 
     /**
      * Get validation rules for all fields
+     * 
+     * @return array<string, array<string>>
      */
     public function getValidationRules(): array
     {

@@ -43,6 +43,8 @@ final class Relationship
 
     /**
      * Convert to array representation
+     * 
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {

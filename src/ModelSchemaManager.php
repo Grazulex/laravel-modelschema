@@ -37,6 +37,8 @@ final class ModelSchemaManager
 
     /**
      * Validate a schema configuration
+     * 
+     * @return array<string>
      */
     public static function validate(ModelSchema $schema): array
     {
@@ -70,6 +72,8 @@ final class ModelSchemaManager
 
     /**
      * Get supported field types
+     * 
+     * @return array<string>
      */
     public static function getSupportedFieldTypes(): array
     {
@@ -109,6 +113,8 @@ final class ModelSchemaManager
 
     /**
      * Get supported relationship types
+     * 
+     * @return array<string>
      */
     public static function getSupportedRelationshipTypes(): array
     {
@@ -127,6 +133,9 @@ final class ModelSchemaManager
 
     /**
      * Create a basic schema template
+     * 
+     * @param array<string, array<string, mixed>> $fields
+     * @return array<string, mixed>
      */
     public static function createTemplate(string $modelName, array $fields = []): array
     {

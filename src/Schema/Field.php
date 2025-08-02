@@ -49,6 +49,8 @@ final class Field
 
     /**
      * Convert to array representation
+     * 
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -71,6 +73,8 @@ final class Field
 
     /**
      * Get validation rules for this field
+     * 
+     * @return array<string>
      */
     public function getValidationRules(): array
     {

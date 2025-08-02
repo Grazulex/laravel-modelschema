@@ -39,11 +39,13 @@ class FieldTypeRegistry
 {
     /**
      * Registered field types
+     * @var array<string, class-string<FieldTypeInterface>>
      */
     private static array $fieldTypes = [];
 
     /**
      * Field type instances cache
+     * @var array<string, FieldTypeInterface>
      */
     private static array $instances = [];
 
@@ -111,6 +113,8 @@ class FieldTypeRegistry
 
     /**
      * Register a field type
+     * 
+     * @param class-string<FieldTypeInterface> $className
      */
     public static function register(string $type, string $className): void
     {
@@ -171,6 +175,8 @@ class FieldTypeRegistry
 
     /**
      * Get all registered field types
+     * 
+     * @return array<string>
      */
     public static function all(): array
     {
@@ -181,6 +187,8 @@ class FieldTypeRegistry
 
     /**
      * Get field types by their base type (excluding aliases)
+     * 
+     * @return array<string>
      */
     public static function getBaseTypes(): array
     {
@@ -208,6 +216,9 @@ class FieldTypeRegistry
         }
 
         $files = glob($directory.'/*FieldType.php');
+        if ($files === false) {
+            return;
+        }
 
         foreach ($files as $file) {
             $className = $namespace.'\\'.basename($file, '.php');

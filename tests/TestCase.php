@@ -23,7 +23,9 @@ abstract class TestCase extends Orchestra
 
     protected function tearDown(): void
     {
-        File::deleteDirectory($this->fakeAppPath);
+        if (isset($this->fakeAppPath) && File::exists($this->fakeAppPath)) {
+            File::deleteDirectory($this->fakeAppPath);
+        }
         parent::tearDown();
     }
 
@@ -42,9 +44,16 @@ abstract class TestCase extends Orchestra
 
         $app->useAppPath($this->fakeAppPath);
 
-        // ✅ Corrige le base_path
-        $app->bind('path.base', fn () => dirname(__DIR__));
+        // Configure database for testing
+        config(['database.default' => 'testing']);
+        config(['database.connections.testing' => [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+        ]]);
 
+        // Fix base_path
+        $app->bind('path.base', fn () => dirname(__DIR__));
     }
 
     protected function getPackageProviders($app)
