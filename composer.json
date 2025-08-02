@@ -31,7 +31,8 @@
         "larastan/larastan": "^3.4",
         "rector/rector": "^2.0",
         "doctrine/dbal": "^4.2",
-        "orchestra/testbench": "^10.0"
+        "orchestra/testbench": "^10.0",
+        "phpstan/phpstan": "^2.1"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
