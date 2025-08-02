@@ -30,7 +30,7 @@ final class FloatFieldType extends AbstractFieldType
         return 'float';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'float';
     }

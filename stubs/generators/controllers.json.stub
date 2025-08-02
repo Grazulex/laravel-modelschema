@@ -1,0 +1,93 @@
+{
+  "controllers": {
+    "api_controller": {
+      "name": "{{CONTROLLER_NAME}}ApiController",
+      "namespace": "{{API_CONTROLLER_NAMESPACE}}",
+      "methods": {
+        "index": {
+          "description": "Display a listing of the resource",
+          "return_type": "JsonResponse",
+          "features": ["pagination", "filtering", "sorting"]
+        },
+        "show": {
+          "description": "Display the specified resource",
+          "return_type": "JsonResponse",
+          "features": ["resource_loading", "relationship_loading"]
+        },
+        "store": {
+          "description": "Store a newly created resource",
+          "return_type": "JsonResponse",
+          "features": ["validation", "creation", "resource_response"]
+        },
+        "update": {
+          "description": "Update the specified resource",
+          "return_type": "JsonResponse",
+          "features": ["validation", "updating", "resource_response"]
+        },
+        "destroy": {
+          "description": "Remove the specified resource",
+          "return_type": "JsonResponse",
+          "features": ["deletion", "relationship_handling"]
+        }
+      },
+      "middleware": ["api", "auth:sanctum"],
+      "resource_class": "{{RESOURCE_CLASS}}"
+    },
+    "web_controller": {
+      "name": "{{CONTROLLER_NAME}}Controller",
+      "namespace": "{{WEB_CONTROLLER_NAMESPACE}}",
+      "methods": {
+        "index": {
+          "description": "Display a listing of the resource",
+          "return_type": "View",
+          "view": "{{VIEW_PREFIX}}.index"
+        },
+        "create": {
+          "description": "Show the form for creating a new resource",
+          "return_type": "View",
+          "view": "{{VIEW_PREFIX}}.create"
+        },
+        "store": {
+          "description": "Store a newly created resource",
+          "return_type": "RedirectResponse",
+          "redirect_to": "{{ROUTE_PREFIX}}.show"
+        },
+        "show": {
+          "description": "Display the specified resource",
+          "return_type": "View",
+          "view": "{{VIEW_PREFIX}}.show"
+        },
+        "edit": {
+          "description": "Show the form for editing the specified resource",
+          "return_type": "View",
+          "view": "{{VIEW_PREFIX}}.edit"
+        },
+        "update": {
+          "description": "Update the specified resource",
+          "return_type": "RedirectResponse",
+          "redirect_to": "{{ROUTE_PREFIX}}.show"
+        },
+        "destroy": {
+          "description": "Remove the specified resource",
+          "return_type": "RedirectResponse",
+          "redirect_to": "{{ROUTE_PREFIX}}.index"
+        }
+      },
+      "middleware": ["web", "auth"],
+      "layout": "layouts.app"
+    },
+    "routes": {
+      "api": {
+        "prefix": "api",
+        "resource": "{{RESOURCE_NAME}}",
+        "controller": "{{CONTROLLER_NAME}}ApiController",
+        "middleware": ["api", "auth:sanctum"]
+      },
+      "web": {
+        "resource": "{{RESOURCE_NAME}}",
+        "controller": "{{CONTROLLER_NAME}}Controller",
+        "middleware": ["web", "auth"]
+      }
+    }
+  }
+}

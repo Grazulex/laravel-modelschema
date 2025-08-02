@@ -30,7 +30,7 @@ final class TimestampFieldType extends AbstractFieldType
         return 'timestamp';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'timestamp';
     }

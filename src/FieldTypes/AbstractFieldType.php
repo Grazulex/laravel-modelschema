@@ -27,6 +27,16 @@ abstract class AbstractFieldType implements FieldTypeInterface
      */
     protected array $specificAttributes = [];
 
+    /**
+     * Abstract method that must be implemented by concrete field types
+     */
+    abstract public function getType(): string;
+
+    /**
+     * Abstract method that must be implemented by concrete field types
+     */
+    abstract protected function getMigrationMethod(): string;
+
     public function getAliases(): array
     {
         return [];
@@ -51,7 +61,7 @@ abstract class AbstractFieldType implements FieldTypeInterface
         return in_array($attribute, array_merge($this->commonAttributes, $this->specificAttributes), true);
     }
 
-    public function getCastType(): ?string
+    public function getCastType(array $config = []): ?string
     {
         return null;
     }

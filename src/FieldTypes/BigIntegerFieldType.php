@@ -30,7 +30,7 @@ final class BigIntegerFieldType extends AbstractFieldType
         return 'bigInteger';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'integer';
     }

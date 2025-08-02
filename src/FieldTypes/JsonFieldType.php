@@ -24,7 +24,7 @@ final class JsonFieldType extends AbstractFieldType
         return 'json';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'array';
     }

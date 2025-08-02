@@ -28,7 +28,7 @@ final class LongTextFieldType extends AbstractFieldType
         return 'longText';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'string';
     }

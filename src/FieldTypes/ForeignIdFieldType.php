@@ -33,7 +33,7 @@ final class ForeignIdFieldType extends AbstractFieldType
         return 'foreignId';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'integer';
     }

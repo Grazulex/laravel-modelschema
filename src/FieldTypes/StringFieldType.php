@@ -29,7 +29,7 @@ final class StringFieldType extends AbstractFieldType
         return 'string';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'string';
     }

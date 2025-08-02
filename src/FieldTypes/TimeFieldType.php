@@ -29,7 +29,7 @@ final class TimeFieldType extends AbstractFieldType
         return 'time';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'string';
     }

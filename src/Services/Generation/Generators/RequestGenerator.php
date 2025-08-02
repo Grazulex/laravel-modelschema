@@ -33,21 +33,42 @@ class RequestGenerator extends AbstractGenerator
 
     protected function generateJson(ModelSchema $schema, array $options): string
     {
-        // Structure que l'app parent peut insérer dans son JSON
-        $requestsData = [
-            'store_request' => [
-                'name' => "Store{$schema->name}Request",
-                'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
-                'validation_rules' => $this->getStoreValidationRules($schema),
-                'messages' => $this->getValidationMessages($schema),
-            ],
-            'update_request' => [
-                'name' => "Update{$schema->name}Request",
-                'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
-                'validation_rules' => $this->getUpdateValidationRules($schema),
-                'messages' => $this->getValidationMessages($schema),
-            ],
-        ];
+        // Check if we want enhanced structure or simple structure
+        $isEnhanced = $options['enhanced'] ?? true;
+
+        if ($isEnhanced) {
+            // Enhanced structure with simplified keys
+            $requestsData = [
+                'store' => [
+                    'name' => "Store{$schema->name}Request",
+                    'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
+                    'validation_rules' => $this->getStoreValidationRules($schema),
+                    'messages' => $this->getValidationMessages($schema),
+                ],
+                'update' => [
+                    'name' => "Update{$schema->name}Request",
+                    'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
+                    'validation_rules' => $this->getUpdateValidationRules($schema),
+                    'messages' => $this->getValidationMessages($schema),
+                ],
+            ];
+        } else {
+            // Standard structure with full key names
+            $requestsData = [
+                'store_request' => [
+                    'name' => "Store{$schema->name}Request",
+                    'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
+                    'validation_rules' => $this->getStoreValidationRules($schema),
+                    'messages' => $this->getValidationMessages($schema),
+                ],
+                'update_request' => [
+                    'name' => "Update{$schema->name}Request",
+                    'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
+                    'validation_rules' => $this->getUpdateValidationRules($schema),
+                    'messages' => $this->getValidationMessages($schema),
+                ],
+            ];
+        }
 
         // Retourne la structure prête à être insérée : "requests": { ... }
         return $this->toJsonFormat(['requests' => $requestsData]);
@@ -55,21 +76,42 @@ class RequestGenerator extends AbstractGenerator
 
     protected function generateYaml(ModelSchema $schema, array $options): string
     {
-        // Structure que l'app parent peut insérer dans son YAML
-        $requestsData = [
-            'store_request' => [
-                'name' => "Store{$schema->name}Request",
-                'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
-                'validation_rules' => $this->getStoreValidationRules($schema),
-                'messages' => $this->getValidationMessages($schema),
-            ],
-            'update_request' => [
-                'name' => "Update{$schema->name}Request",
-                'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
-                'validation_rules' => $this->getUpdateValidationRules($schema),
-                'messages' => $this->getValidationMessages($schema),
-            ],
-        ];
+        // Check if we want enhanced structure or simple structure
+        $isEnhanced = $options['enhanced'] ?? true;
+
+        if ($isEnhanced) {
+            // Enhanced structure with simplified keys
+            $requestsData = [
+                'store' => [
+                    'name' => "Store{$schema->name}Request",
+                    'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
+                    'validation_rules' => $this->getStoreValidationRules($schema),
+                    'messages' => $this->getValidationMessages($schema),
+                ],
+                'update' => [
+                    'name' => "Update{$schema->name}Request",
+                    'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
+                    'validation_rules' => $this->getUpdateValidationRules($schema),
+                    'messages' => $this->getValidationMessages($schema),
+                ],
+            ];
+        } else {
+            // Standard structure with full key names
+            $requestsData = [
+                'store_request' => [
+                    'name' => "Store{$schema->name}Request",
+                    'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
+                    'validation_rules' => $this->getStoreValidationRules($schema),
+                    'messages' => $this->getValidationMessages($schema),
+                ],
+                'update_request' => [
+                    'name' => "Update{$schema->name}Request",
+                    'namespace' => ($options['requests_namespace'] ?? 'App\\Http\\Requests'),
+                    'validation_rules' => $this->getUpdateValidationRules($schema),
+                    'messages' => $this->getValidationMessages($schema),
+                ],
+            ];
+        }
 
         // Retourne la structure YAML prête à être insérée
         return \Symfony\Component\Yaml\Yaml::dump(['requests' => $requestsData], 4, 2);

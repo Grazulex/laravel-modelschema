@@ -30,7 +30,7 @@ final class DateTimeFieldType extends AbstractFieldType
         return 'dateTime';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'datetime';
     }

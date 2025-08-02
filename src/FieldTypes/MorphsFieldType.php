@@ -30,7 +30,7 @@ final class MorphsFieldType extends AbstractFieldType
         return 'morphs';
     }
 
-    public function getCastType(): ?string
+    public function getCastType(array $config = []): ?string
     {
         return null; // Morphs creates multiple columns
     }

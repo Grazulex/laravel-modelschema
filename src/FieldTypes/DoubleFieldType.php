@@ -30,7 +30,7 @@ final class DoubleFieldType extends AbstractFieldType
         return 'double';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'double';
     }

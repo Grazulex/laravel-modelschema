@@ -30,7 +30,7 @@ final class MediumIntegerFieldType extends AbstractFieldType
         return 'mediumInteger';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'integer';
     }

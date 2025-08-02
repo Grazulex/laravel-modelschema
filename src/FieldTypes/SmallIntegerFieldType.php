@@ -30,7 +30,7 @@ final class SmallIntegerFieldType extends AbstractFieldType
         return 'smallInteger';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'integer';
     }

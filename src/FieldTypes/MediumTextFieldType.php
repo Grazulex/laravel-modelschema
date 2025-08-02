@@ -28,7 +28,7 @@ final class MediumTextFieldType extends AbstractFieldType
         return 'mediumText';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'string';
     }

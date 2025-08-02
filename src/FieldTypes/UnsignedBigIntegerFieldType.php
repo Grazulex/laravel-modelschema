@@ -29,7 +29,7 @@ final class UnsignedBigIntegerFieldType extends AbstractFieldType
         return 'unsignedBigInteger';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'integer';
     }

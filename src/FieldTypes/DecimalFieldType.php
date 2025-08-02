@@ -30,7 +30,7 @@ final class DecimalFieldType extends AbstractFieldType
         return 'decimal';
     }
 
-    public function getCastType(): string
+    public function getCastType(array $config = []): string
     {
         return 'decimal:'.$this->getScale();
     }
