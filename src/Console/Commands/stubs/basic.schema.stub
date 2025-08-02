@@ -1,0 +1,40 @@
+# Basic Model Schema: {{MODEL_NAME}}
+# Generated: {{CREATED_AT}}
+
+model: {{MODEL_NAME}}
+table: {{TABLE_NAME}}
+
+fields:
+  id:
+    type: bigInteger
+    nullable: false
+    primary: true
+    auto_increment: true
+
+  name:
+    type: string
+    length: 255
+    nullable: false
+    rules: ['required', 'string', 'max:255']
+    comment: "{{MODEL_NAME}} name"
+
+  description:
+    type: text
+    nullable: true
+    comment: "{{MODEL_NAME}} description"
+
+  is_active:
+    type: boolean
+    default: true
+    nullable: false
+    comment: "Whether the {{SNAKE_NAME}} is active"
+
+options:
+  timestamps: true
+  soft_deletes: false
+
+metadata:
+  created_by: make:schema
+  template: basic
+  version: "1.0"
+  model_class: "{{MODEL_CLASS}}"

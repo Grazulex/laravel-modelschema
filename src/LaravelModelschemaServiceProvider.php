@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Grazulex\LaravelModelschema;
 
+use Grazulex\LaravelModelschema\Console\Commands\MakeSchemaCommand;
 use Grazulex\LaravelModelschema\Support\FieldTypeRegistry;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,7 +27,7 @@ final class LaravelModelschemaServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                // Future commands will be registered here
+                MakeSchemaCommand::class,
             ]);
         }
     }

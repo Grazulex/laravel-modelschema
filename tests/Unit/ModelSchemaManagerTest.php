@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use Grazulex\LaravelModelschema\ModelSchemaManager;
-use Grazulex\LaravelModelschema\Schema\ModelSchema;
 use Grazulex\LaravelModelschema\Schema\Field;
+use Grazulex\LaravelModelschema\Schema\ModelSchema;
 use Grazulex\LaravelModelschema\Schema\Relationship;
 
 // Tests pour ModelSchemaManager
@@ -11,16 +13,16 @@ it('can create schema from array using manager', function () {
         'table' => 'users',
         'fields' => [
             'id' => ['type' => 'bigInteger', 'nullable' => false],
-            'name' => ['type' => 'string', 'length' => 255]
+            'name' => ['type' => 'string', 'length' => 255],
         ],
         'relationships' => [
-            'posts' => ['type' => 'hasMany', 'model' => 'Post']
+            'posts' => ['type' => 'hasMany', 'model' => 'Post'],
         ],
-        'options' => ['timestamps' => true]
+        'options' => ['timestamps' => true],
     ];
-    
+
     $schema = ModelSchemaManager::fromArray('User', $config);
-    
+
     expect($schema)->toBeInstanceOf(ModelSchema::class);
     expect($schema->name)->toBe('User');
     expect($schema->table)->toBe('users');
@@ -35,13 +37,13 @@ it('validates schema correctly', function () {
         table: 'users',
         fields: [
             new Field('id', 'bigInteger'),
-            new Field('name', 'string')
+            new Field('name', 'string'),
         ],
         relationships: [
-            new Relationship('posts', 'hasMany', 'Post')
+            new Relationship('posts', 'hasMany', 'Post'),
         ]
     );
-    
+
     $errors = ModelSchemaManager::validate($validSchema);
     expect($errors)->toBeEmpty();
 });
@@ -53,7 +55,7 @@ it('detects validation errors for empty fields', function () {
         fields: [], // No fields
         relationships: []
     );
-    
+
     $errors = ModelSchemaManager::validate($invalidSchema);
     expect($errors)->toContain('Schema must have at least one field');
 });
@@ -64,10 +66,10 @@ it('detects validation errors for invalid field types', function () {
         table: 'invalid_models',
         fields: [
             new Field('id', 'bigInteger'),
-            new Field('bad_field', 'invalidType') // Invalid type
+            new Field('bad_field', 'invalidType'), // Invalid type
         ]
     );
-    
+
     $errors = ModelSchemaManager::validate($invalidSchema);
     expect($errors)->toContain("Invalid field type 'invalidType' for field 'bad_field'");
 });
@@ -77,13 +79,13 @@ it('detects validation errors for invalid relationship types', function () {
         name: 'InvalidModel',
         table: 'invalid_models',
         fields: [
-            new Field('id', 'bigInteger')
+            new Field('id', 'bigInteger'),
         ],
         relationships: [
-            new Relationship('bad_rel', 'invalidRelType', 'Model') // Invalid type
+            new Relationship('bad_rel', 'invalidRelType', 'Model'), // Invalid type
         ]
     );
-    
+
     $errors = ModelSchemaManager::validate($invalidSchema);
     expect($errors)->toContain("Invalid relationship type 'invalidRelType' for relationship 'bad_rel'");
 });
@@ -93,13 +95,13 @@ it('detects validation errors for relationships without model', function () {
         name: 'InvalidModel',
         table: 'invalid_models',
         fields: [
-            new Field('id', 'bigInteger')
+            new Field('id', 'bigInteger'),
         ],
         relationships: [
-            new Relationship('bad_rel', 'hasMany', '') // Empty model
+            new Relationship('bad_rel', 'hasMany', ''), // Empty model
         ]
     );
-    
+
     $errors = ModelSchemaManager::validate($invalidSchema);
     expect($errors)->toContain("Relationship 'bad_rel' must have a model");
 });
@@ -109,20 +111,20 @@ it('allows morphTo relationships without model', function () {
         name: 'ValidModel',
         table: 'valid_models',
         fields: [
-            new Field('id', 'bigInteger')
+            new Field('id', 'bigInteger'),
         ],
         relationships: [
-            new Relationship('commentable', 'morphTo', '') // morphTo can have empty model
+            new Relationship('commentable', 'morphTo', ''), // morphTo can have empty model
         ]
     );
-    
+
     $errors = ModelSchemaManager::validate($validSchema);
     expect($errors)->toBeEmpty();
 });
 
 it('returns correct supported field types', function () {
     $fieldTypes = ModelSchemaManager::getSupportedFieldTypes();
-    
+
     expect($fieldTypes)->toBeArray();
     expect($fieldTypes)->toContain('string');
     expect($fieldTypes)->toContain('integer');
@@ -139,7 +141,7 @@ it('returns correct supported field types', function () {
 
 it('returns correct supported relationship types', function () {
     $relationshipTypes = ModelSchemaManager::getSupportedRelationshipTypes();
-    
+
     expect($relationshipTypes)->toBeArray();
     expect($relationshipTypes)->toContain('belongsTo');
     expect($relationshipTypes)->toContain('hasOne');
@@ -154,7 +156,7 @@ it('returns correct supported relationship types', function () {
 
 it('creates basic template with default fields', function () {
     $template = ModelSchemaManager::createTemplate('Product');
-    
+
     expect($template)->toBeArray();
     expect($template['model'])->toBe('Product');
     expect($template['table'])->toBe('products'); // pluralized
@@ -172,16 +174,16 @@ it('creates template with custom fields', function () {
         'title' => [
             'type' => 'string',
             'nullable' => false,
-            'length' => 255
+            'length' => 255,
         ],
         'content' => [
             'type' => 'text',
-            'nullable' => true
-        ]
+            'nullable' => true,
+        ],
     ];
-    
+
     $template = ModelSchemaManager::createTemplate('Article', $customFields);
-    
+
     expect($template['model'])->toBe('Article');
     expect($template['table'])->toBe('articles');
     expect($template['fields'])->toBe($customFields);
@@ -193,16 +195,16 @@ it('creates template with custom fields', function () {
 
 it('template has correct structure and metadata', function () {
     $template = ModelSchemaManager::createTemplate('TestModel');
-    
+
     // Check main structure
     expect($template)->toHaveKeys(['model', 'table', 'fields', 'relationships', 'options', 'metadata']);
-    
+
     // Check options
     expect($template['options'])->toHaveKeys(['timestamps', 'soft_deletes', 'namespace']);
     expect($template['options']['timestamps'])->toBeTrue();
     expect($template['options']['soft_deletes'])->toBeFalse();
     expect($template['options']['namespace'])->toBe('App\\Models');
-    
+
     // Check metadata
     expect($template['metadata'])->toHaveKeys(['version', 'description', 'created_at']);
     expect($template['metadata']['version'])->toBe('1.0');
@@ -216,9 +218,9 @@ it('table name is correctly pluralized and snake_cased', function () {
         'BlogPost' => 'blog_posts',
         'Category' => 'categories',
         'ProductVariant' => 'product_variants',
-        'OrderItem' => 'order_items'
+        'OrderItem' => 'order_items',
     ];
-    
+
     foreach ($templates as $model => $expectedTable) {
         $template = ModelSchemaManager::createTemplate($model);
         expect($template['table'])->toBe($expectedTable);
@@ -237,9 +239,9 @@ it('validates multiple errors correctly', function () {
             new Relationship('bad_rel2', 'hasMany', ''), // Error 3: empty model
         ]
     );
-    
+
     $errors = ModelSchemaManager::validate($invalidSchema);
-    
+
     expect($errors)->toHaveCount(3);
     expect($errors)->toContain("Invalid field type 'invalidType' for field 'bad_field'");
     expect($errors)->toContain("Invalid relationship type 'invalidRelType' for relationship 'bad_rel1'");

@@ -1,0 +1,108 @@
+# User Model Schema: {{MODEL_NAME}}
+# Generated: {{CREATED_AT}}
+
+model: {{MODEL_NAME}}
+table: {{TABLE_NAME}}
+
+fields:
+  id:
+    type: bigInteger
+    nullable: false
+    primary: true
+
+  name:
+    type: string
+    length: 255
+    nullable: false
+    rules: ['required', 'string', 'max:255']
+    comment: "User full name"
+
+  email:
+    type: email
+    length: 255
+    nullable: false
+    unique: true
+    rules: ['required', 'email', 'unique:{{TABLE_NAME}}']
+    comment: "User email address"
+
+  email_verified_at:
+    type: timestamp
+    nullable: true
+    comment: "When the email was verified"
+
+  password:
+    type: string
+    length: 255
+    nullable: false
+    rules: ['required', 'string', 'min:8']
+    comment: "Hashed password"
+
+  remember_token:
+    type: string
+    length: 100
+    nullable: true
+    comment: "Remember me token"
+
+  is_active:
+    type: boolean
+    default: true
+    comment: "Whether the user account is active"
+
+  last_login_at:
+    type: timestamp
+    nullable: true
+    comment: "Last login timestamp"
+
+  avatar:
+    type: string
+    length: 500
+    nullable: true
+    comment: "Avatar image path or URL"
+
+  timezone:
+    type: string
+    length: 50
+    default: 'UTC'
+    comment: "User timezone"
+
+  locale:
+    type: string
+    length: 10
+    default: 'en'
+    comment: "User preferred language"
+
+relationships:
+  profile:
+    type: hasOne
+    model: App\Models\UserProfile
+    foreign_key: user_id
+    comment: "Extended user profile information"
+
+  posts:
+    type: hasMany
+    model: App\Models\Post
+    foreign_key: user_id
+    comment: "Posts created by this user"
+
+  roles:
+    type: belongsToMany
+    model: App\Models\Role
+    pivot_table: user_roles
+    with_timestamps: true
+    comment: "User roles for permissions"
+
+  permissions:
+    type: belongsToMany
+    model: App\Models\Permission
+    pivot_table: user_permissions
+    with_timestamps: true
+
+options:
+  timestamps: true
+  soft_deletes: true
+
+metadata:
+  created_by: make:schema
+  template: user
+  version: "1.0"
+  model_class: "{{MODEL_CLASS}}"

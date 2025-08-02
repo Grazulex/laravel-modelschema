@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use Grazulex\LaravelModelschema\Schema\Field;
-use Grazulex\LaravelModelschema\Schema\Relationship;
 use Grazulex\LaravelModelschema\Schema\ModelSchema;
+use Grazulex\LaravelModelschema\Schema\Relationship;
 
 it('can create a field with all properties', function () {
     $field = new Field(
@@ -47,7 +49,7 @@ it('can create field from array', function () {
         'nullable' => true,
         'unique' => false,
         'length' => 255,
-        'rules' => ['required', 'string']
+        'rules' => ['required', 'string'],
     ];
 
     $field = Field::fromArray('email', $config);
@@ -146,25 +148,25 @@ it('can create schema from array data', function () {
             'id' => [
                 'type' => 'bigInteger',
                 'nullable' => false,
-                'unique' => true
+                'unique' => true,
             ],
             'title' => [
                 'type' => 'string',
                 'nullable' => false,
-                'length' => 255
-            ]
+                'length' => 255,
+            ],
         ],
         'relationships' => [
             'author' => [
                 'type' => 'belongsTo',
                 'model' => 'App\\Models\\User',
-                'foreign_key' => 'user_id'
-            ]
+                'foreign_key' => 'user_id',
+            ],
         ],
         'options' => [
             'timestamps' => true,
-            'softDeletes' => false
-        ]
+            'softDeletes' => false,
+        ],
     ];
 
     $schema = ModelSchema::fromArray('Post', $config);

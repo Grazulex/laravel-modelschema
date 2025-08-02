@@ -1,0 +1,112 @@
+# E-commerce Model Schema: {{MODEL_NAME}}
+# Generated: {{CREATED_AT}}
+
+model: {{MODEL_NAME}}
+table: {{TABLE_NAME}}
+
+fields:
+  id:
+    type: bigInteger
+    nullable: false
+    primary: true
+
+  name:
+    type: string
+    length: 255
+    nullable: false
+    rules: ['required', 'string', 'max:255']
+    comment: "{{MODEL_NAME}} name"
+
+  sku:
+    type: string
+    length: 100
+    nullable: false
+    unique: true
+    rules: ['required', 'string', 'unique:{{TABLE_NAME}}']
+    comment: "Stock Keeping Unit - unique product identifier"
+
+  description:
+    type: text
+    nullable: true
+    comment: "Product description"
+
+  price:
+    type: decimal
+    precision: 8
+    scale: 2
+    nullable: false
+    rules: ['required', 'numeric', 'min:0']
+    comment: "Regular price"
+
+  sale_price:
+    type: decimal
+    precision: 8
+    scale: 2
+    nullable: true
+    rules: ['nullable', 'numeric', 'min:0']
+    comment: "Sale price when on promotion"
+
+  stock_quantity:
+    type: integer
+    default: 0
+    nullable: false
+    rules: ['integer', 'min:0']
+    comment: "Available stock quantity"
+
+  is_active:
+    type: boolean
+    default: true
+    comment: "Whether the product is active and available"
+
+  weight:
+    type: decimal
+    precision: 5
+    scale: 2
+    nullable: true
+    comment: "Product weight in kilograms"
+
+  dimensions:
+    type: json
+    nullable: true
+    comment: "Product dimensions (length, width, height)"
+
+relationships:
+  category:
+    type: belongsTo
+    model: App\Models\Category
+    foreign_key: category_id
+    comment: "Product category"
+
+  brand:
+    type: belongsTo
+    model: App\Models\Brand
+    foreign_key: brand_id
+    comment: "Product brand"
+
+  tags:
+    type: belongsToMany
+    model: App\Models\Tag
+    pivot_table: "{{SNAKE_NAME}}_tags"
+    comment: "Product tags for filtering and search"
+
+  reviews:
+    type: hasMany
+    model: App\Models\Review
+    foreign_key: "{{SNAKE_NAME}}_id"
+    comment: "Customer reviews"
+
+  images:
+    type: hasMany
+    model: App\Models\ProductImage
+    foreign_key: "{{SNAKE_NAME}}_id"
+    comment: "Product images"
+
+options:
+  timestamps: true
+  soft_deletes: true
+
+metadata:
+  created_by: make:schema
+  template: ecommerce
+  version: "1.0"
+  model_class: "{{MODEL_CLASS}}"

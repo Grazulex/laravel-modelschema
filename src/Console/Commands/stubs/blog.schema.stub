@@ -1,0 +1,93 @@
+# Blog Model Schema: {{MODEL_NAME}}
+# Generated: {{CREATED_AT}}
+
+model: {{MODEL_NAME}}
+table: {{TABLE_NAME}}
+
+fields:
+  id:
+    type: bigInteger
+    nullable: false
+    primary: true
+
+  title:
+    type: string
+    length: 255
+    nullable: false
+    rules: ['required', 'string', 'max:255']
+    comment: "{{MODEL_NAME}} title"
+
+  slug:
+    type: string
+    length: 255
+    nullable: false
+    unique: true
+    rules: ['required', 'string', 'unique:{{TABLE_NAME}}']
+    comment: "URL-friendly version of the title"
+
+  content:
+    type: longText
+    nullable: false
+    rules: ['required']
+    comment: "Main content of the {{SNAKE_NAME}}"
+
+  excerpt:
+    type: text
+    nullable: true
+    comment: "Short description or summary"
+
+  published_at:
+    type: timestamp
+    nullable: true
+    comment: "When the {{SNAKE_NAME}} was published"
+
+  status:
+    type: string
+    length: 20
+    default: 'draft'
+    rules: ['in:draft,published,archived']
+    comment: "Publication status"
+
+  featured:
+    type: boolean
+    default: false
+    comment: "Whether this {{SNAKE_NAME}} is featured"
+
+  view_count:
+    type: integer
+    default: 0
+    nullable: false
+    comment: "Number of views"
+
+relationships:
+  author:
+    type: belongsTo
+    model: App\Models\User
+    foreign_key: user_id
+    comment: "The author of this {{SNAKE_NAME}}"
+
+  categories:
+    type: belongsToMany
+    model: App\Models\Category
+    pivot_table: "{{SNAKE_NAME}}_categories"
+    with_timestamps: true
+
+  tags:
+    type: belongsToMany
+    model: App\Models\Tag
+    pivot_table: "{{SNAKE_NAME}}_tags"
+
+  comments:
+    type: hasMany
+    model: App\Models\Comment
+    foreign_key: "{{SNAKE_NAME}}_id"
+
+options:
+  timestamps: true
+  soft_deletes: true
+
+metadata:
+  created_by: make:schema
+  template: blog
+  version: "1.0"
+  model_class: "{{MODEL_CLASS}}"
