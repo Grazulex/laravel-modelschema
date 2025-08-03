@@ -195,4 +195,101 @@ return [
         'enum' => 'enum',
         'set' => 'set',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logging Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure detailed logging for debugging and monitoring ModelSchema
+    | operations. This includes performance metrics, validation results,
+    | generation statistics, and error tracking.
+    |
+    */
+    'logging' => [
+        /*
+        |--------------------------------------------------------------------------
+        | Enable Logging
+        |--------------------------------------------------------------------------
+        |
+        | Enable or disable detailed logging. When disabled, no ModelSchema
+        | logs will be written, improving performance for production use.
+        |
+        */
+        'enabled' => filter_var($_ENV['MODELSCHEMA_LOGGING_ENABLED'] ?? 'true', FILTER_VALIDATE_BOOLEAN),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Log Channel
+        |--------------------------------------------------------------------------
+        |
+        | The log channel to use for ModelSchema logs. You can create a custom
+        | channel in config/logging.php for better organization.
+        |
+        */
+        'channel' => $_ENV['MODELSCHEMA_LOG_CHANNEL'] ?? 'modelschema',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Log Levels
+        |--------------------------------------------------------------------------
+        |
+        | Configure which types of events to log at different levels.
+        |
+        */
+        'levels' => [
+            'operations' => 'info',      // Start/end of major operations
+            'performance' => 'info',     // Performance metrics
+            'validation' => 'info',      // Validation results
+            'generation' => 'info',      // File/fragment generation
+            'cache' => 'debug',          // Cache operations
+            'yaml_parsing' => 'info',    // YAML parsing events
+            'debug' => 'debug',          // General debug information
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Performance Thresholds
+        |--------------------------------------------------------------------------
+        |
+        | Configure thresholds for performance warnings. Operations exceeding
+        | these thresholds will be logged with warnings.
+        |
+        */
+        'performance_thresholds' => [
+            'yaml_parsing_ms' => 1000,      // Warn if YAML parsing takes > 1s
+            'validation_ms' => 2000,        // Warn if validation takes > 2s
+            'generation_ms' => 3000,        // Warn if generation takes > 3s
+            'cache_operation_ms' => 100,    // Warn if cache op takes > 100ms
+            'memory_usage_mb' => 128,       // Warn if memory usage > 128MB
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Context Tracking
+        |--------------------------------------------------------------------------
+        |
+        | Track execution context and call stacks for better debugging.
+        |
+        */
+        'track_context' => true,
+        'max_context_depth' => 10,
+        'include_memory_usage' => true,
+        'include_timing' => true,
+
+        /*
+        |--------------------------------------------------------------------------
+        | Error Details
+        |--------------------------------------------------------------------------
+        |
+        | Configure how much detail to include in error logs.
+        |
+        */
+        'error_details' => [
+            'include_stack_trace' => true,
+            'include_context_stack' => true,
+            'include_request_data' => false, // Be careful with sensitive data
+            'max_trace_lines' => 20,
+        ],
+    ],
 ];

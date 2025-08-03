@@ -18,11 +18,15 @@ class SchemaService
 {
     protected SchemaCacheService $cache;
 
+    protected LoggingService $logger;
+
     public function __construct(
         protected Filesystem $filesystem = new Filesystem(),
-        ?SchemaCacheService $cache = null
+        ?SchemaCacheService $cache = null,
+        ?LoggingService $logger = null
     ) {
         $this->cache = $cache ?? new SchemaCacheService();
+        $this->logger = $logger ?? new LoggingService();
     }
 
     /**
@@ -31,21 +35,83 @@ class SchemaService
      */
     public function parseYamlFile(string $filePath): ModelSchema
     {
+        $this->logger->logOperationStart('parseYamlFile', ['file' => $filePath]);
+
         if (! $this->filesystem->exists($filePath)) {
+            $this->logger->logError("File not found: {$filePath}");
             throw SchemaException::fileNotFound($filePath);
         }
 
-        // Try to get from cache first
-        $cached = $this->cache->getSchemaByFile($filePath);
-        if ($cached instanceof ModelSchema) {
-            return $cached;
+        try {
+            // Try to get from cache first
+            $startTime = microtime(true);
+            $cached = $this->cache->getSchemaByFile($filePath);
+            $cacheTime = microtime(true) - $startTime;
+
+            if ($cached instanceof ModelSchema) {
+                $this->logger->logCache('hit', $filePath, true, $cacheTime);
+                $this->logger->logOperationEnd('parseYamlFile', [
+                    'source' => 'cache',
+                    'cache_time_ms' => round($cacheTime * 1000, 2),
+                ]);
+
+                return $cached;
+            }
+
+            $this->logger->logCache('miss', $filePath, false, $cacheTime);
+
+            // Parse and cache the result
+            $parseStart = microtime(true);
+            $schema = ModelSchema::fromYamlFile($filePath);
+            $parseTime = microtime(true) - $parseStart;
+
+            $this->logger->logYamlParsing($filePath, true, [
+                'parse_time_ms' => round($parseTime * 1000, 2),
+                'field_count' => count($schema->getAllFields()),
+                'relationship_count' => count($schema->getRelationships()),
+                'file_size' => $this->filesystem->size($filePath),
+            ]);
+
+            // Cache the result
+            $cacheStoreStart = microtime(true);
+            $this->cache->putSchemaByFile($filePath, $schema);
+            $cacheStoreTime = microtime(true) - $cacheStoreStart;
+
+            $this->logger->logCache('store', $filePath, false, $cacheStoreTime);
+
+            // Check performance thresholds
+            $parseTimeMs = $parseTime * 1000;
+            $threshold = config('modelschema.logging.performance_thresholds.yaml_parsing_ms', 1000);
+            if ($parseTimeMs > $threshold) {
+                $this->logger->logWarning(
+                    'YAML parsing exceeded threshold',
+                    [
+                        'file' => $filePath,
+                        'parse_time_ms' => round($parseTimeMs, 2),
+                        'threshold_ms' => $threshold,
+                    ],
+                    'Consider optimizing the YAML structure or enabling caching'
+                );
+            }
+
+            $this->logger->logOperationEnd('parseYamlFile', [
+                'source' => 'parse',
+                'parse_time_ms' => round($parseTime * 1000, 2),
+                'cache_store_time_ms' => round($cacheStoreTime * 1000, 2),
+                'field_count' => count($schema->getAllFields()),
+                'relationship_count' => count($schema->getRelationships()),
+            ]);
+
+            return $schema;
+
+        } catch (Exception $e) {
+            $this->logger->logError(
+                "Failed to parse YAML file: {$filePath}",
+                $e,
+                ['file' => $filePath]
+            );
+            throw $e;
         }
-
-        // Parse and cache the result
-        $schema = ModelSchema::fromYamlFile($filePath);
-        $this->cache->putSchemaByFile($filePath, $schema);
-
-        return $schema;
     }
 
     /**
@@ -73,6 +139,13 @@ class SchemaService
      */
     public function validateSchema(ModelSchema $schema): array
     {
+        $this->logger->logOperationStart('validateSchema', [
+            'schema_name' => $schema->name,
+            'field_count' => count($schema->getAllFields()),
+            'relationship_count' => count($schema->getRelationships()),
+        ]);
+
+        $startTime = microtime(true);
         $errors = [];
 
         // Core validations that all packages should respect
@@ -93,6 +166,37 @@ class SchemaService
                 $errors[] = "Unknown relationship type '{$relationship->type}' in relationship '{$relationship->name}'";
             }
         }
+
+        $validationTime = microtime(true) - $startTime;
+        $success = $errors === [];
+
+        // Log validation results
+        $this->logger->logValidation('schema', $success, $errors, [], [
+            'field_count' => count($schema->getAllFields()),
+            'relationship_count' => count($schema->getRelationships()),
+            'validation_time_ms' => round($validationTime * 1000, 2),
+        ]);
+
+        // Check performance threshold
+        $validationTimeMs = $validationTime * 1000;
+        $threshold = config('modelschema.logging.performance_thresholds.validation_ms', 2000);
+        if ($validationTimeMs > $threshold) {
+            $this->logger->logWarning(
+                'Schema validation exceeded threshold',
+                [
+                    'schema_name' => $schema->name,
+                    'validation_time_ms' => round($validationTimeMs, 2),
+                    'threshold_ms' => $threshold,
+                ],
+                'Consider optimizing validation rules or schema complexity'
+            );
+        }
+
+        $this->logger->logOperationEnd('validateSchema', [
+            'success' => $success,
+            'error_count' => count($errors),
+            'validation_time_ms' => round($validationTime * 1000, 2),
+        ]);
 
         return $errors;
     }

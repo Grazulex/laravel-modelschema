@@ -123,7 +123,7 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - [ ] Ajouter validation des types de champs personnalisés
 - [x] **Configuration cache pour les schémas parsés** ✅ - Configuration présente dans `config/modelschema.php`
 - [x] **Implémentation cache** ✅ - SchemaCacheService avec mise en cache des schémas, validation et parsing YAML
-- [ ] Ajouter logs détaillés pour le debugging
+- [x] **Ajouter logs détaillés pour le debugging** ✅ - TERMINÉ : LoggingService complet avec logging des opérations, métriques de performance, validation, génération, cache, erreurs, warnings et intégration dans SchemaService et GenerationService
 
 ### Extensions du système de champs - LARGEMENT COMPLÉTÉ ✅
 - [x] **Nombreux types de champs disponibles** : string, text, longText, mediumText, integer, bigInteger, smallInteger, tinyInteger, unsignedBigInteger, float, double, decimal, boolean, date, dateTime, time, timestamp, json, uuid, email, binary, morphs, foreignId

@@ -16,6 +16,7 @@ use Grazulex\LaravelModelschema\Services\Generation\Generators\RequestGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ResourceGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\SeederGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\TestGenerator;
+use Grazulex\LaravelModelschema\Services\LoggingService;
 use Grazulex\LaravelModelschema\Services\Validation\EnhancedValidationService;
 use InvalidArgumentException;
 
@@ -25,6 +26,8 @@ use InvalidArgumentException;
  */
 class GenerationService
 {
+    protected LoggingService $logger;
+
     public function __construct(
         protected ModelGenerator $modelGenerator = new ModelGenerator(),
         protected MigrationGenerator $migrationGenerator = new MigrationGenerator(),
@@ -35,52 +38,161 @@ class GenerationService
         protected ControllerGenerator $controllerGenerator = new ControllerGenerator(),
         protected TestGenerator $testGenerator = new TestGenerator(),
         protected PolicyGenerator $policyGenerator = new PolicyGenerator(),
-    ) {}
+        ?LoggingService $logger = null
+    ) {
+        $this->logger = $logger ?? new LoggingService();
+    }
 
     /**
      * Generate all files for a schema
      */
     public function generateAll(ModelSchema $schema, array $options = []): array
     {
+        $this->logger->logOperationStart('generateAll', [
+            'schema_name' => $schema->name,
+            'options' => array_keys(array_filter($options, fn ($value) => $value)),
+        ]);
+
+        $startTime = microtime(true);
         $results = [];
+        $generatedCount = 0;
+        $errors = [];
 
-        if ($options['model'] ?? true) {
-            $results['model'] = $this->generateModel($schema, $options);
+        try {
+            if ($options['model'] ?? true) {
+                $result = $this->generateModel($schema, $options);
+                $results['model'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Model generation failed';
+                }
+            }
+
+            if ($options['migration'] ?? true) {
+                $result = $this->generateMigration($schema, $options);
+                $results['migration'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Migration generation failed';
+                }
+            }
+
+            if ($options['requests'] ?? false) {
+                $result = $this->generateRequests($schema, $options);
+                $results['requests'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Requests generation failed';
+                }
+            }
+
+            if ($options['resources'] ?? false) {
+                $result = $this->generateResources($schema, $options);
+                $results['resources'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Resources generation failed';
+                }
+            }
+
+            if ($options['factory'] ?? false) {
+                $result = $this->generateFactory($schema, $options);
+                $results['factory'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Factory generation failed';
+                }
+            }
+
+            if ($options['seeder'] ?? false) {
+                $result = $this->generateSeeder($schema, $options);
+                $results['seeder'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Seeder generation failed';
+                }
+            }
+
+            if ($options['controllers'] ?? false) {
+                $result = $this->generateControllers($schema, $options);
+                $results['controllers'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Controllers generation failed';
+                }
+            }
+
+            if ($options['tests'] ?? false) {
+                $result = $this->generateTests($schema, $options);
+                $results['tests'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Tests generation failed';
+                }
+            }
+
+            if ($options['policies'] ?? false) {
+                $result = $this->generatePolicies($schema, $options);
+                $results['policies'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Policies generation failed';
+                }
+            }
+
+            $totalTime = microtime(true) - $startTime;
+
+            // Log generation performance
+            $this->logger->logPerformance('generateAll', [
+                'schema_name' => $schema->name,
+                'total_time_ms' => round($totalTime * 1000, 2),
+                'generated_count' => $generatedCount,
+                'total_requested' => count(array_filter($options, fn ($value) => $value)),
+                'success_rate' => $generatedCount > 0 ? round(($generatedCount / count(array_filter($options, fn ($value) => $value))) * 100, 2) : 0,
+            ]);
+
+            // Check performance threshold
+            $totalTimeMs = $totalTime * 1000;
+            $threshold = config('modelschema.logging.performance_thresholds.generation_ms', 3000);
+            if ($totalTimeMs > $threshold) {
+                $this->logger->logWarning(
+                    'Generation exceeded threshold',
+                    [
+                        'schema_name' => $schema->name,
+                        'total_time_ms' => round($totalTimeMs, 2),
+                        'threshold_ms' => $threshold,
+                        'generated_count' => $generatedCount,
+                    ],
+                    'Consider optimizing templates or reducing the number of generators used simultaneously'
+                );
+            }
+
+            $this->logger->logOperationEnd('generateAll', [
+                'success' => $errors === [],
+                'generated_count' => $generatedCount,
+                'error_count' => count($errors),
+                'total_time_ms' => round($totalTime * 1000, 2),
+            ]);
+
+            return $results;
+
+        } catch (Exception $e) {
+            $this->logger->logError(
+                "Generation failed for schema: {$schema->name}",
+                $e,
+                ['schema_name' => $schema->name, 'options' => $options]
+            );
+            throw $e;
         }
-
-        if ($options['migration'] ?? true) {
-            $results['migration'] = $this->generateMigration($schema, $options);
-        }
-
-        if ($options['requests'] ?? false) {
-            $results['requests'] = $this->generateRequests($schema, $options);
-        }
-
-        if ($options['resources'] ?? false) {
-            $results['resources'] = $this->generateResources($schema, $options);
-        }
-
-        if ($options['factory'] ?? false) {
-            $results['factory'] = $this->generateFactory($schema, $options);
-        }
-
-        if ($options['seeder'] ?? false) {
-            $results['seeder'] = $this->generateSeeder($schema, $options);
-        }
-
-        if ($options['controllers'] ?? false) {
-            $results['controllers'] = $this->generateControllers($schema, $options);
-        }
-
-        if ($options['tests'] ?? false) {
-            $results['tests'] = $this->generateTests($schema, $options);
-        }
-
-        if ($options['policies'] ?? false) {
-            $results['policies'] = $this->generatePolicies($schema, $options);
-        }
-
-        return $results;
     }
 
     /**
@@ -88,7 +200,43 @@ class GenerationService
      */
     public function generateModel(ModelSchema $schema, array $options = []): array
     {
-        return $this->modelGenerator->generate($schema, $options);
+        $this->logger->logOperationStart('generateModel', [
+            'schema_name' => $schema->name,
+            'options' => $options,
+        ]);
+
+        try {
+            $startTime = microtime(true);
+            $result = $this->modelGenerator->generate($schema, $options);
+            $generationTime = microtime(true) - $startTime;
+
+            $success = $result['success'] ?? false;
+
+            $this->logger->logGeneration(
+                'model',
+                $schema->name,
+                $success,
+                [
+                    'generation_time_ms' => round($generationTime * 1000, 2),
+                    'output_size' => isset($result['content']) ? mb_strlen($result['content']) : 0,
+                ]
+            );
+
+            $this->logger->logOperationEnd('generateModel', [
+                'success' => $success,
+                'generation_time_ms' => round($generationTime * 1000, 2),
+            ]);
+
+            return $result;
+
+        } catch (Exception $e) {
+            $this->logger->logError(
+                "Model generation failed for schema: {$schema->name}",
+                $e,
+                ['schema_name' => $schema->name, 'options' => $options]
+            );
+            throw $e;
+        }
     }
 
     /**
