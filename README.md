@@ -28,7 +28,8 @@ Laravel ModelSchema provides **schema parsing, validation, and fragment generati
 - **🧩 Fragment Generation** - Generate insertable JSON/YAML fragments for Laravel artifacts  
 - **🏗️ Clean Architecture** - Separate core schema responsibilities from app-specific generation
 - **🔄 Multi-Generator Support** - Models, Migrations, Requests, Resources, Factories, Seeders, Controllers, Tests, Policies
-- **🔌 Plugin System** - Extensible field type plugins for custom functionality
+- **� Schema Analysis** - Advanced schema comparison, optimization, and performance analysis
+- **�🔌 Plugin System** - Extensible field type plugins for custom functionality
 - **📊 Integration API** - Complete workflow for external packages (TurboMaker, Arc, etc.)
 - **✨ Extensible Design** - Custom field types, generators, and validation rules
 
@@ -44,6 +45,8 @@ composer require grazulex/laravel-modelschema
 
 - **`SchemaService`** - Main API for parsing, validation, and core/extension separation
 - **`GenerationService`** - Coordinates all generators to produce insertable fragments
+- **`SchemaDiffService`** - Advanced schema comparison and difference analysis
+- **`SchemaOptimizationService`** - Performance analysis and optimization recommendations
 - **8 Specialized Generators** - Model, Migration, Request, Resource, Factory, Seeder, Controller, Test, Policy
 - **`FieldTypePluginManager`** - Manages extensible field type plugins for custom functionality
 
@@ -386,11 +389,13 @@ composer test-coverage
 ### Advanced Features
 - **📝 [Logging System](docs/LOGGING.md)** - Comprehensive logging and debugging
 - **⚡ [Enhanced Features](docs/enhanced-features.md)** - Advanced capabilities overview
+- **🔍 [Schema Optimization](docs/SCHEMA_OPTIMIZATION.md)** - Schema analysis and optimization tools
 
 ### Integration Examples
 - **🔗 [Integration Example](examples/IntegrationExample.php)** - Complete integration workflow
 - **🛠️ [Schema Service API](examples/SchemaServiceApiExample.php)** - API usage examples
 - **📋 [API Extensions](examples/ApiExtensions.php)** - Extended API implementations
+- **⚡ [Schema Optimization Usage](examples/SchemaOptimizationUsage.php)** - Advanced schema analysis examples
 
 ## 🤝 Contributing
 

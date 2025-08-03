@@ -56,6 +56,10 @@ The package uses a "core" structure in YAML to clearly separate core schema data
 │ ├─ TestGenerator                                           │
 │ └─ PolicyGenerator                                         │
 │                                                             │
+│ Analysis Services                                          │
+│ ├─ SchemaDiffService (Schema Comparison)                  │
+│ └─ SchemaOptimizationService (Multi-dimensional Analysis) │
+│                                                             │
 │ Field Type Plugin System                                   │
 │ ├─ FieldTypePluginManager                                  │
 │ ├─ FieldTypePlugin (Base Class)                           │
@@ -116,6 +120,46 @@ Base class providing common functionality:
 7. **ControllerGenerator** - API and web controller fragments
 8. **TestGenerator** - Feature and unit test fragments  
 9. **PolicyGenerator** - Authorization policy fragments
+
+## Analysis Services
+
+Laravel ModelSchema provides comprehensive analysis services for schema introspection and optimization:
+
+### SchemaDiffService
+Analyzes differences between schema versions to understand impact and migration requirements.
+
+**Key Features:**
+- Detects added, modified, and removed fields
+- Analyzes relationship changes
+- Assesses migration impact and data loss risks
+- Provides breaking change detection
+- Generates comprehensive diff reports
+
+**Methods:**
+- `compareSchemas()` - Compare two schemas and detect differences
+- `analyzeImpact()` - Assess migration impact and breaking changes
+- `generateReport()` - Create detailed diff report with recommendations
+
+### SchemaOptimizationService
+Provides multi-dimensional analysis and optimization recommendations for schemas.
+
+**Analysis Dimensions:**
+- **Performance** - Index recommendations, relationship optimization, N+1 query detection
+- **Storage** - Field sizing, type efficiency, nullable optimization
+- **Validation** - Redundant rules detection, missing validation identification
+- **Maintenance** - Naming conventions, documentation coverage, complexity scoring
+- **Security** - Sensitive data detection, protection recommendations
+
+**Key Features:**
+- Intelligent scoring system (0-100) across all dimensions
+- Priority-based recommendations (Critical → Low)
+- Health status classification (Excellent → Critical)
+- Actionable implementation guidance with code examples
+
+**Methods:**
+- `analyzeSchema()` - Comprehensive multi-dimensional analysis
+- `generateOptimizationReport()` - Detailed optimization recommendations
+- `calculateHealthScore()` - Overall schema health assessment
 
 ## Schema Structure
 

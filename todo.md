@@ -83,10 +83,11 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - **Validation robuste** : Erreurs détaillées et validation core uniquement
 
 ### ✨ Tests et qualité
-- **449 tests** passés avec 2055 assertions
+- **467 tests** passés avec 2111 assertions
 - **Couverture complète** : Tous les services, générateurs, et APIs
 - **Tests d'intégration** : Simulation d'usage par apps parent
-- **Performance validée** : 2.12s pour toute la suite de tests
+- **Performance validée** : ~17s pour toute la suite de tests
+- **Analyse statique** : PHPStan niveau max sans erreurs
 
 ### 📖 Documentation complète
 - **README** : Vue d'ensemble et exemples d'utilisation

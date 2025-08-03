@@ -308,6 +308,7 @@ class SchemaOptimizationService
                 'implementation' => $this->generateExpensiveRuleOptimizations(),
             ];
         }
+
         return [
             'score' => max(0, $score),
             'issues' => $issues,
@@ -370,6 +371,7 @@ class SchemaOptimizationService
                 'implementation' => $this->generateComplexityReductionRecommendations(),
             ];
         }
+
         return [
             'score' => max(0, $score),
             'issues' => $issues,
