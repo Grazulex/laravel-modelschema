@@ -1,10 +1,75 @@
-# Custom Field Types Validation
+# Custom Field Types Validation with Trait-Based Architecture
 
-Le package Laravel ModelSchema inclut un système de validation robuste pour les types de champs personnalisés, permettant de valider des configurations complexes comme les champs enum, set, et géométriques.
+The Laravel ModelSchema package includes a robust validation system for custom field types, now extended with a **trait-based architecture** that enables validation of complex and modular configurations.
 
-## Types de Champs Personnalisés Supportés
+## New: Trait-Based Validation System
 
-### Champs d'Énumération
+### Overview
+The trait-based architecture revolutionizes validation by enabling:
+
+1. **Modular validation**: Each trait can have its own validation rules
+2. **Cross-trait validation**: Traits can interact for contextual validation  
+3. **Dynamic validation**: Rules adapt based on trait configuration
+4. **Layered validation**: Type, constraints, business logic, and custom validation
+
+### Trait-Based Validation Configuration
+```php
+// Dans un plugin FieldTypePlugin
+$this->customAttributeConfig = [
+    'timeout' => [
+        'type' => 'integer',           // Type validation
+        'min' => 1,                    // Minimum constraint
+        'max' => 300,                  // Maximum constraint
+        'required' => false,           // Required
+        'validator' => function($value): array {  // Custom validation
+            if ($value > 60 && !extension_loaded('curl')) {
+                return ['Timeout > 60s requires curl extension'];
+            }
+            return [];
+        }
+    ],
+    'schemes' => [
+        'type' => 'array',
+        'enum' => ['http', 'https', 'ftp'],    // Enumeration validation
+        'validator' => function($schemes): array {
+            $errors = [];
+            if (in_array('ftp', $schemes) && !in_array('ftps', $schemes)) {
+                $errors[] = 'FTP should be paired with FTPS for security';
+            }
+            return $errors;
+        }
+    ]
+];
+```
+
+### Plugin Example with Trait-Based Validation
+```php
+class AdvancedUrlFieldTypePlugin extends FieldTypePlugin
+{
+    public function validate(array $config): array
+    {
+        $errors = [];
+        
+        // Cross-trait validation
+        if (($config['verify_ssl'] ?? true) && in_array('http', $config['schemes'] ?? [])) {
+            $errors[] = 'SSL verification cannot be enabled with HTTP scheme';
+        }
+        
+        // Conditional validation based on traits
+        if (($config['virus_scan'] ?? false) && !in_array($config['storage_disk'] ?? 'local', ['local', 's3'])) {
+            $errors[] = 'Virus scanning requires local or S3 storage';
+        }
+        
+        return $errors;
+    }
+    
+    // Individual trait validations are automatic
+}
+```
+
+## Supported Custom Field Types (Legacy + Traits)
+
+### Enumeration Fields
 
 #### Enum
 ```yaml
@@ -15,13 +80,13 @@ fields:
     default: 'active'
 ```
 
-**Validations automatiques :**
-- Présence obligatoire du tableau `values`
-- Valeurs doivent être des chaînes ou des nombres
-- Pas de valeurs dupliquées
-- Valeur par défaut doit être dans le tableau de valeurs
-- Avertissement si moins de 2 valeurs (suggestion boolean)
-- Avertissement si plus de 100 valeurs (suggestion table de lookup)
+**Automatic validations:**
+- Required presence of `values` array
+- Values must be strings or numbers
+- No duplicate values
+- Default value must be in the values array
+- Warning if less than 2 values (boolean suggestion)
+- Warning if more than 100 values (lookup table suggestion)
 
 #### Set / Multi-Select
 ```yaml
@@ -32,13 +97,13 @@ fields:
     default: ['read', 'write']
 ```
 
-**Validations automatiques :**
-- Hérite de toutes les validations d'enum
-- Maximum 64 valeurs (limitation MySQL SET)
-- Valeur par défaut peut être un tableau ou une chaîne séparée par des virgules
-- Validation que toutes les valeurs par défaut sont dans le tableau de valeurs
+**Automatic validations:**
+- Inherits all enum validations
+- Maximum 64 values (MySQL SET limitation)
+- Default value can be an array or comma-separated string
+- Validation that all default values are in the values array
 
-### Champs Géométriques
+### Geometric Fields
 
 #### Point
 ```yaml
@@ -124,7 +189,7 @@ fields:
 **Validations :**
 - Vérification de compatibilité avec les types numériques
 
-## API d'Utilisation
+## Usage API
 
 ### Via SchemaService
 
@@ -133,7 +198,7 @@ use Grazulex\LaravelModelschema\Services\SchemaService;
 
 $schemaService = new SchemaService();
 
-// Validation de plusieurs schémas
+// Multiple schemas validation
 $schemas = [
     (object) [
         'name' => 'User',
@@ -151,7 +216,7 @@ $schemas = [
 $result = $schemaService->validateCustomFieldTypes($schemas);
 
 if ($result['is_valid']) {
-    echo "Validation réussie !";
+    echo "Validation successful!";
 } else {
     foreach ($result['errors'] as $error) {
         echo "Erreur : $error\n";
@@ -162,10 +227,10 @@ if ($result['is_valid']) {
 ### Via Fichiers YAML
 
 ```php
-// Validation d'un fichier unique
+// Single file validation
 $result = $schemaService->validateCustomFieldTypesFromFile('schema.yaml');
 
-// Validation de plusieurs fichiers
+// Multiple files validation
 $result = $schemaService->validateCustomFieldTypesFromFiles([
     'user.schema.yaml',
     'product.schema.yaml'
@@ -181,7 +246,7 @@ La validation retourne un tableau structuré :
     'is_valid' => true,              // Statut global
     'errors' => [],                  // Erreurs de validation
     'warnings' => [],                // Avertissements
-    'custom_type_stats' => [         // Statistiques d'utilisation
+    'custom_type_stats' => [         // Usage statistics
         'enum' => 2,
         'set' => 1,
         'point' => 3
@@ -228,14 +293,14 @@ La validation retourne un tableau structuré :
 - Champs enum avec moins de 2 valeurs
 - Attributs inutiles pour certains types
 
-## Intégration avec le Logging
+## Integration with Logging
 
-Toutes les validations sont automatiquement loggées :
+All validations are automatically logged:
 
 ```php
 // Les métriques incluent :
-// - Nombre de schémas validés
-// - Nombre de champs traités
+// - Number of validated schemas
+// - Number of processed fields
 // - Types personnalisés utilisés
 // - Temps de validation
 // - Erreurs et avertissements détectés
@@ -318,4 +383,4 @@ if (!empty($result['warnings'])) {
 }
 ```
 
-Cette fonctionnalité assure la robustesse et la fiabilité des définitions de schémas en détectant les erreurs de configuration avant la génération de code.
+This functionality ensures robustness and reliability of schema definitions by detecting configuration errors before code generation.

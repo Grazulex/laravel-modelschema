@@ -13,6 +13,9 @@ namespace App\Examples;
 
 use Exception;
 use Grazulex\LaravelModelschema\Services\SchemaService;
+use Grazulex\LaravelModelschema\Support\FieldTypePluginManager;
+use Grazulex\LaravelModelschema\Examples\UrlFieldTypePlugin;
+use Grazulex\LaravelModelschema\Examples\FileUploadFieldTypePlugin;
 
 class SchemaServiceApiExample
 {
@@ -302,10 +305,217 @@ YAML;
             echo '✓ Caught exception: '.$e->getMessage()."\n";
         }
     }
+
+    /**
+     * Example: Trait-Based Field Configuration
+     * 
+     * Demonstrates how to use trait-based field types in schemas
+     */
+    public function traitBasedFieldExample(): void
+    {
+        echo "=== Trait-Based Field Configuration Example ===\n";
+        
+        $yamlWithTraits = <<<'YAML'
+core:
+  model: Website
+  table: websites
+  fields:
+    homepage:
+      type: url
+      nullable: false
+      # Trait-based URL configuration
+      schemes: ["https", "http"]
+      verify_ssl: true
+      timeout: 45
+      domain_whitelist: 
+        - "trusted.com"
+        - "partner.org"
+      max_redirects: 3
+    
+    logo:
+      type: file_upload
+      nullable: true
+      # Trait-based file upload configuration
+      allowed_extensions: ["jpg", "png", "svg"]
+      max_file_size: "2MB"
+      storage_disk: "s3"
+      auto_optimize: true
+      generate_thumbnails:
+        small: "150x150"
+        medium: "300x300"
+      
+    coordinates:
+      type: coordinates
+      nullable: true
+      # Trait-based geographic configuration
+      coordinate_system: "WGS84"
+      precision: 6
+      validate_bounds:
+        latitude: [45.0, 50.0]
+        longitude: [2.0, 8.0]
+      default_country: "FR"
+  
+  options:
+    timestamps: true
+    soft_deletes: false
+YAML;
+
+        try {
+            // Parse schema with trait-based fields
+            $result = $this->schemaService->parseAndSeparateSchema($yamlWithTraits);
+            echo "✅ Parse successful\n";
+            echo "Core fields found: " . count($result['core']['fields'] ?? []) . "\n";
+            
+            // Validate including trait configurations
+            $errors = $this->schemaService->validateCoreSchema($yamlWithTraits);
+            if (empty($errors)) {
+                echo "✅ Trait validation passed\n";
+            } else {
+                echo "❌ Trait validation errors:\n";
+                foreach ($errors as $error) {
+                    echo "  - $error\n";
+                }
+            }
+            
+            // Extract generation data with processed traits
+            $generationData = $this->schemaService->getGenerationDataFromCompleteYaml($yamlWithTraits);
+            echo "✅ Generation data extracted with trait processing\n";
+            
+            // Show how traits are processed in the model fragment
+            $modelFragment = json_decode($generationData['generation_data']['model']['json'], true);
+            echo "Model fragment includes trait-processed fields:\n";
+            foreach ($modelFragment['fields'] ?? [] as $fieldName => $fieldData) {
+                echo "  - $fieldName: " . ($fieldData['type'] ?? 'unknown') . "\n";
+                if (isset($fieldData['custom_attributes'])) {
+                    echo "    Traits: " . implode(', ', array_keys($fieldData['custom_attributes'])) . "\n";
+                }
+            }
+            
+        } catch (Exception $e) {
+            echo "❌ Error: " . $e->getMessage() . "\n";
+        }
+        
+        echo "\n";
+    }
+
+    /**
+     * Example: Cross-Trait Validation
+     * 
+     * Shows how traits can interact for complex validation scenarios
+     */
+    public function crossTraitValidationExample(): void
+    {
+        echo "=== Cross-Trait Validation Example ===\n";
+        
+        // This schema has conflicting trait configurations
+        $conflictingYaml = <<<'YAML'
+core:
+  model: SecureFile
+  table: secure_files
+  fields:
+    document:
+      type: file_upload
+      # This configuration has trait conflicts:
+      # - virus_scan requires local/s3 storage
+      # - but we're using 'gcs' which doesn't support it
+      virus_scan: true
+      storage_disk: "gcs"
+      encryption_enabled: true
+      allowed_extensions: ["pdf", "doc", "docx"]
+      max_file_size: "10MB"
+    
+    backup_url:
+      type: url
+      # This has trait conflicts:
+      # - verify_ssl: true but allows 'http' scheme
+      verify_ssl: true
+      schemes: ["http", "https"]
+      timeout: 30
+YAML;
+
+        try {
+            // This should detect cross-trait validation errors
+            $errors = $this->schemaService->validateCoreSchema($conflictingYaml);
+            
+            if (!empty($errors)) {
+                echo "✅ Cross-trait validation working - conflicts detected:\n";
+                foreach ($errors as $error) {
+                    echo "  - $error\n";
+                }
+            } else {
+                echo "⚠️  Cross-trait validation may need improvement\n";
+            }
+            
+        } catch (Exception $e) {
+            echo "❌ Error during validation: " . $e->getMessage() . "\n";
+        }
+        
+        echo "\n";
+    }
+
+    /**
+     * Example: Plugin Manager Integration
+     * 
+     * Shows how plugins register and process traits
+     */
+    public function pluginManagerIntegrationExample(): void
+    {
+        echo "=== Plugin Manager Integration Example ===\n";
+        
+        try {
+            $pluginManager = new FieldTypePluginManager();
+            
+            // Register trait-based plugins
+            $pluginManager->registerPlugin(new UrlFieldTypePlugin());
+            $pluginManager->registerPlugin(new FileUploadFieldTypePlugin());
+            
+            echo "✅ Trait-based plugins registered\n";
+            
+            // Show plugin capabilities
+            $urlPlugin = $pluginManager->getPlugin('url');
+            if ($urlPlugin) {
+                echo "URL Plugin traits: " . implode(', ', $urlPlugin->getCustomAttributes()) . "\n";
+                
+                // Test trait configuration processing
+                $config = [
+                    'schemes' => ['https'],
+                    'timeout' => 30,
+                    // Missing other traits - should get defaults
+                ];
+                
+                $processed = $urlPlugin->processCustomAttributes($config);
+                echo "Processed config (with trait defaults):\n";
+                foreach ($processed as $key => $value) {
+                    echo "  - $key: " . (is_array($value) ? json_encode($value) : $value) . "\n";
+                }
+            }
+            
+        } catch (Exception $e) {
+            echo "❌ Plugin manager error: " . $e->getMessage() . "\n";
+        }
+        
+        echo "\n";
+    }
+
+    /**
+     * Run all trait-based examples
+     */
+    public function runTraitExamples(): void
+    {
+        echo "🚀 Running Trait-Based Schema Service Examples\n\n";
+        
+        $this->traitBasedFieldExample();
+        $this->crossTraitValidationExample();
+        $this->pluginManagerIntegrationExample();
+        
+        echo "✨ All trait examples completed!\n";
+    }
 }
 
 // Run examples
 $examples = new SchemaServiceApiExample();
+
+echo "🚀 Running Schema Service API Examples\n\n";
 
 echo "1. Parse and Separate Example:\n";
 $examples->parseAndSeparateExample();
@@ -327,3 +537,18 @@ $examples->completeWorkflowExample();
 
 echo "\n7. Error Handling Example:\n";
 $examples->errorHandlingExample();
+
+echo "\n" . str_repeat("=", 50) . "\n";
+echo "🎯 NEW: Trait-Based Examples\n";
+echo str_repeat("=", 50) . "\n\n";
+
+echo "8. Trait-Based Field Configuration:\n";
+$examples->traitBasedFieldExample();
+
+echo "\n9. Cross-Trait Validation:\n";
+$examples->crossTraitValidationExample();
+
+echo "\n10. Plugin Manager Integration:\n";
+$examples->pluginManagerIntegrationExample();
+
+echo "\n✨ All examples completed!\n";

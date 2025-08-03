@@ -1,21 +1,25 @@
-# Architecture Guide
+# Architecture Guide with Trait-Based Plugin System
 
-This guide explains the architecture of Laravel ModelSchema and how it's designed to integrate with parent applications like TurboMaker and Arc.
+This guide explains the modern trait-based architecture of Laravel ModelSchema and how it's designed to integrate with parent applications like TurboMaker and Arc.
 
 ## Core Principles
 
-### 1. Separation of Concerns
-- **Core Schema Logic**: Handled by ModelSchema package
+### 1. Trait-Based Separation of Concerns
+- **Core Schema Logic**: Handled by ModelSchema package with trait support
 - **Application Generation**: Handled by parent applications
-- **Fragment Production**: Clean insertable data structures
+- **Fragment Production**: Clean insertable data structures with trait processing
+- **Plugin Architecture**: Trait-based field type plugins for extensibility
 
-### 2. Fragment-Based Architecture
-Instead of generating complete files, ModelSchema produces **insertable fragments** that parent applications can integrate into their own templates.
+### 2. Trait-Enhanced Fragment Architecture
+Instead of generating complete files, ModelSchema produces **insertable fragments** with trait-based field configurations that parent applications can integrate into their own templates.
 
-### 3. Core/Extension Separation
-The package uses a "core" structure in YAML to clearly separate core schema data from application-specific extensions.
+### 3. Core/Extension/Trait Separation
+The package uses a "core" structure in YAML with trait-based field configurations to clearly separate:
+- Core schema data (managed by traits)
+- Application-specific extensions  
+- Field-level trait configurations
 
-## Architecture Overview
+## Modern Trait-Based Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -23,27 +27,34 @@ The package uses a "core" structure in YAML to clearly separate core schema data
 │                 (TurboMaker, Arc, etc.)                     │
 ├─────────────────────────────────────────────────────────────┤
 │ • Generates complete YAML from stubs                       │
-│ • Validates schemas using ModelSchema                      │
-│ • Extracts generation fragments                            │
+│ • Configures trait-based field types                       │
+│ • Validates schemas using ModelSchema (with trait support) │
+│ • Extracts generation fragments (with processed traits)    │
 │ • Integrates fragments into app-specific templates         │
 │ • Produces final PHP files                                 │
 └─────────────────────────────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────┐
-│               Laravel ModelSchema Package                   │
+│          Laravel ModelSchema Package (Trait-Enhanced)      │
 ├─────────────────────────────────────────────────────────────┤
-│ SchemaService (Core API)                                   │
-│ ├─ parseAndSeparateSchema()                                │
-│ ├─ validateCoreSchema()                                    │
-│ ├─ extractCoreContentForGeneration()                       │
-│ ├─ generateCompleteYamlFromStub()                          │
-│ └─ getGenerationDataFromCompleteYaml()                     │
+│ SchemaService (Core API with Trait Support)               │
+│ ├─ parseAndSeparateSchema() - with trait processing       │
+│ ├─ validateCoreSchema() - includes trait validation       │
+│ ├─ extractCoreContentForGeneration() - processes traits   │
+│ ├─ generateCompleteYamlFromStub() - trait integration     │
+│ └─ getGenerationDataFromCompleteYaml() - trait fragments   │
 │                                                             │
-│ GenerationService (Fragment Coordinator)                   │
-│ ├─ generateAll()                                           │
-│ ├─ generateSingle()                                        │
-│ └─ getAvailableGenerators()                               │
+│ FieldTypePluginManager (Trait Plugin System)              │
+│ ├─ registerPlugin() - register trait-based plugins        │
+│ ├─ discoverPlugins() - auto-discover trait plugins        │
+│ ├─ validatePluginTraits() - validate trait configurations │
+│ └─ processTraitAttributes() - apply trait logic           │
+│                                                             │
+│ GenerationService (Trait-Aware Fragment Coordinator)      │
+│ ├─ generateAll() - with trait processing                  │
+│ ├─ generateSingle() - trait-aware generation              │
+│ └─ getAvailableGenerators() - trait-enhanced generators   │
 │                                                             │
 │ 8 Specialized Generators                                   │
 │ ├─ ModelGenerator                                          │

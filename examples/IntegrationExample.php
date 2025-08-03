@@ -3,10 +3,11 @@
 declare(strict_types=1);
 
 /**
- * Complete Integration Example
+ * Complete Integration Example with Trait-Based Architecture
  *
  * This example demonstrates how parent applications (like TurboMaker, Arc)
- * can integrate with Laravel ModelSchema to generate insertable fragments.
+ * can integrate with Laravel ModelSchema's modern trait-based plugin system
+ * to generate insertable fragments.
  */
 
 namespace App\Examples;
@@ -14,26 +15,45 @@ namespace App\Examples;
 use Exception;
 use Grazulex\LaravelModelschema\Services\GenerationService;
 use Grazulex\LaravelModelschema\Services\SchemaService;
+use Grazulex\LaravelModelschema\Support\FieldTypePluginManager;
+use Grazulex\LaravelModelschema\Examples\UrlFieldTypePlugin;
+use Grazulex\LaravelModelschema\Examples\JsonSchemaFieldTypePlugin;
 use InvalidArgumentException;
 
 class IntegrationExample
 {
     private SchemaService $schemaService;
-
     private GenerationService $generationService;
+    private FieldTypePluginManager $pluginManager;
 
     public function __construct()
     {
         $this->schemaService = new SchemaService();
         $this->generationService = new GenerationService();
+        $this->pluginManager = new FieldTypePluginManager();
+        
+        // Register trait-based plugins
+        $this->registerTraitBasedPlugins();
     }
 
     /**
-     * Complete workflow example for parent applications
+     * Register modern trait-based plugins
+     */
+    private function registerTraitBasedPlugins(): void
+    {
+        // Register URL plugin with trait-based configuration
+        $this->pluginManager->registerPlugin(new UrlFieldTypePlugin());
+        
+        // Register JSON Schema plugin with trait-based validation
+        $this->pluginManager->registerPlugin(new JsonSchemaFieldTypePlugin());
+    }
+
+    /**
+     * Complete workflow example with trait-based plugins for parent applications
      */
     public function completeWorkflowExample(): array
     {
-        // 1. Generate complete YAML from stub with parent app data
+        // 1. Generate complete YAML from stub with parent app data and trait-based fields
         $completeYaml = $this->schemaService->generateCompleteYamlFromStub(
             'user.schema.stub',
             [
@@ -47,6 +67,18 @@ class IntegrationExample
                     'views' => ['index', 'create', 'edit', 'show'],
                     'routes' => ['api', 'web'],
                     'controllers' => ['UserController', 'ApiUserController'],
+                    // Trait-based field configurations
+                    'field_traits' => [
+                        'url_fields' => [
+                            'schemes' => ['https'],
+                            'verify_ssl' => true,
+                            'timeout' => 30
+                        ],
+                        'json_fields' => [
+                            'strict_validation' => true,
+                            'schema_format' => 'draft-07'
+                        ]
+                    ]
                 ],
                 'arc' => [
                     'permissions' => ['view', 'create', 'edit', 'delete'],
@@ -150,6 +182,119 @@ YAML;
         $fragments = $this->generationService->generateAll($schema);
 
         return $fragments;
+    }
+
+    /**
+     * Example of trait-based field configuration workflow
+     */
+    public function traitBasedFieldConfigurationExample(): array
+    {
+        // Define schema with trait-based field configurations
+        $yamlContent = '
+core:
+  model: Website
+  table: websites
+  fields:
+    homepage:
+      type: url
+      nullable: false
+      # Trait-based URL configuration
+      schemes: ["https", "http"]
+      verify_ssl: true
+      timeout: 45
+      domain_whitelist: 
+        - "trusted.com"
+        - "partner.org"
+      max_redirects: 3
+    
+    api_config:
+      type: json_schema
+      nullable: true
+      # Trait-based JSON Schema configuration
+      schema:
+        type: object
+        properties:
+          endpoint:
+            type: string
+            pattern: "^https?://"
+          timeout:
+            type: integer
+            minimum: 1
+            maximum: 300
+        required: ["endpoint"]
+      strict_validation: true
+      schema_format: "draft-07"
+      validation_mode: "strict"
+  
+  options:
+    timestamps: true
+    soft_deletes: false
+';
+
+        // 1. Parse schema with trait-based field configurations
+        $result = $this->schemaService->parseAndSeparateSchema($yamlContent);
+        
+        // 2. Validate including trait-based configurations
+        $errors = $this->schemaService->validateCoreSchema($yamlContent);
+        if (!empty($errors)) {
+            throw new InvalidArgumentException('Trait validation failed: ' . implode(', ', $errors));
+        }
+        
+        // 3. Extract generation data with processed traits
+        $generationData = $this->schemaService->getGenerationDataFromCompleteYaml($yamlContent);
+        
+        return [
+            'core_schema' => $result['core'],
+            'validation_passed' => empty($errors),
+            'generation_fragments' => $generationData['generation_data'],
+            'trait_processing_summary' => $this->getTraitProcessingSummary($generationData)
+        ];
+    }
+
+    /**
+     * Demonstrate trait plugin discovery and registration
+     */
+    public function traitPluginDiscoveryExample(): array
+    {
+        // Auto-discover trait-based plugins
+        $discoveredPlugins = $this->pluginManager->discoverPlugins([
+            'App\\FieldTypes\\*Plugin',
+            'Custom\\Traits\\*FieldTypePlugin'
+        ]);
+        
+        $pluginSummary = [];
+        foreach ($discoveredPlugins as $plugin) {
+            $pluginSummary[] = [
+                'type' => $plugin->getType(),
+                'version' => $plugin->getVersion(),
+                'custom_traits' => $plugin->getCustomAttributes(),
+                'trait_configs' => array_keys($plugin->customAttributeConfig ?? []),
+                'metadata' => $plugin->getMetadata()
+            ];
+        }
+        
+        return [
+            'discovered_count' => count($discoveredPlugins),
+            'plugins' => $pluginSummary
+        ];
+    }
+
+    /**
+     * Get summary of trait processing for debugging
+     */
+    private function getTraitProcessingSummary(array $generationData): array
+    {
+        $summary = [
+            'traits_applied' => 0,
+            'default_values_used' => 0,
+            'transformations_applied' => 0,
+            'validations_passed' => 0
+        ];
+        
+        // This would be enhanced with actual trait processing metrics
+        // from the generation service in a real implementation
+        
+        return $summary;
     }
 
     /**

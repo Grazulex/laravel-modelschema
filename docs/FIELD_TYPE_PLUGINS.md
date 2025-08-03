@@ -1,25 +1,35 @@
-# Système de Plugins pour Types de Champs Personnalisés
+# Custom Field Type Plugin System
 
-Le système de plugins de Laravel ModelSchema permet aux développeurs de créer et d'enregistrer facilement leurs propres types de champs personnalisés. Cette fonctionnalité étend considérablement les capacités du package en permettant l'ajout de types de champs spécialisés sans modifier le code core.
+The Laravel ModelSchema plugin system allows developers to easily create and register their own custom field types using a **trait-based architecture**. This modern approach significantly extends the package's capabilities by enabling the addition of specialized field types with flexible and modular configuration.
 
-## Vue d'ensemble
+## Overview
 
-Le système de plugins fournit :
+The trait-based plugin system provides:
 
-- **FieldTypePlugin** : Classe de base abstraite pour créer des plugins
-- **FieldTypePluginManager** : Gestionnaire pour l'enregistrement et la gestion des plugins
-- **Auto-découverte** : Chargement automatique des plugins depuis des répertoires
-- **Validation** : Validation automatique des plugins avant enregistrement
-- **Métadonnées** : Système riche de métadonnées pour les plugins
-- **Configuration** : Configuration flexible des plugins via des fichiers ou des APIs
+- **FieldTypePlugin**: Abstract base class using configuration traits
+- **FieldTypePluginManager**: Manager for plugin registration and management
+- **Trait-based architecture**: Modular configuration via trait arrays
+- **Auto-discovery**: Automatic plugin loading from directories
+- **Advanced validation**: Automatic validation of plugins and their traits before registration  
+- **Rich metadata**: Rich metadata system for plugins with trait support
+- **Flexible configuration**: Trait configuration via files or APIs
 
-## Architecture
+## Trait-Based Architecture
 
-### Classes principales
+### Key Concepts
 
-#### FieldTypePlugin (Classe abstraite)
+The trait-based architecture allows defining field options and behaviors through **configuration objects** rather than hardcoded properties. This provides:
 
-Classe de base pour tous les plugins de types de champs. Étend `FieldTypeInterface` avec des fonctionnalités supplémentaires :
+1. **Flexibility**: Traits can be combined and reused
+2. **Dynamic validation**: Each trait can have its own rules
+3. **Extensibility**: New traits can be added without core modification
+4. **Modularity**: Clear separation of responsibilities
+
+### Main Classes
+
+#### FieldTypePlugin (Abstract class with traits)
+
+Classe de base pour tous les plugins de types de champs. Utilise une approche par traits pour la configuration :
 
 ```php
 abstract class FieldTypePlugin implements FieldTypeInterface
@@ -32,6 +42,10 @@ abstract class FieldTypePlugin implements FieldTypeInterface
     protected array $dependencies = [];
     protected array $config = [];
     
+    // Configuration par traits
+    protected array $customAttributes = [];           // Liste des traits supportés
+    protected array $customAttributeConfig = [];     // Configuration de chaque trait
+    
     // Méthodes abstraites à implémenter
     abstract public function getType(): string;
     abstract public function getAliases(): array;
@@ -40,9 +54,9 @@ abstract class FieldTypePlugin implements FieldTypeInterface
 }
 ```
 
-#### FieldTypePluginManager
+#### FieldTypePluginManager (avec support des traits)
 
-Gestionnaire central pour les plugins :
+Gestionnaire central pour les plugins avec support complet de l'architecture par traits :
 
 ```php
 class FieldTypePluginManager
@@ -53,7 +67,81 @@ class FieldTypePluginManager
     public function hasPlugin(string $type): bool;
     public function discoverPlugins(): array;
     public function loadFromConfig(array $config): void;
+    
+    // Nouveau : Support des traits
+    public function validatePluginTraits(FieldTypePlugin $plugin): array;
+    public function mergeTraitConfigurations(array $baseConfig, array $traitConfig): array;
 }
+```
+
+## Configuration par Traits
+
+### Principe de Base
+
+Au lieu de définir des propriétés fixes, les plugins utilisent des **traits de configuration** définis dans des tableaux :
+
+```php
+// Ancien système (rigide)
+protected array $specificAttributes = ['url_only', 'max_length'];
+
+// Nouveau système par traits (flexible)
+protected array $customAttributes = ['schemes', 'verify_ssl', 'timeout'];
+protected array $customAttributeConfig = [
+    'schemes' => [
+        'type' => 'array',
+        'default' => ['http', 'https'],
+        'enum' => ['http', 'https', 'ftp', 'ftps'],
+        'description' => 'Protocoles autorisés'
+    ],
+    // ... autres traits
+];
+```
+
+### Types de Traits Disponibles
+
+#### 1. Traits de Validation de Type
+```php
+'timeout' => [
+    'type' => 'integer',        // Trait de type
+    'min' => 1,                 // Trait de contrainte minimum
+    'max' => 300,               // Trait de contrainte maximum
+    'default' => 30             // Trait de valeur par défaut
+]
+```
+
+#### 2. Traits d'Énumération
+```php
+'schemes' => [
+    'type' => 'array',
+    'enum' => ['http', 'https', 'ftp', 'ftps'],  // Trait d'énumération
+    'default' => ['http', 'https']
+]
+```
+
+#### 3. Traits de Validation Personnalisée
+```php
+'domain_whitelist' => [
+    'type' => 'array',
+    'validator' => function ($value): array {     // Trait de validation custom
+        if (!is_array($value)) return ['must be an array'];
+        foreach ($value as $domain) {
+            if (!filter_var("http://{$domain}", FILTER_VALIDATE_URL)) {
+                return ["Invalid domain: {$domain}"];
+            }
+        }
+        return [];
+    }
+]
+```
+
+#### 4. Traits de Transformation
+```php
+'max_length' => [
+    'type' => 'integer',
+    'transform' => function ($value) {           // Trait de transformation
+        return max(1, min(255, (int) $value));  // Force entre 1 et 255
+    }
+]
 ```
 
 ## Création d'un Plugin
@@ -98,12 +186,177 @@ class UrlFieldTypePlugin extends FieldTypePlugin
         }
         
         return $errors;
+## Création d'un Plugin avec Architecture par Traits
+
+### 1. Plugin Moderne : UrlFieldTypePlugin
+
+```php
+<?php
+
+namespace Grazulex\LaravelModelschema\Examples;
+
+use Grazulex\LaravelModelschema\Support\FieldTypePlugin;
+
+class UrlFieldTypePlugin extends FieldTypePlugin
+{
+    protected string $version = '1.0.0';
+    protected string $author = 'Laravel ModelSchema Team';
+    protected string $description = 'Field type for validating and storing URLs with trait-based configuration';
+    
+    public function __construct()
+    {
+        // Définir les traits supportés par ce plugin
+        $this->customAttributes = [
+            'schemes',
+            'verify_ssl', 
+            'allow_query_params',
+            'max_redirects',
+            'timeout',
+            'domain_whitelist',
+            'domain_blacklist'
+        ];
+        
+        // Configuration de chaque trait avec validation et comportement
+        $this->customAttributeConfig = [
+            'schemes' => [
+                'type' => 'array',
+                'required' => false,
+                'default' => ['http', 'https'],
+                'enum' => ['http', 'https', 'ftp', 'ftps', 'file'],
+                'description' => 'Protocoles URL autorisés pour la validation'
+            ],
+            'verify_ssl' => [
+                'type' => 'boolean',
+                'required' => false,
+                'default' => true,
+                'description' => 'Activer la vérification du certificat SSL'
+            ],
+            'allow_query_params' => [
+                'type' => 'boolean',
+                'required' => false, 
+                'default' => true,
+                'description' => 'Autoriser les paramètres de requête dans l\'URL'
+            ],
+            'max_redirects' => [
+                'type' => 'integer',
+                'required' => false,
+                'min' => 0,
+                'max' => 10,
+                'default' => 3,
+                'description' => 'Nombre maximum de redirections autorisées'
+            ],
+            'timeout' => [
+                'type' => 'integer',
+                'required' => false,
+                'min' => 1,
+                'max' => 300,
+                'default' => 30,
+                'transform' => function ($value) {
+                    // Trait de transformation : force la valeur dans la plage valide
+                    return max(1, min(300, (int) $value));
+                },
+                'description' => 'Timeout de connexion en secondes'
+            ],
+            'domain_whitelist' => [
+                'type' => 'array',
+                'required' => false,
+                'validator' => function ($value): array {
+                    // Trait de validation personnalisée pour liste de domaines
+                    if (!is_array($value)) {
+                        return ['domain_whitelist must be an array'];
+                    }
+                    foreach ($value as $domain) {
+                        if (!is_string($domain) || !filter_var("http://{$domain}", FILTER_VALIDATE_URL)) {
+                            return ["Invalid domain in whitelist: {$domain}"];
+                        }
+                    }
+                    return [];
+                },
+                'description' => 'Liste blanche des domaines autorisés'
+            ],
+            'domain_blacklist' => [
+                'type' => 'array',
+                'required' => false,
+                'validator' => function ($value): array {
+                    // Même trait de validation que whitelist mais pour blacklist
+                    if (!is_array($value)) {
+                        return ['domain_blacklist must be an array'];
+                    }
+                    foreach ($value as $domain) {
+                        if (!is_string($domain) || !filter_var("http://{$domain}", FILTER_VALIDATE_URL)) {
+                            return ["Invalid domain in blacklist: {$domain}"];
+                        }
+                    }
+                    return [];
+                },
+                'description' => 'Liste noire des domaines interdits'
+            ]
+        ];
+    }
+    
+    public function getType(): string
+    {
+        return 'url';
+    }
+    
+    public function getAliases(): array
+    {
+        return ['website', 'link', 'uri'];
+    }
+    
+    public function validate(array $config): array
+    {
+        $errors = [];
+        
+        // Validation de base du champ URL
+        if (isset($config['default']) && !filter_var($config['default'], FILTER_VALIDATE_URL)) {
+            $errors[] = 'Default value must be a valid URL';
+        }
+        
+        // Les traits personnalisés sont validés automatiquement par le système
+        
+        return $errors;
     }
     
     public function getCastType(array $config): ?string
     {
         return 'string';
     }
+    
+    public function getValidationRules(array $config): array
+    {
+        $rules = ['url'];
+        
+        // Utiliser les traits pour construire les règles de validation
+        if (isset($config['schemes'])) {
+            $schemes = implode(',', $config['schemes']);
+            $rules[] = "url:schemes:{$schemes}";
+        }
+        
+        return $rules;
+    }
+    
+    public function getMigrationParameters(array $config): array
+    {
+        return [
+            'type' => 'string',
+            'length' => $config['max_length'] ?? 2048
+        ];
+    }
+    
+    public function transformConfig(array $config): array
+    {
+        // Les transformations des traits sont appliquées automatiquement
+        return $this->processCustomAttributes($config);
+    }
+    
+    public function getMigrationCall(array $config): string
+    {
+        $length = $config['max_length'] ?? 2048;
+        return "string('{$config['name']}', {$length})";
+    }
+}
+```
     
     public function getValidationRules(array $config): array
     {
