@@ -14,6 +14,7 @@ use Grazulex\LaravelModelschema\FieldTypes\DateTimeFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\DecimalFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\DoubleFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\EmailFieldType;
+use Grazulex\LaravelModelschema\FieldTypes\EnumFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\FloatFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\ForeignIdFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\IntegerFieldType;
@@ -22,6 +23,7 @@ use Grazulex\LaravelModelschema\FieldTypes\LongTextFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\MediumIntegerFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\MediumTextFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\MorphsFieldType;
+use Grazulex\LaravelModelschema\FieldTypes\SetFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\SmallIntegerFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\StringFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\TextFieldType;
@@ -79,6 +81,8 @@ class FieldTypeRegistry
         self::register('uuid', UuidFieldType::class);
         self::register('binary', BinaryFieldType::class);
         self::register('email', EmailFieldType::class);
+        self::register('enum', EnumFieldType::class);
+        self::register('set', SetFieldType::class);
         self::register('foreignId', ForeignIdFieldType::class);
         self::register('morphs', MorphsFieldType::class);
 
@@ -104,6 +108,9 @@ class FieldTypeRegistry
         self::registerAlias('guid', 'uuid');
         self::registerAlias('blob', 'binary');
         self::registerAlias('email_address', 'email');
+        self::registerAlias('enumeration', 'enum');
+        self::registerAlias('multi_select', 'set');
+        self::registerAlias('multiple_choice', 'set');
         self::registerAlias('foreign_id', 'foreignId');
         self::registerAlias('fk', 'foreignId');
         self::registerAlias('polymorphic', 'morphs');

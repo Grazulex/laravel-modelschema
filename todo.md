@@ -83,10 +83,10 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - **Validation robuste** : Erreurs détaillées et validation core uniquement
 
 ### ✨ Tests et qualité
-- **197 tests** passés avec 1208 assertions
+- **223 tests** passés avec 1291 assertions
 - **Couverture complète** : Tous les services, générateurs, et APIs
 - **Tests d'intégration** : Simulation d'usage par apps parent
-- **Performance validée** : 7.86s pour toute la suite de tests
+- **Performance validée** : 8.90s pour toute la suite de tests
 
 ### 📖 Documentation complète
 - **README** : Vue d'ensemble et exemples d'utilisation
@@ -104,7 +104,7 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 ## À faire 📋
 
 ### 🚀 Priorités immédiates (Prêtes à implémenter)
-1. **EnumFieldType et SetFieldType** - Configuration existe, classes à créer
+1. [x] **EnumFieldType et SetFieldType** ✅ - TERMINÉ avec tests complets
 2. **Implémentation du cache** - Configuration existe, logique à ajouter dans les services
 3. **Générateur de Tests** - Stubs et générateur à créer pour fournir fragments JSON/YAML
 4. **Générateur de Policies** - Stubs et générateur à créer pour fournir fragments JSON/YAML
@@ -125,10 +125,11 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - [ ] **Implémentation cache** - Logique de mise en cache à implémenter dans les services
 - [ ] Ajouter logs détaillés pour le debugging
 
-### Extensions du système de champs - PARTIELLEMENT COMPLÉTÉ ✅
+### Extensions du système de champs - LARGEMENT COMPLÉTÉ ✅
 - [x] **Nombreux types de champs disponibles** : string, text, longText, mediumText, integer, bigInteger, smallInteger, tinyInteger, unsignedBigInteger, float, double, decimal, boolean, date, dateTime, time, timestamp, json, uuid, email, binary, morphs, foreignId
-- [x] **Types avancés configurés mais pas implémentés** : enum, set (listés dans config et ModelSchemaManager)
-- [ ] **Implémenter classes manquantes** : EnumFieldType, SetFieldType 
+- [x] **EnumFieldType et SetFieldType** ✅ - IMPLÉMENTÉS avec tests complets
+- [x] **Types enum/set configurés et implémentés** : classes complètes avec validation, transformation, et génération
+- [x] **Alias pour nouveaux types** : enumeration, multi_select, multiple_choice
 - [ ] **Ajouter types géométriques** : geometry, point, polygon
 - [x] **Exemple de type personnalisé** : UrlFieldType dans examples/
 - [ ] Système de plugins pour types de champs personnalisés
