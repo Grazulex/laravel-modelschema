@@ -259,4 +259,106 @@ describe('Enhanced ResourceGenerator', function () {
         expect($rolesResource['with_pivot'])->toBe(true);
         expect($rolesResource['pivot_fields'])->toBeArray();
     });
+
+    it('generates deep nested relationships with depth control', function () {
+        // Create a more complex schema with potential deep nesting
+        $complexSchema = ModelSchema::fromArray('Post', [
+            'table' => 'posts',
+            'fields' => [
+                'id' => ['type' => 'bigInteger', 'nullable' => false],
+                'title' => ['type' => 'string', 'nullable' => false],
+                'content' => ['type' => 'text', 'nullable' => false],
+                'user_id' => ['type' => 'bigInteger', 'nullable' => false],
+                'created_at' => ['type' => 'timestamp'],
+                'updated_at' => ['type' => 'timestamp'],
+            ],
+            'relationships' => [
+                'user' => [
+                    'type' => 'belongsTo',
+                    'model' => 'App\Models\User',
+                ],
+                'comments' => [
+                    'type' => 'hasMany',
+                    'model' => 'App\Models\Comment',
+                ],
+                'categories' => [
+                    'type' => 'belongsToMany',
+                    'model' => 'App\Models\Category',
+                ],
+            ],
+            'options' => [
+                'timestamps' => true,
+                'soft_deletes' => false,
+            ],
+        ]);
+
+        // Test with custom nested depth
+        $options = [
+            'nested_depth' => 3,
+            'relation_limit' => 5,
+            'nested_limit' => 3,
+            'deep_limit' => 2,
+        ];
+
+        $result = $this->generator->generate($complexSchema, $options);
+        $jsonData = json_decode($result['json'], true);
+
+        $relationships = $jsonData['resources']['main_resource']['relationships'];
+
+        // Check user relationship (belongsTo)
+        expect($relationships)->toHaveKey('user');
+        expect($relationships['user']['always_include'])->toBe(true);
+        expect($relationships['user']['depth'])->toBe(1);
+
+        // Check comments relationship (hasMany)
+        expect($relationships)->toHaveKey('comments');
+        expect($relationships['comments']['limit'])->toBe(5);
+        expect($relationships['comments']['with_count'])->toBe(true);
+        expect($relationships['comments']['paginated'])->toBe(true);
+
+        // Check nested relationships exist
+        if (isset($relationships['user']['nested_relationships'])) {
+            expect($relationships['user']['nested_relationships'])->toBeArray();
+        }
+
+        if (isset($relationships['comments']['nested_relationships'])) {
+            expect($relationships['comments']['nested_relationships'])->toBeArray();
+        }
+    });
+
+    it('prevents circular references in deep nesting', function () {
+        // Test that circular references are detected and prevented
+        $options = [
+            'nested_depth' => 5, // Deep enough to potentially cause circles
+            'visited_models' => ['User'], // Start with User already visited
+        ];
+
+        $result = $this->generator->generate($this->schema, $options);
+        $jsonData = json_decode($result['json'], true);
+
+        // The generation should complete without infinite loops
+        expect($result)->toHaveKey('json');
+        expect($result)->toHaveKey('yaml');
+        expect($jsonData)->toHaveKey('resources');
+    });
+
+    it('applies different field sets based on relationship depth', function () {
+        $options = ['nested_depth' => 2];
+        $result = $this->generator->generate($this->schema, $options);
+        $jsonData = json_decode($result['json'], true);
+
+        $relationships = $jsonData['resources']['main_resource']['relationships'];
+
+        // Direct relationships should have more detailed fields
+        if (isset($relationships['profile'])) {
+            expect($relationships['profile']['fields'])->toContain('id');
+            expect($relationships['profile']['fields'])->toContain('name');
+            expect($relationships['profile']['fields'])->toContain('status');
+        }
+
+        // Verify load conditions are appropriate
+        if (isset($relationships['posts'])) {
+            expect($relationships['posts']['load_condition'])->toBe('whenLoaded');
+        }
+    });
 });

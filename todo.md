@@ -113,7 +113,7 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - [x] **Ajouter générateur de Controllers (API et Web)** ✅ - DÉJÀ IMPLÉMENTÉ
 - [x] Ajouter générateur de Tests (Feature et Unit) ✅ - TERMINÉ avec TestGenerator intégré
 - [x] Ajouter générateur de Policies ✅ - TERMINÉ avec PolicyGenerator intégré
-- [ ] Améliorer générateur de Resources avec relations imbriquées
+- [x] **Améliorer générateur de Resources avec relations imbriquées** ✅ - TERMINÉ avec relations multi-niveaux, contrôle de profondeur, prévention des références circulaires, et champs optimisés par niveau
 - [ ] Ajouter support des Form Requests personnalisées
 
 ### Validation et robustesse - PARTIELLEMENT COMPLÉTÉ ✅

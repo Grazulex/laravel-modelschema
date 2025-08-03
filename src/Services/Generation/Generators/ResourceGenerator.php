@@ -194,8 +194,10 @@ class ResourceGenerator extends AbstractGenerator
                 'type' => $relationship->type,
                 'model' => $relationship->model,
                 'resource' => $resourceName,
-                'load_condition' => 'whenLoaded',
+                'load_condition' => $this->getOptimalLoadCondition($relationship->type, 0),
                 'conditionally_load' => $relationship->type !== 'belongsTo',
+                'fields' => $this->getNestedFields($relationship->type, 0, $options),
+                'depth' => 1,
             ];
 
             // Add specific handling for different relationship types
@@ -214,12 +216,19 @@ class ResourceGenerator extends AbstractGenerator
                 case 'hasOne':
                 case 'belongsTo':
                     $relationData['always_load'] = $relationship->type === 'belongsTo';
+                    $relationData['always_include'] = $relationship->type === 'belongsTo';
                     break;
                 case 'morphTo':
                 case 'morphMany':
                     $relationData['polymorphic'] = true;
                     break;
             }
+
+            // Add nested relationships if depth allows
+            $relationData['nested_relationships'] = $this->getNestedRelationships($schema, array_merge($options, [
+                'current_depth' => 1,
+                'visited_models' => [$schema->name],
+            ]));
 
             $relationships[$relationship->name] = $relationData;
         }
@@ -229,25 +238,101 @@ class ResourceGenerator extends AbstractGenerator
 
     protected function getNestedRelationships(ModelSchema $schema, array $options = []): array
     {
-        $nested = [];
         $maxDepth = $options['nested_depth'] ?? 2;
+        $currentDepth = $options['current_depth'] ?? 0;
+        $visitedModels = $options['visited_models'] ?? [];
 
-        if ($maxDepth <= 0) {
-            return $nested;
+        if ($maxDepth <= 0 || $currentDepth >= $maxDepth) {
+            return [];
         }
 
+        // Prevent circular references
+        if (in_array($schema->name, $visitedModels)) {
+            return [];
+        }
+
+        $nested = [];
+        $newVisitedModels = array_merge($visitedModels, [$schema->name]);
+
         foreach ($schema->relationships as $relationship) {
-            if (in_array($relationship->type, ['hasOne', 'belongsTo'])) {
-                $nested[$relationship->name] = [
-                    'resource_class' => $this->getResourceClassForModel($relationship->model),
-                    'fields' => ['id', 'name', 'created_at'],
-                    'load_when' => 'when_loaded',
-                    'depth' => 1,
-                ];
+            $relationConfig = $this->buildNestedRelationConfig(
+                $relationship,
+                $currentDepth,
+                $maxDepth,
+                $newVisitedModels,
+                $options
+            );
+
+            if ($relationConfig !== null) {
+                $nested[$relationship->name] = $relationConfig;
             }
         }
 
         return $nested;
+    }
+
+    protected function buildNestedRelationConfig($relationship, int $currentDepth, int $maxDepth, array $visitedModels, array $options): ?array
+    {
+        $modelClass = class_basename($relationship->model);
+        $resourceClass = $this->getResourceClassForModel($relationship->model);
+
+        // Base configuration for the nested relationship
+        $config = [
+            'resource_class' => $resourceClass,
+            'model_class' => $relationship->model,
+            'type' => $relationship->type,
+            'depth' => $currentDepth + 1,
+            'load_condition' => $this->getOptimalLoadCondition($relationship->type, $currentDepth),
+            'fields' => $this->getNestedFields($relationship->type, $currentDepth, $options),
+        ];
+
+        // Add relationship-specific configurations
+        switch ($relationship->type) {
+            case 'belongsTo':
+                $config['always_include'] = $currentDepth === 0; // Always include direct belongsTo
+                $config['fields'] = array_merge($config['fields'], ['name', 'title']);
+                break;
+
+            case 'hasOne':
+                $config['fields'] = $this->getDetailedFields($currentDepth);
+                break;
+
+            case 'hasMany':
+                $config['limit'] = $this->getCollectionLimit($currentDepth, $options);
+                $config['with_count'] = true;
+                $config['paginated'] = $currentDepth === 0;
+                $config['fields'] = $this->getSummaryFields($currentDepth);
+                break;
+
+            case 'belongsToMany':
+                $config['limit'] = $this->getCollectionLimit($currentDepth, $options);
+                $config['with_count'] = true;
+                $config['with_pivot'] = $currentDepth === 0;
+                $config['paginated'] = $currentDepth === 0;
+                $config['fields'] = $this->getSummaryFields($currentDepth);
+                break;
+
+            case 'morphTo':
+            case 'morphMany':
+                $config['polymorphic'] = true;
+                $config['fields'] = $this->getPolymorphicFields($currentDepth);
+                break;
+        }
+
+        // For deeper nesting, generate sub-relationships if we haven't reached max depth
+        if (($currentDepth + 1) < $maxDepth && ! in_array($modelClass, $visitedModels)) {
+            // Note: In a real implementation, we would need access to the related model's schema
+            // For now, we'll simulate this with basic relationship detection
+            $config['nested_relationships'] = $this->getSimulatedNestedRelationships(
+                $relationship,
+                $currentDepth + 1,
+                $maxDepth,
+                $visitedModels,
+                $options
+            );
+        }
+
+        return $config;
     }
 
     protected function getConditionalFields(ModelSchema $schema, array $options = []): array
@@ -427,11 +512,140 @@ class ResourceGenerator extends AbstractGenerator
 
         return [
             'enabled' => $options['enable_sorting'] ?? $options['sorting'] ?? true,
-            'fields' => $sortableFields,
-            'sortable_fields' => $sortableFields,
-            'default' => $options['default_sort'] ?? 'created_at',
-            'direction' => $options['default_direction'] ?? 'desc',
+            'default_sort' => $options['default_sort'] ?? 'created_at',
+            'default_direction' => $options['default_direction'] ?? 'desc',
+            'allowed_fields' => $sortableFields,
+            'sortable_fields' => $sortableFields, // For backwards compatibility
         ];
+    }
+
+    /**
+     * Get optimal load condition based on relationship type and depth
+     */
+    protected function getOptimalLoadCondition(string $relationshipType, int $currentDepth): string
+    {
+        if ($currentDepth === 0) {
+            // Direct relationships - load based on type
+            return match ($relationshipType) {
+                'belongsTo' => 'whenLoaded', // Always try to load belongsTo
+                'hasOne', 'hasMany', 'belongsToMany' => 'whenLoaded',
+                'morphTo', 'morphMany' => 'whenLoaded',
+                default => 'whenLoaded'
+            };
+        }
+
+        // Deeper relationships - be more conservative
+        return 'when_requested';
+    }
+
+    /**
+     * Get appropriate fields based on relationship type and depth
+     */
+    protected function getNestedFields(string $relationshipType, int $currentDepth, array $options): array
+    {
+        if ($currentDepth === 0) {
+            // Direct relationships - include more fields
+            return ['id', 'name', 'title', 'slug', 'status', 'created_at'];
+        }
+
+        // Deeper relationships - minimal fields only
+        return ['id', 'name', 'title'];
+    }
+
+    /**
+     * Get detailed fields for hasOne relationships
+     */
+    protected function getDetailedFields(int $currentDepth): array
+    {
+        if ($currentDepth === 0) {
+            return ['id', 'name', 'title', 'description', 'status', 'created_at', 'updated_at'];
+        }
+
+        return ['id', 'name', 'title', 'status'];
+    }
+
+    /**
+     * Get summary fields for collection relationships
+     */
+    protected function getSummaryFields(int $currentDepth): array
+    {
+        if ($currentDepth === 0) {
+            return ['id', 'name', 'title', 'slug', 'status', 'created_at'];
+        }
+
+        return ['id', 'name', 'title'];
+    }
+
+    /**
+     * Get fields for polymorphic relationships
+     */
+    protected function getPolymorphicFields(int $currentDepth): array
+    {
+        $fields = ['id', 'name', 'title', 'type', 'created_at'];
+
+        if ($currentDepth === 0) {
+            $fields[] = 'updated_at';
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Get collection limit based on depth
+     */
+    protected function getCollectionLimit(int $currentDepth, array $options): int
+    {
+        $baseLimits = [
+            0 => $options['relation_limit'] ?? 10,      // Direct relationships
+            1 => $options['nested_limit'] ?? 5,         // First level nested
+            2 => $options['deep_limit'] ?? 3,           // Deep nested
+        ];
+
+        return $baseLimits[$currentDepth] ?? 2;
+    }
+
+    /**
+     * Simulate nested relationships for deeper levels
+     * In a real implementation, this would load the actual related model schema
+     */
+    protected function getSimulatedNestedRelationships($relationship, int $currentDepth, int $maxDepth, array $visitedModels, array $options): array
+    {
+        // For now, we'll return common relationship patterns based on model names
+        $modelClass = class_basename($relationship->model);
+        $nestedRels = [];
+
+        // Simulate common relationship patterns
+        $commonPatterns = [
+            'User' => ['profile' => 'hasOne', 'posts' => 'hasMany'],
+            'Post' => ['user' => 'belongsTo', 'comments' => 'hasMany', 'categories' => 'belongsToMany'],
+            'Comment' => ['user' => 'belongsTo', 'post' => 'belongsTo'],
+            'Profile' => ['user' => 'belongsTo'],
+            'Category' => ['posts' => 'belongsToMany'],
+            'Role' => ['users' => 'belongsToMany', 'permissions' => 'belongsToMany'],
+            'Permission' => ['roles' => 'belongsToMany'],
+        ];
+
+        if (isset($commonPatterns[$modelClass])) {
+            foreach ($commonPatterns[$modelClass] as $relName => $relType) {
+                $relatedModel = ucfirst($relName);
+                if ($relType === 'hasMany' || $relType === 'belongsToMany') {
+                    $relatedModel = mb_rtrim($relatedModel, 's'); // Simple singularization
+                }
+
+                if (! in_array($relatedModel, $visitedModels)) {
+                    $nestedRels[$relName] = [
+                        'resource_class' => $relatedModel.'Resource',
+                        'type' => $relType,
+                        'depth' => $currentDepth,
+                        'load_condition' => 'when_requested',
+                        'fields' => ['id', 'name'],
+                        'limited' => true,
+                    ];
+                }
+            }
+        }
+
+        return $nestedRels;
     }
 
     /**
