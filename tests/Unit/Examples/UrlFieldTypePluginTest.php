@@ -76,14 +76,14 @@ class UrlFieldTypePluginTest extends TestCase
         ];
 
         $errors = $this->plugin->validate($invalidConfig);
-        $this->assertContains('schemes must be an array', $errors);
+        $this->assertStringContainsString("Custom attribute 'schemes' must be of type array", $errors[0]);
 
         $invalidConfig = [
             'schemes' => ['invalid-scheme'],
         ];
 
         $errors = $this->plugin->validate($invalidConfig);
-        $this->assertStringContainsString("Invalid scheme 'invalid-scheme'", $errors[0]);
+        $this->assertStringContainsString("Custom attribute 'schemes' contains invalid value 'invalid-scheme'", $errors[0]);
     }
 
     /** @test */

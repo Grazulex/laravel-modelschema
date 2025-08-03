@@ -21,6 +21,90 @@ class UrlFieldTypePlugin extends FieldTypePlugin
     protected string $description = 'Field type for validating and storing URLs';
 
     /**
+     * Initialize URL field type with custom attributes
+     */
+    public function __construct()
+    {
+        // Set custom attributes for URL fields
+        $this->customAttributes = [
+            'schemes',
+            'verify_ssl',
+            'allow_query_params',
+            'max_redirects',
+            'timeout',
+            'domain_whitelist',
+            'domain_blacklist',
+        ];
+
+        // Configure custom attribute validation
+        $this->customAttributeConfig = [
+            'schemes' => [
+                'type' => 'array',
+                'required' => false,
+                'default' => ['http', 'https'],
+                'enum' => ['http', 'https', 'ftp', 'ftps', 'file'],
+                'description' => 'Allowed URL schemes for validation',
+            ],
+            'verify_ssl' => [
+                'type' => 'boolean',
+                'required' => false,
+                'default' => true,
+            ],
+            'allow_query_params' => [
+                'type' => 'boolean',
+                'required' => false,
+                'default' => true,
+            ],
+            'max_redirects' => [
+                'type' => 'integer',
+                'required' => false,
+                'min' => 0,
+                'max' => 10,
+                'default' => 3,
+            ],
+            'timeout' => [
+                'type' => 'integer',
+                'required' => false,
+                'min' => 1,
+                'max' => 300,
+                'default' => 30,
+            ],
+            'domain_whitelist' => [
+                'type' => 'array',
+                'required' => false,
+                'validator' => function ($value): array {
+                    if (! is_array($value)) {
+                        return ['domain_whitelist must be an array'];
+                    }
+                    foreach ($value as $domain) {
+                        if (! is_string($domain) || ! filter_var("http://{$domain}", FILTER_VALIDATE_URL)) {
+                            return ["Invalid domain: {$domain}"];
+                        }
+                    }
+
+                    return [];
+                },
+            ],
+            'domain_blacklist' => [
+                'type' => 'array',
+                'required' => false,
+                'validator' => function ($value): array {
+                    if (! is_array($value)) {
+                        return ['domain_blacklist must be an array'];
+                    }
+                    foreach ($value as $domain) {
+                        if (! is_string($domain) || ! filter_var("http://{$domain}", FILTER_VALIDATE_URL)) {
+                            return ["Invalid domain: {$domain}"];
+                        }
+                    }
+
+                    return [];
+                },
+            ],
+        ];
+    }
+
+    /**
      * Get the field type identifier
      */
     public function getType(): string
@@ -59,17 +143,11 @@ class UrlFieldTypePlugin extends FieldTypePlugin
             $errors[] = 'default value must be a valid URL';
         }
 
-        // Validate schemes if provided
-        if (isset($config['schemes'])) {
-            if (! is_array($config['schemes'])) {
-                $errors[] = 'schemes must be an array';
-            } else {
-                $validSchemes = ['http', 'https', 'ftp', 'ftps', 'file'];
-                foreach ($config['schemes'] as $scheme) {
-                    if (! in_array($scheme, $validSchemes, true)) {
-                        $errors[] = "Invalid scheme '{$scheme}'. Allowed: ".implode(', ', $validSchemes);
-                    }
-                }
+        // Validate custom attributes
+        foreach ($this->getCustomAttributes() as $attribute) {
+            if (isset($config[$attribute])) {
+                $customErrors = $this->validateCustomAttribute($attribute, $config[$attribute]);
+                $errors = array_merge($errors, $customErrors);
             }
         }
 
@@ -186,7 +264,7 @@ class UrlFieldTypePlugin extends FieldTypePlugin
      */
     public function getSupportedAttributesList(): array
     {
-        return ['nullable', 'default', 'max_length', 'schemes'];
+        return array_merge(['nullable', 'default', 'max_length'], $this->customAttributes);
     }
 
     /**

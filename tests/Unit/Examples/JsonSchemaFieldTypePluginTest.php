@@ -34,12 +34,12 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         // Missing schema
         $config = [];
         $errors = $this->plugin->validate($config);
-        $this->assertContains('schema configuration is required for json_schema fields', $errors);
+        $this->assertStringContainsString('Missing required attributes: schema', $errors[0]);
 
         // Invalid schema type
         $config = ['schema' => 'not-an-array'];
         $errors = $this->plugin->validate($config);
-        $this->assertContains('schema must be a valid array/object', $errors);
+        $this->assertStringContainsString("Custom attribute 'schema' must be of type array", $errors[0]);
 
         // Valid schema
         $config = [

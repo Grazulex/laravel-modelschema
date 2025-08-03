@@ -50,6 +50,17 @@ abstract class FieldTypePlugin implements FieldTypeInterface
     protected array $config = [];
 
     /**
+     * Custom attributes supported by this plugin
+     * These are in addition to standard Laravel field attributes
+     */
+    protected array $customAttributes = [];
+
+    /**
+     * Custom attribute configurations with validation rules and defaults
+     */
+    protected array $customAttributeConfig = [];
+
+    /**
      * Create plugin from array data
      */
     public static function fromArray(array $data): static
@@ -221,7 +232,139 @@ abstract class FieldTypePlugin implements FieldTypeInterface
      */
     public function getSupportedAttributesList(): array
     {
-        return ['nullable', 'default'];
+        return array_merge(['nullable', 'default'], $this->customAttributes);
+    }
+
+    /**
+     * Get custom attributes supported by this plugin
+     */
+    public function getCustomAttributes(): array
+    {
+        return $this->customAttributes;
+    }
+
+    /**
+     * Set custom attributes for this plugin
+     */
+    public function setCustomAttributes(array $attributes): void
+    {
+        $this->customAttributes = $attributes;
+    }
+
+    /**
+     * Add a custom attribute to this plugin
+     */
+    public function addCustomAttribute(string $attribute, array $config = []): void
+    {
+        $this->customAttributes[] = $attribute;
+        if ($config !== []) {
+            $this->customAttributeConfig[$attribute] = $config;
+        }
+    }
+
+    /**
+     * Get custom attribute configuration
+     */
+    public function getCustomAttributeConfig(string $attribute): array
+    {
+        return $this->customAttributeConfig[$attribute] ?? [];
+    }
+
+    /**
+     * Set custom attribute configuration
+     */
+    public function setCustomAttributeConfig(string $attribute, array $config): void
+    {
+        $this->customAttributeConfig[$attribute] = $config;
+    }
+
+    /**
+     * Validate custom attribute value
+     */
+    public function validateCustomAttribute(string $attribute, $value): array
+    {
+        $errors = [];
+        $config = $this->getCustomAttributeConfig($attribute);
+
+        if ($config === []) {
+            return $errors;
+        }
+
+        // Type validation (must pass before other validations)
+        if (isset($config['type']) && ! $this->validateAttributeType($value, $config['type'])) {
+            $errors[] = "Custom attribute '{$attribute}' must be of type {$config['type']}";
+
+            // Return early if type validation fails to prevent cascading errors
+            return $errors;
+        }
+
+        // Required validation
+        if (isset($config['required']) && $config['required'] && ($value === null || $value === '')) {
+            $errors[] = "Custom attribute '{$attribute}' is required";
+        }
+
+        // Min/Max validation for numeric values
+        if (is_numeric($value)) {
+            if (isset($config['min']) && $value < $config['min']) {
+                $errors[] = "Custom attribute '{$attribute}' must be at least {$config['min']}";
+            }
+            if (isset($config['max']) && $value > $config['max']) {
+                $errors[] = "Custom attribute '{$attribute}' must be at most {$config['max']}";
+            }
+        }
+
+        // Enum validation
+        if (isset($config['enum']) && is_array($config['enum'])) {
+            if (is_array($value)) {
+                // For array values, check each element against enum
+                foreach ($value as $element) {
+                    if (! in_array($element, $config['enum'], true)) {
+                        $enumValues = implode(', ', $config['enum']);
+                        $errors[] = "Custom attribute '{$attribute}' contains invalid value '{$element}'. Must be one of: {$enumValues}";
+                    }
+                }
+            } elseif (! in_array($value, $config['enum'], true)) {
+                // For scalar values, check directly
+                $enumValues = implode(', ', $config['enum']);
+                $errors[] = "Custom attribute '{$attribute}' must be one of: {$enumValues}";
+            }
+        }
+
+        // Custom validation callback
+        if (isset($config['validator']) && is_callable($config['validator'])) {
+            $customErrors = call_user_func($config['validator'], $value, $attribute);
+            if (is_array($customErrors)) {
+                $errors = array_merge($errors, $customErrors);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Process custom attributes for field configuration
+     */
+    public function processCustomAttributes(array $fieldConfig): array
+    {
+        $processedConfig = $fieldConfig;
+
+        foreach ($this->getCustomAttributes() as $attribute) {
+            $attributeConfig = $this->getCustomAttributeConfig($attribute);
+
+            if (isset($fieldConfig[$attribute])) {
+                $value = $fieldConfig[$attribute];
+
+                // Apply default transformation if specified
+                if (isset($attributeConfig['transform']) && is_callable($attributeConfig['transform'])) {
+                    $processedConfig[$attribute] = call_user_func($attributeConfig['transform'], $value);
+                }
+            } elseif (isset($attributeConfig['default'])) {
+                // Apply default value if attribute is not provided
+                $processedConfig[$attribute] = $attributeConfig['default'];
+            }
+        }
+
+        return $processedConfig;
     }
 
     /**
@@ -238,6 +381,22 @@ abstract class FieldTypePlugin implements FieldTypeInterface
     public function cleanup(): void
     {
         // Override in plugin if needed
+    }
+
+    /**
+     * Get missing required custom attributes
+     */
+    public function getMissingRequiredCustomAttributes(array $config): array
+    {
+        $missing = [];
+
+        foreach ($this->customAttributeConfig as $attribute => $attrConfig) {
+            if (($attrConfig['required'] ?? false) && ! isset($config[$attribute])) {
+                $missing[] = $attribute;
+            }
+        }
+
+        return $missing;
     }
 
     /**
@@ -329,5 +488,23 @@ abstract class FieldTypePlugin implements FieldTypeInterface
             'type' => $this->getType(),
             'aliases' => $this->getAliases(),
         ];
+    }
+
+    /**
+     * Validate attribute type
+     */
+    protected function validateAttributeType($value, string $expectedType): bool
+    {
+        return match ($expectedType) {
+            'string' => is_string($value),
+            'int', 'integer' => is_int($value),
+            'float', 'double' => is_float($value) || is_int($value),
+            'bool', 'boolean' => is_bool($value),
+            'array' => is_array($value),
+            'object' => is_object($value),
+            'null' => $value === null,
+            'numeric' => is_numeric($value),
+            default => true, // Unknown type, assume valid
+        };
     }
 }

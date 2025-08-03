@@ -23,6 +23,82 @@ class JsonSchemaFieldTypePlugin extends FieldTypePlugin
     protected array $dependencies = ['json'];
 
     /**
+     * Constructor - Define custom attributes for JSON schema handling
+     */
+    public function __construct()
+    {
+        // Define custom attributes specific to JSON schema validation
+        $this->customAttributes = [
+            'schema',
+            'strict_validation',
+            'allow_additional_properties',
+            'schema_format',
+            'validation_mode',
+            'error_format',
+            'schema_cache_ttl',
+            'schema_version',
+        ];
+
+        // Configure validation rules for custom attributes
+        $this->customAttributeConfig = [
+            'schema' => [
+                'type' => 'array',
+                'required' => true,
+                'description' => 'JSON Schema definition for validation',
+                'validator' => function ($value): array {
+                    return $this->validateJsonSchema($value);
+                },
+            ],
+            'strict_validation' => [
+                'type' => 'boolean',
+                'required' => false,
+                'default' => true,
+                'description' => 'Enable strict validation mode',
+            ],
+            'allow_additional_properties' => [
+                'type' => 'boolean',
+                'required' => false,
+                'default' => false,
+                'description' => 'Allow properties not defined in schema',
+            ],
+            'schema_format' => [
+                'type' => 'string',
+                'required' => false,
+                'default' => 'draft-07',
+                'enum' => ['draft-04', 'draft-06', 'draft-07', 'draft-2019-09', 'draft-2020-12'],
+                'description' => 'JSON Schema specification version',
+            ],
+            'validation_mode' => [
+                'type' => 'string',
+                'required' => false,
+                'default' => 'strict',
+                'enum' => ['strict', 'loose', 'type_only'],
+                'description' => 'Validation mode for JSON data',
+            ],
+            'error_format' => [
+                'type' => 'string',
+                'required' => false,
+                'default' => 'detailed',
+                'enum' => ['simple', 'detailed', 'json_pointer'],
+                'description' => 'Format for validation error messages',
+            ],
+            'schema_cache_ttl' => [
+                'type' => 'integer',
+                'required' => false,
+                'default' => 3600,
+                'min' => 0,
+                'max' => 86400,
+                'description' => 'Schema cache TTL in seconds (0 = no cache)',
+            ],
+            'schema_version' => [
+                'type' => 'string',
+                'required' => false,
+                'description' => 'Version identifier for the schema',
+            ],
+        ];
+    }
+
+    /**
      * Get the field type identifier
      */
     public function getType(): string
@@ -45,20 +121,18 @@ class JsonSchemaFieldTypePlugin extends FieldTypePlugin
     {
         $errors = [];
 
-        // Schema is required
-        if (! isset($config['schema'])) {
-            $errors[] = 'schema configuration is required for json_schema fields';
-        } elseif (! is_array($config['schema'])) {
-            $errors[] = 'schema must be a valid array/object';
-        } else {
-            // Validate schema structure
-            $schemaErrors = $this->validateJsonSchema($config['schema']);
-            $errors = array_merge($errors, $schemaErrors);
+        // Validate custom attributes
+        foreach ($this->getCustomAttributes() as $attribute) {
+            if (isset($config[$attribute])) {
+                $customErrors = $this->validateCustomAttribute($attribute, $config[$attribute]);
+                $errors = array_merge($errors, $customErrors);
+            }
         }
 
-        // Validate strict_validation option
-        if (isset($config['strict_validation']) && ! is_bool($config['strict_validation'])) {
-            $errors[] = 'strict_validation must be a boolean';
+        // Check required custom attributes
+        $missingRequired = $this->getMissingRequiredCustomAttributes($config);
+        if ($missingRequired !== []) {
+            $errors[] = 'Missing required attributes: '.implode(', ', $missingRequired);
         }
 
         // Validate default value against schema if both provided
