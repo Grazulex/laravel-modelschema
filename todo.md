@@ -133,7 +133,7 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - [x] **Types géométriques** ✅ - IMPLÉMENTÉS : PointFieldType, GeometryFieldType, PolygonFieldType avec support WKT, SRID, calculs spatiaux et tests complets
 - [x] **Alias pour types géométriques** ✅ - geopoint, coordinates, latlng, geom, spatial, geo, area, boundary, region
 - [x] **Exemple de type personnalisé** : UrlFieldType dans examples/
-- [ ] Système de plugins pour types de champs personnalisés
+- [x] **Système de plugins pour types de champs personnalisés** ✅ - TERMINÉ : Architecture complète avec FieldTypePlugin, FieldTypePluginManager, découverte automatique, gestion des dépendances, exemples (URL, JsonSchema), tests complets (58 tests) et documentation
 - [ ] Support des attributs de champs personnalisés
 - [ ] Validation automatique basée sur les types de champs
 
