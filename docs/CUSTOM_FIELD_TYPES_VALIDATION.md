@@ -1,8 +1,73 @@
-# Custom Field Types Validation
+# Validation des Types de Champs Personnalisés avec Architecture par Traits
 
-Le package Laravel ModelSchema inclut un système de validation robuste pour les types de champs personnalisés, permettant de valider des configurations complexes comme les champs enum, set, et géométriques.
+Le package Laravel ModelSchema inclut un système de validation robuste pour les types de champs personnalisés, maintenant étendu avec une **architecture par traits** qui permet de valider des configurations complexes et modulaires.
 
-## Types de Champs Personnalisés Supportés
+## Nouveau : Système de Validation par Traits
+
+### Vue d'ensemble
+L'architecture par traits révolutionne la validation en permettant :
+
+1. **Validation modulaire** : Chaque trait peut avoir ses propres règles de validation
+2. **Validation croisée** : Les traits peuvent interagir pour une validation contextuelle  
+3. **Validation dynamique** : Les règles s'adaptent selon la configuration des traits
+4. **Validation en couches** : Type, contraintes, logique métier, et validation personnalisée
+
+### Configuration de Validation par Traits
+```php
+// Dans un plugin FieldTypePlugin
+$this->customAttributeConfig = [
+    'timeout' => [
+        'type' => 'integer',           // Validation de type
+        'min' => 1,                    // Contrainte minimum
+        'max' => 300,                  // Contrainte maximum
+        'required' => false,           // Obligation
+        'validator' => function($value): array {  // Validation personnalisée
+            if ($value > 60 && !extension_loaded('curl')) {
+                return ['Timeout > 60s requires curl extension'];
+            }
+            return [];
+        }
+    ],
+    'schemes' => [
+        'type' => 'array',
+        'enum' => ['http', 'https', 'ftp'],    // Validation d'énumération
+        'validator' => function($schemes): array {
+            $errors = [];
+            if (in_array('ftp', $schemes) && !in_array('ftps', $schemes)) {
+                $errors[] = 'FTP should be paired with FTPS for security';
+            }
+            return $errors;
+        }
+    ]
+];
+```
+
+### Exemple de Plugin avec Validation par Traits
+```php
+class AdvancedUrlFieldTypePlugin extends FieldTypePlugin
+{
+    public function validate(array $config): array
+    {
+        $errors = [];
+        
+        // Validation croisée entre traits
+        if (($config['verify_ssl'] ?? true) && in_array('http', $config['schemes'] ?? [])) {
+            $errors[] = 'SSL verification cannot be enabled with HTTP scheme';
+        }
+        
+        // Validation conditionnelle basée sur les traits
+        if (($config['virus_scan'] ?? false) && !in_array($config['storage_disk'] ?? 'local', ['local', 's3'])) {
+            $errors[] = 'Virus scanning requires local or S3 storage';
+        }
+        
+        return $errors;
+    }
+    
+    // Les validations individuelles des traits sont automatiques
+}
+```
+
+## Types de Champs Personnalisés Supportés (Legacy + Traits)
 
 ### Champs d'Énumération
 
