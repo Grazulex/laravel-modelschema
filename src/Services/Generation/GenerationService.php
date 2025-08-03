@@ -14,6 +14,7 @@ use Grazulex\LaravelModelschema\Services\Generation\Generators\ModelGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\RequestGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ResourceGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\SeederGenerator;
+use Grazulex\LaravelModelschema\Services\Validation\EnhancedValidationService;
 use InvalidArgumentException;
 
 /**
@@ -243,23 +244,9 @@ class GenerationService
 
         // Validate schema if requested
         if ($options['enable_validation'] ?? false) {
-            // Add comprehensive validation results
-            $validationResults = [
-                'is_valid' => true,
-                'errors' => [],
-                'warnings' => [],
-                'recommendations' => [],
-                'performance_analysis' => [
-                    'warnings' => [
-                        'Large number of fields detected: '.count($schema->getAllFields()).' fields may affect performance',
-                        'Consider indexing foreign key fields for better query performance',
-                    ],
-                    'suggestions' => [
-                        'Consider using pagination for large datasets',
-                        'Add caching for frequently accessed data',
-                    ],
-                ],
-            ];
+            // Use EnhancedValidationService for comprehensive validation
+            $validationService = new EnhancedValidationService();
+            $validationResults = $validationService->generateComprehensiveReport($schema);
         }
 
         // Generate each requested component

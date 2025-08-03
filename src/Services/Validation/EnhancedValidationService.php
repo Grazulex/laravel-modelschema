@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Grazulex\LaravelModelSchema\Services\Validation;
+namespace Grazulex\LaravelModelschema\Services\Validation;
 
-use Grazulex\LaravelModelSchema\Schema\ModelSchema;
+use Grazulex\LaravelModelschema\Schema\ModelSchema;
 
 class EnhancedValidationService
 {
@@ -14,7 +14,7 @@ class EnhancedValidationService
         $missingReverseRelationships = $this->detectMissingReverseRelationships($schemas);
 
         return [
-            'is_consistent' => empty($circularDependencies) && empty($missingReverseRelationships),
+            'is_consistent' => $circularDependencies === [] && $missingReverseRelationships === [],
             'circular_dependencies' => $circularDependencies,
             'missing_reverse_relationships' => $missingReverseRelationships,
             'validation_summary' => [
@@ -37,20 +37,20 @@ class EnhancedValidationService
 
             // Check field type configuration
             $fieldTypeErrors = $this->validateFieldTypeConfiguration($field->name, $field->type, $field);
-            if (! empty($fieldTypeErrors)) {
+            if ($fieldTypeErrors !== []) {
                 $fieldErrors = array_merge($fieldErrors, $fieldTypeErrors);
             }
 
             // Check type compatibility
             $typeCompatibility[$field->name] = [
                 'type' => $field->type ?? 'unknown',
-                'is_compatible' => empty($fieldTypeErrors),
+                'is_compatible' => $fieldTypeErrors === [],
                 'warnings' => $fieldTypeErrors,
             ];
         }
 
         return [
-            'is_valid' => empty($fieldErrors),
+            'is_valid' => $fieldErrors === [],
             'field_errors' => $fieldErrors,
             'validated_fields' => $validatedFields,
             'type_compatibility' => $typeCompatibility,
@@ -96,15 +96,15 @@ class EnhancedValidationService
         $warnings = [];
 
         // Check basic schema requirements
-        if (empty($schema->name)) {
+        if ($schema->name === '' || $schema->name === '0') {
             $errors[] = 'Schema must have a model name';
         }
 
-        if (empty($schema->table)) {
+        if ($schema->table === '' || $schema->table === '0') {
             $errors[] = 'Schema must have a table name';
         }
 
-        if (empty($schema->getAllFields())) {
+        if ($schema->getAllFields() === []) {
             $errors[] = 'Schema must have at least one field';
             $warnings[] = 'Schema with no fields may not be functional';
         }
@@ -118,7 +118,7 @@ class EnhancedValidationService
         $recommendations = $performanceAnalysis['recommendations'];
 
         return [
-            'is_valid' => empty($errors),
+            'is_valid' => $errors === [],
             'errors' => $errors,
             'warnings' => $warnings,
             'recommendations' => $recommendations,
@@ -332,19 +332,6 @@ class EnhancedValidationService
         $score -= min(30, $relationshipCount * 2);
 
         return max(0, $score);
-    }
-
-    private function analyzeRelationshipTypes(array $schemas): array
-    {
-        $types = [];
-        foreach ($schemas as $schema) {
-            foreach ($schema->relationships as $relationship) {
-                $type = $relationship->type ?? 'unknown';
-                $types[$type] = ($types[$type] ?? 0) + 1;
-            }
-        }
-
-        return $types;
     }
 
     private function analyzeRelationshipTypesForSchema(ModelSchema $schema): array

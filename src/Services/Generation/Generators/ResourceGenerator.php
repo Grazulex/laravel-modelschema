@@ -330,23 +330,50 @@ class ResourceGenerator extends AbstractGenerator
 
     protected function getPartialResources(ModelSchema $schema, array $options): array
     {
+        // Get basic fields that are commonly used in partial resources
+        $basicFields = ['id' => ['type' => 'integer']];
+        $summaryFields = ['id' => ['type' => 'integer']];
+
+        // Add common fields if they exist in the schema
+        $commonBasicFields = ['name', 'title', 'email'];
+        $commonSummaryFields = ['name', 'title', 'email', 'status'];
+
+        foreach ($schema->getAllFields() as $field) {
+            $fieldType = match ($field->type) {
+                'string', 'text' => 'string',
+                'integer', 'bigInteger' => 'integer',
+                'boolean' => 'boolean',
+                'timestamp', 'datetime' => 'string',
+                default => 'string'
+            };
+
+            if (in_array($field->name, $commonBasicFields)) {
+                $basicFields[$field->name] = ['type' => $fieldType];
+            }
+
+            if (in_array($field->name, $commonSummaryFields)) {
+                $summaryFields[$field->name] = ['type' => $fieldType];
+            }
+
+            // Always include timestamps in summary
+            if (in_array($field->name, ['created_at', 'updated_at'])) {
+                $summaryFields[$field->name] = ['type' => 'string', 'format' => 'datetime'];
+            }
+
+            // Include created_at in basic if timestamps are enabled
+            if ($field->name === 'created_at') {
+                $basicFields[$field->name] = ['type' => 'string', 'format' => 'datetime'];
+            }
+        }
+
         return [
             'basic' => [
                 'name' => "{$schema->name}BasicResource",
-                'fields' => [
-                    'id' => ['type' => 'integer'],
-                    'name' => ['type' => 'string'],
-                    'created_at' => ['type' => 'string', 'format' => 'datetime'],
-                ],
+                'fields' => $basicFields,
             ],
             'summary' => [
                 'name' => "{$schema->name}SummaryResource",
-                'fields' => [
-                    'id' => ['type' => 'integer'],
-                    'name' => ['type' => 'string'],
-                    'created_at' => ['type' => 'string', 'format' => 'datetime'],
-                    'updated_at' => ['type' => 'string', 'format' => 'datetime'],
-                ],
+                'fields' => $summaryFields,
             ],
             'detailed' => [
                 'name' => "{$schema->name}DetailedResource",

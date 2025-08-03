@@ -231,4 +231,12 @@ final class ModelSchema
     {
         return $this->getModelNamespace().'\\'.$this->name;
     }
+
+    /**
+     * Get all relationships
+     */
+    public function getRelationships(): array
+    {
+        return $this->relationships;
+    }
 }
