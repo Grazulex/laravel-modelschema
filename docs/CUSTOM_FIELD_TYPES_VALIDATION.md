@@ -189,7 +189,7 @@ fields:
 **Validations :**
 - Vérification de compatibilité avec les types numériques
 
-## API d'Utilisation
+## Usage API
 
 ### Via SchemaService
 
@@ -198,7 +198,7 @@ use Grazulex\LaravelModelschema\Services\SchemaService;
 
 $schemaService = new SchemaService();
 
-// Validation de plusieurs schémas
+// Multiple schemas validation
 $schemas = [
     (object) [
         'name' => 'User',
@@ -216,7 +216,7 @@ $schemas = [
 $result = $schemaService->validateCustomFieldTypes($schemas);
 
 if ($result['is_valid']) {
-    echo "Validation réussie !";
+    echo "Validation successful!";
 } else {
     foreach ($result['errors'] as $error) {
         echo "Erreur : $error\n";
@@ -227,10 +227,10 @@ if ($result['is_valid']) {
 ### Via Fichiers YAML
 
 ```php
-// Validation d'un fichier unique
+// Single file validation
 $result = $schemaService->validateCustomFieldTypesFromFile('schema.yaml');
 
-// Validation de plusieurs fichiers
+// Multiple files validation
 $result = $schemaService->validateCustomFieldTypesFromFiles([
     'user.schema.yaml',
     'product.schema.yaml'
@@ -246,7 +246,7 @@ La validation retourne un tableau structuré :
     'is_valid' => true,              // Statut global
     'errors' => [],                  // Erreurs de validation
     'warnings' => [],                // Avertissements
-    'custom_type_stats' => [         // Statistiques d'utilisation
+    'custom_type_stats' => [         // Usage statistics
         'enum' => 2,
         'set' => 1,
         'point' => 3
@@ -293,14 +293,14 @@ La validation retourne un tableau structuré :
 - Champs enum avec moins de 2 valeurs
 - Attributs inutiles pour certains types
 
-## Intégration avec le Logging
+## Integration with Logging
 
-Toutes les validations sont automatiquement loggées :
+All validations are automatically logged:
 
 ```php
 // Les métriques incluent :
-// - Nombre de schémas validés
-// - Nombre de champs traités
+// - Number of validated schemas
+// - Number of processed fields
 // - Types personnalisés utilisés
 // - Temps de validation
 // - Erreurs et avertissements détectés
@@ -383,4 +383,4 @@ if (!empty($result['warnings'])) {
 }
 ```
 
-Cette fonctionnalité assure la robustesse et la fiabilité des définitions de schémas en détectant les erreurs de configuration avant la génération de code.
+This functionality ensures robustness and reliability of schema definitions by detecting configuration errors before code generation.

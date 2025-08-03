@@ -178,14 +178,14 @@ $processedConfig = $plugin->processCustomAttributes($config);
 // ]
 ```
 
-### 4. Intégration avec le système de génération
+### 4. Integration with Generation System
 
 ```php
 use Grazulex\LaravelModelschema\Services\SchemaService;
 
 $schemaService = new SchemaService();
 
-// YAML avec attributs custom
+// YAML with custom attributes
 $yamlContent = '
 core:
   model: Website
@@ -198,17 +198,17 @@ core:
       timeout: 45
 ';
 
-// Parse et validation (inclut les attributs custom)
+// Parse and validation (includes custom attributes)
 $result = $schemaService->parseAndSeparateSchema($yamlContent);
 $errors = $schemaService->validateCoreSchema($yamlContent);
 
-// Génération des fragments (les attributs custom sont pris en compte)
+// Fragment generation (custom attributes are taken into account)
 $generationData = $schemaService->getGenerationDataFromCompleteYaml($yamlContent);
 ```
 
-## Cas d'usage avancés
+## Advanced Use Cases
 
-### 1. Plugin avec validation conditionnelle
+### 1. Plugin with Conditional Validation
 
 ```php
 class DatabaseConnectionFieldTypePlugin extends FieldTypePlugin
@@ -241,7 +241,7 @@ class DatabaseConnectionFieldTypePlugin extends FieldTypePlugin
 }
 ```
 
-### 2. Plugin avec transformation de données
+### 2. Plugin with Data Transformation
 
 ```php
 class EncryptedFieldTypePlugin extends FieldTypePlugin
@@ -250,7 +250,7 @@ class EncryptedFieldTypePlugin extends FieldTypePlugin
     {
         $config = parent::processCustomAttributes($fieldConfig);
         
-        // Transformation automatique
+        // Automatic transformation
         if (isset($config['encryption_key']) && $config['encryption_key'] === 'auto') {
             $config['encryption_key'] = $this->generateEncryptionKey();
         }
@@ -260,7 +260,7 @@ class EncryptedFieldTypePlugin extends FieldTypePlugin
 }
 ```
 
-### 3. Utilisation avec les Relations
+### 3. Usage with Relations
 
 ```yaml
 core:
@@ -277,30 +277,30 @@ core:
     posts:
       type: has_many
       model: Post
-      # Les attributs custom peuvent aussi être utilisés dans les configurations de relations
+      # Custom attributes can also be used in relation configurations
 ```
 
-## Debugging et Tests
+## Debugging and Testing
 
-### 1. Validation pas à pas
+### 1. Step-by-Step Validation
 
 ```php
 $plugin = new UrlFieldTypePlugin();
 
-// Debug : voir tous les attributs supportés
+// Debug: see all supported attributes
 $allAttributes = $plugin->getSupportedAttributesList();
 // ['nullable', 'default', 'max_length', 'schemes', 'verify_ssl', ...]
 
-// Debug : voir seulement les attributs custom
+// Debug: see only custom attributes
 $customAttributes = $plugin->getCustomAttributes();
 // ['schemes', 'verify_ssl', 'allow_query_params', ...]
 
-// Debug : validation d'un attribut spécifique
+// Debug: validation of a specific attribute
 $errors = $plugin->validateCustomAttribute('timeout', 'invalid');
 // ["Custom attribute 'timeout' must be of type integer"]
 ```
 
-### 2. Tests unitaires
+### 2. Unit Testing
 
 ```php
 class MyPluginTest extends TestCase
@@ -329,4 +329,4 @@ class MyPluginTest extends TestCase
 }
 ```
 
-Ce système d'attributs custom offre une flexibilité maximale pour créer des types de champs sophistiqués tout en maintenant la robustesse et la facilité d'utilisation du package Laravel ModelSchema.
+This custom attributes system offers maximum flexibility for creating sophisticated field types while maintaining the robustness and ease of use of the Laravel ModelSchema package.

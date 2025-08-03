@@ -1,33 +1,33 @@
-# Système de Plugins pour Types de Champs Personnalisés
+# Custom Field Type Plugin System
 
-Le système de plugins de Laravel ModelSchema permet aux développeurs de créer et d'enregistrer facilement leurs propres types de champs personnalisés en utilisant une **architecture basée sur les traits**. Cette approche moderne étend considérablement les capacités du package en permettant l'ajout de types de champs spécialisés avec une configuration flexible et modulaire.
+The Laravel ModelSchema plugin system allows developers to easily create and register their own custom field types using a **trait-based architecture**. This modern approach significantly extends the package's capabilities by enabling the addition of specialized field types with flexible and modular configuration.
 
-## Vue d'ensemble
+## Overview
 
-Le système de plugins basé sur les traits fournit :
+The trait-based plugin system provides:
 
-- **FieldTypePlugin** : Classe de base abstraite utilisant des traits de configuration
-- **FieldTypePluginManager** : Gestionnaire pour l'enregistrement et la gestion des plugins
-- **Architecture par traits** : Configuration modulaire via des tableaux de traits
-- **Auto-découverte** : Chargement automatique des plugins depuis des répertoires
-- **Validation avancée** : Validation automatique des plugins et de leurs traits avant enregistrement  
-- **Métadonnées enrichies** : Système riche de métadonnées pour les plugins avec support des traits
-- **Configuration flexible** : Configuration des traits via des fichiers ou des APIs
+- **FieldTypePlugin**: Abstract base class using configuration traits
+- **FieldTypePluginManager**: Manager for plugin registration and management
+- **Trait-based architecture**: Modular configuration via trait arrays
+- **Auto-discovery**: Automatic plugin loading from directories
+- **Advanced validation**: Automatic validation of plugins and their traits before registration  
+- **Rich metadata**: Rich metadata system for plugins with trait support
+- **Flexible configuration**: Trait configuration via files or APIs
 
-## Architecture Basée sur les Traits
+## Trait-Based Architecture
 
-### Concepts Clés
+### Key Concepts
 
-L'architecture par traits permet de définir les options et comportements des champs à travers des **objets de configuration** plutôt que des propriétés codées en dur. Cela offre :
+The trait-based architecture allows defining field options and behaviors through **configuration objects** rather than hardcoded properties. This provides:
 
-1. **Flexibilité** : Les traits peuvent être combinés et réutilisés
-2. **Validation dynamique** : Chaque trait peut avoir ses propres règles
-3. **Extensibilité** : Nouveaux traits ajoutables sans modification du core
-4. **Modularité** : Separation claire des responsabilités
+1. **Flexibility**: Traits can be combined and reused
+2. **Dynamic validation**: Each trait can have its own rules
+3. **Extensibility**: New traits can be added without core modification
+4. **Modularity**: Clear separation of responsibilities
 
-### Classes principales
+### Main Classes
 
-#### FieldTypePlugin (Classe abstraite avec traits)
+#### FieldTypePlugin (Abstract class with traits)
 
 Classe de base pour tous les plugins de types de champs. Utilise une approche par traits pour la configuration :
 
