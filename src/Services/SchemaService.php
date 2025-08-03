@@ -16,9 +16,14 @@ use Symfony\Component\Yaml\Yaml;
  */
 class SchemaService
 {
+    protected SchemaCacheService $cache;
+
     public function __construct(
-        protected Filesystem $filesystem = new Filesystem()
-    ) {}
+        protected Filesystem $filesystem = new Filesystem(),
+        ?SchemaCacheService $cache = null
+    ) {
+        $this->cache = $cache ?? new SchemaCacheService();
+    }
 
     /**
      * Parse a YAML file into a ModelSchema
@@ -30,7 +35,17 @@ class SchemaService
             throw SchemaException::fileNotFound($filePath);
         }
 
-        return ModelSchema::fromYamlFile($filePath);
+        // Try to get from cache first
+        $cached = $this->cache->getSchemaByFile($filePath);
+        if ($cached instanceof \Grazulex\LaravelModelschema\Schema\ModelSchema) {
+            return $cached;
+        }
+
+        // Parse and cache the result
+        $schema = ModelSchema::fromYamlFile($filePath);
+        $this->cache->putSchemaByFile($filePath, $schema);
+
+        return $schema;
     }
 
     /**
@@ -39,7 +54,17 @@ class SchemaService
      */
     public function parseYamlContent(string $yamlContent, string $modelName = 'UnknownModel'): ModelSchema
     {
-        return ModelSchema::fromYaml($yamlContent, $modelName);
+        // Try to get from cache first
+        $cached = $this->cache->getSchemaByContent($yamlContent, $modelName);
+        if ($cached instanceof \Grazulex\LaravelModelschema\Schema\ModelSchema) {
+            return $cached;
+        }
+
+        // Parse and cache the result
+        $schema = ModelSchema::fromYaml($yamlContent, $modelName);
+        $this->cache->putSchemaByContent($yamlContent, $schema, $modelName);
+
+        return $schema;
     }
 
     /**
@@ -227,12 +252,7 @@ class SchemaService
     {
         $data = $schema->toArray();
 
-        if (! function_exists('yaml_emit')) {
-            // Fallback to simple YAML generation if yaml extension not available
-            return $this->generateSimpleYaml($data);
-        }
-
-        return yaml_emit($data, YAML_UTF8_ENCODING);
+        return Yaml::dump($data, 4, 2, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK);
     }
 
     // ==============================================
@@ -522,47 +542,53 @@ class SchemaService
         return $this->generateCompleteYamlFromStub('basic.schema.stub', $replacements, $extensionData);
     }
 
+    // ==============================================
+    // CACHE MANAGEMENT METHODS
+    // ==============================================
+
     /**
-     * Simple YAML generation fallback
+     * Clear schema cache for a specific file
      */
-    protected function generateSimpleYaml(array $data): string
+    public function clearSchemaCache(string $filePath): void
     {
-        $modelName = $data['name'] ?? 'UnknownModel';
-        $yaml = "# Model Schema: {$modelName}\n";
-        $yaml .= '# Generated: '.now()->format('Y-m-d H:i:s')."\n\n";
-
-        foreach ($data as $key => $value) {
-            $yaml .= $this->convertValueToYaml($key, $value, 0);
-        }
-
-        return $yaml;
+        $this->cache->forgetSchemaByFile($filePath);
     }
 
     /**
-     * Convert a value to YAML format recursively
+     * Clear all schema caches
      */
-    protected function convertValueToYaml(string|int $key, mixed $value, int $depth): string
+    public function clearAllSchemaCache(): void
     {
-        $indent = str_repeat('  ', $depth);
+        $this->cache->forgetAllSchemas();
+    }
 
-        if (is_array($value)) {
-            $yaml = "{$indent}{$key}:\n";
-            foreach ($value as $subKey => $subValue) {
-                $yaml .= $this->convertValueToYaml($subKey, $subValue, $depth + 1);
-            }
+    /**
+     * Clear validation cache for specific content
+     */
+    public function clearValidationCache(string $content): void
+    {
+        $this->cache->forgetValidation($content);
+    }
 
-            return $yaml;
-        }
+    /**
+     * Clear all validation caches
+     */
+    public function clearAllValidationCache(): void
+    {
+        $this->cache->forgetAllValidations();
+    }
 
-        if (is_bool($value)) {
-            $value = $value ? 'true' : 'false';
-        } elseif (is_null($value)) {
-            $value = 'null';
-        } elseif (is_string($value) && (mb_strpos($value, ':') !== false || mb_strpos($value, '\n') !== false)) {
-            $value = "'{$value}'";
-        }
-
-        return "{$indent}{$key}: {$value}\n";
+    /**
+     * Get cache statistics for monitoring
+     */
+    public function getCacheStats(): array
+    {
+        return [
+            'enabled' => true,
+            'service' => 'SchemaCacheService',
+            'driver' => 'Laravel Cache',
+            'default_ttl' => 3600,
+        ];
     }
 
     /**
