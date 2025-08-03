@@ -1,40 +1,40 @@
-# Exemples d'Attributs Personnalisés avec Architecture par Traits
+# Custom Attributes Examples with Trait-Based Architecture
 
-Ce fichier présente des exemples pratiques d'utilisation du système d'attributs personnalisés basé sur les **traits** dans les plugins de types de champs de Laravel ModelSchema.
+This file presents practical examples of using the **trait-based** custom attributes system in Laravel ModelSchema field type plugins.
 
-## Architecture par Traits : Vue d'Ensemble
+## Trait-Based Architecture: Overview
 
-Le nouveau système utilise une approche par **traits de configuration** qui permet :
+The new system uses a **configuration traits** approach that enables:
 
-1. **Modularité** : Chaque attribut est défini comme un trait réutilisable
-2. **Flexibilité** : Les traits peuvent être combinés et configurés dynamiquement  
-3. **Validation avancée** : Chaque trait a ses propres règles de validation
-4. **Transformation** : Les traits peuvent transformer les valeurs automatiquement
-5. **Documentation** : Chaque trait est autodocumenté
+1. **Modularity**: Each attribute is defined as a reusable trait
+2. **Flexibility**: Traits can be combined and configured dynamically  
+3. **Advanced validation**: Each trait has its own validation rules
+4. **Transformation**: Traits can transform values automatically
+5. **Documentation**: Each trait is self-documented
 
-### Structure d'un Trait d'Attribut
+### Attribute Trait Structure
 
 ```php
-// Dans un plugin FieldTypePlugin
+// In a FieldTypePlugin plugin
 $this->customAttributeConfig = [
-    'nom_du_trait' => [
-        'type' => 'string|int|boolean|array',    // Type de données du trait
-        'required' => true|false,                // Trait obligatoire ou optionnel
-        'default' => $valeurParDefaut,           // Valeur par défaut du trait
-        'min' => $minimum,                       // Contrainte minimum (numérique)
-        'max' => $maximum,                       // Contrainte maximum (numérique)
-        'enum' => [$valeursAutorisees],          // Valeurs autorisées pour ce trait
-        'validator' => $validateur,              // Fonction de validation personnalisée
-        'transform' => $transformateur,          // Fonction de transformation
-        'description' => 'Description du trait' // Documentation du trait
+    'trait_name' => [
+        'type' => 'string|int|boolean|array',    // Trait data type
+        'required' => true|false,                // Required or optional trait
+        'default' => $defaultValue,              // Trait default value
+        'min' => $minimum,                       // Minimum constraint (numeric)
+        'max' => $maximum,                       // Maximum constraint (numeric)
+        'enum' => [$allowedValues],              // Allowed values for this trait
+        'validator' => $validator,               // Custom validation function
+        'transform' => $transformer,             // Transformation function
+        'description' => 'Trait description'    // Trait documentation
     ]
 ];
 ```
 
-## Configuration d'un champ URL avec attributs custom
+## URL Field Configuration with Custom Attributes
 
 ```yaml
-# Schema YAML utilisant les attributs custom du UrlFieldTypePlugin
+# YAML Schema using UrlFieldTypePlugin custom attributes
 core:
   model: Website
   table: websites
@@ -43,7 +43,7 @@ core:
       type: url
       nullable: false
       max_length: 500
-      # Attributs custom du UrlFieldTypePlugin
+      # UrlFieldTypePlugin custom attributes
       schemes: ['https', 'http']
       verify_ssl: true
       allow_query_params: true
@@ -58,10 +58,10 @@ core:
         - 'spam.net'
 ```
 
-## Configuration d'un champ JSON Schema avec validation
+## JSON Schema Field Configuration with Validation
 
 ```yaml
-# Schema YAML utilisant les attributs custom du JsonSchemaFieldTypePlugin
+# YAML Schema using JsonSchemaFieldTypePlugin custom attributes
 core:
   model: ApiConfiguration
   table: api_configurations
@@ -69,7 +69,7 @@ core:
     settings:
       type: json_schema
       nullable: true
-      # Attributs custom du JsonSchemaFieldTypePlugin
+      # JsonSchemaFieldTypePlugin custom attributes
       schema:
         type: object
         properties:
@@ -106,12 +106,12 @@ core:
       schema_version: '1.0.0'
 ```
 
-## Exemple d'utilisation dans une application Laravel
+## Usage Example in a Laravel Application
 
-### 1. Registration du plugin
+### 1. Plugin Registration
 
 ```php
-// Dans AppServiceProvider.php
+// In AppServiceProvider.php
 public function boot()
 {
     $pluginManager = app(FieldTypePluginManager::class);
@@ -122,7 +122,7 @@ public function boot()
 }
 ```
 
-### 2. Validation des configurations
+### 2. Configuration Validation
 
 ```php
 use Grazulex\LaravelModelschema\Examples\UrlFieldTypePlugin;

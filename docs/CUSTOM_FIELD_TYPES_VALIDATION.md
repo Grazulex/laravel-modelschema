@@ -1,27 +1,27 @@
-# Validation des Types de Champs Personnalisés avec Architecture par Traits
+# Custom Field Types Validation with Trait-Based Architecture
 
-Le package Laravel ModelSchema inclut un système de validation robuste pour les types de champs personnalisés, maintenant étendu avec une **architecture par traits** qui permet de valider des configurations complexes et modulaires.
+The Laravel ModelSchema package includes a robust validation system for custom field types, now extended with a **trait-based architecture** that enables validation of complex and modular configurations.
 
-## Nouveau : Système de Validation par Traits
+## New: Trait-Based Validation System
 
-### Vue d'ensemble
-L'architecture par traits révolutionne la validation en permettant :
+### Overview
+The trait-based architecture revolutionizes validation by enabling:
 
-1. **Validation modulaire** : Chaque trait peut avoir ses propres règles de validation
-2. **Validation croisée** : Les traits peuvent interagir pour une validation contextuelle  
-3. **Validation dynamique** : Les règles s'adaptent selon la configuration des traits
-4. **Validation en couches** : Type, contraintes, logique métier, et validation personnalisée
+1. **Modular validation**: Each trait can have its own validation rules
+2. **Cross-trait validation**: Traits can interact for contextual validation  
+3. **Dynamic validation**: Rules adapt based on trait configuration
+4. **Layered validation**: Type, constraints, business logic, and custom validation
 
-### Configuration de Validation par Traits
+### Trait-Based Validation Configuration
 ```php
 // Dans un plugin FieldTypePlugin
 $this->customAttributeConfig = [
     'timeout' => [
-        'type' => 'integer',           // Validation de type
-        'min' => 1,                    // Contrainte minimum
-        'max' => 300,                  // Contrainte maximum
-        'required' => false,           // Obligation
-        'validator' => function($value): array {  // Validation personnalisée
+        'type' => 'integer',           // Type validation
+        'min' => 1,                    // Minimum constraint
+        'max' => 300,                  // Maximum constraint
+        'required' => false,           // Required
+        'validator' => function($value): array {  // Custom validation
             if ($value > 60 && !extension_loaded('curl')) {
                 return ['Timeout > 60s requires curl extension'];
             }
@@ -30,7 +30,7 @@ $this->customAttributeConfig = [
     ],
     'schemes' => [
         'type' => 'array',
-        'enum' => ['http', 'https', 'ftp'],    // Validation d'énumération
+        'enum' => ['http', 'https', 'ftp'],    // Enumeration validation
         'validator' => function($schemes): array {
             $errors = [];
             if (in_array('ftp', $schemes) && !in_array('ftps', $schemes)) {
@@ -42,7 +42,7 @@ $this->customAttributeConfig = [
 ];
 ```
 
-### Exemple de Plugin avec Validation par Traits
+### Plugin Example with Trait-Based Validation
 ```php
 class AdvancedUrlFieldTypePlugin extends FieldTypePlugin
 {
@@ -50,12 +50,12 @@ class AdvancedUrlFieldTypePlugin extends FieldTypePlugin
     {
         $errors = [];
         
-        // Validation croisée entre traits
+        // Cross-trait validation
         if (($config['verify_ssl'] ?? true) && in_array('http', $config['schemes'] ?? [])) {
             $errors[] = 'SSL verification cannot be enabled with HTTP scheme';
         }
         
-        // Validation conditionnelle basée sur les traits
+        // Conditional validation based on traits
         if (($config['virus_scan'] ?? false) && !in_array($config['storage_disk'] ?? 'local', ['local', 's3'])) {
             $errors[] = 'Virus scanning requires local or S3 storage';
         }
@@ -63,13 +63,13 @@ class AdvancedUrlFieldTypePlugin extends FieldTypePlugin
         return $errors;
     }
     
-    // Les validations individuelles des traits sont automatiques
+    // Individual trait validations are automatic
 }
 ```
 
-## Types de Champs Personnalisés Supportés (Legacy + Traits)
+## Supported Custom Field Types (Legacy + Traits)
 
-### Champs d'Énumération
+### Enumeration Fields
 
 #### Enum
 ```yaml
@@ -80,13 +80,13 @@ fields:
     default: 'active'
 ```
 
-**Validations automatiques :**
-- Présence obligatoire du tableau `values`
-- Valeurs doivent être des chaînes ou des nombres
-- Pas de valeurs dupliquées
-- Valeur par défaut doit être dans le tableau de valeurs
-- Avertissement si moins de 2 valeurs (suggestion boolean)
-- Avertissement si plus de 100 valeurs (suggestion table de lookup)
+**Automatic validations:**
+- Required presence of `values` array
+- Values must be strings or numbers
+- No duplicate values
+- Default value must be in the values array
+- Warning if less than 2 values (boolean suggestion)
+- Warning if more than 100 values (lookup table suggestion)
 
 #### Set / Multi-Select
 ```yaml
@@ -97,13 +97,13 @@ fields:
     default: ['read', 'write']
 ```
 
-**Validations automatiques :**
-- Hérite de toutes les validations d'enum
-- Maximum 64 valeurs (limitation MySQL SET)
-- Valeur par défaut peut être un tableau ou une chaîne séparée par des virgules
-- Validation que toutes les valeurs par défaut sont dans le tableau de valeurs
+**Automatic validations:**
+- Inherits all enum validations
+- Maximum 64 values (MySQL SET limitation)
+- Default value can be an array or comma-separated string
+- Validation that all default values are in the values array
 
-### Champs Géométriques
+### Geometric Fields
 
 #### Point
 ```yaml

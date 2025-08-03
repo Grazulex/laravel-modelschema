@@ -1,57 +1,57 @@
-# Laravel ModelSchema - Exemples et Documentation
+# Laravel ModelSchema - Examples and Documentation
 
-Ce répertoire contient une collection complète d'exemples pratiques pour Laravel ModelSchema, mettant l'accent sur la nouvelle **architecture par traits** et le système de plugins avancé.
+This directory contains a complete collection of practical examples for Laravel ModelSchema, focusing on the new **trait-based architecture** and advanced plugin system.
 
-## 🆕 Architecture par Traits - Nouveautés
+## 🆕 Trait-Based Architecture - New Features
 
-Laravel ModelSchema a évolué vers une architecture moderne basée sur les **traits de configuration** qui permet une personnalisation modulaire et flexible des types de champs.
+Laravel ModelSchema has evolved to a modern architecture based on **configuration traits** that enables modular and flexible customization of field types.
 
-### Changements Clés
-- **Options passées en traits** : Configuration modulaire via des objets de trait
-- **Plugins extensibles** : Système de plugins basé sur `FieldTypePlugin`
-- **Validation avancée** : Validation par trait avec contraintes et logique métier
-- **Configuration déclarative** : Définition des comportements via des tableaux de configuration
+### Key Changes
+- **Options passed as traits**: Modular configuration via trait objects
+- **Extensible plugins**: Plugin system based on `FieldTypePlugin`
+- **Advanced validation**: Trait-based validation with constraints and business logic
+- **Declarative configuration**: Behavior definition via configuration arrays
 
-## 📁 Structure des Exemples
+## 📁 Examples Structure
 
-### Core Examples (Usage Principal)
-- **[IntegrationExample.php](IntegrationExample.php)** - Workflow d'intégration complet avec traits
-- **[SchemaServiceApiExample.php](SchemaServiceApiExample.php)** - API SchemaService avec support des traits
-- **[TraitBasedPluginExample.php](TraitBasedPluginExample.php)** - Exemples avancés de plugins par traits
+### Core Examples (Main Usage)
+- **[IntegrationExample.php](IntegrationExample.php)** - Complete integration workflow with traits
+- **[SchemaServiceApiExample.php](SchemaServiceApiExample.php)** - SchemaService API with trait support
+- **[TraitBasedPluginExample.php](TraitBasedPluginExample.php)** - Advanced trait-based plugin examples
 
-### Plugin System Examples (Système de Plugins)
-- **[UrlFieldType.php](UrlFieldType.php)** - Plugin URL legacy (référence historique)
-- **Voir `src/Examples/UrlFieldTypePlugin.php`** - Plugin URL moderne avec traits
+### Plugin System Examples (Plugin System)
+- **[UrlFieldType.php](UrlFieldType.php)** - Legacy URL plugin (historical reference)
+- **See `src/Examples/UrlFieldTypePlugin.php`** - Modern URL plugin with traits
 
 ### Configuration Examples (Configuration)
-- **[CUSTOM_ATTRIBUTES.md](CUSTOM_ATTRIBUTES.md)** - Guide des attributs personnalisés par traits
-- **[FRAGMENTS.md](FRAGMENTS.md)** - Structure des fragments générés
+- **[CUSTOM_ATTRIBUTES.md](CUSTOM_ATTRIBUTES.md)** - Custom attributes guide with traits
+- **[FRAGMENTS.md](FRAGMENTS.md)** - Structure of generated fragments
 
-### Specialized Examples (Exemples Spécialisés)
-- **[ApiExtensions.php](ApiExtensions.php)** - Extensions API avancées
-- **[AutoValidationExample.php](AutoValidationExample.php)** - Validation automatique
-- **[CustomFieldTypesValidationExample.php](CustomFieldTypesValidationExample.php)** - Validation personnalisée
-- **[LoggingExample.php](LoggingExample.php)** - Système de logging
-- **[SecurityUsageExamples.php](SecurityUsageExamples.php)** - Sécurité et validation
-- **[YamlOptimizationExamples.php](YamlOptimizationExamples.php)** - Optimisation YAML
-- **[SchemaOptimizationUsage.php](SchemaOptimizationUsage.php)** - Optimisation de schémas
+### Specialized Examples (Specialized Examples)
+- **[ApiExtensions.php](ApiExtensions.php)** - Advanced API extensions
+- **[AutoValidationExample.php](AutoValidationExample.php)** - Automatic validation
+- **[CustomFieldTypesValidationExample.php](CustomFieldTypesValidationExample.php)** - Custom validation
+- **[LoggingExample.php](LoggingExample.php)** - Logging system
+- **[SecurityUsageExamples.php](SecurityUsageExamples.php)** - Security and validation
+- **[YamlOptimizationExamples.php](YamlOptimizationExamples.php)** - YAML optimization
+- **[SchemaOptimizationUsage.php](SchemaOptimizationUsage.php)** - Schema optimization
 
-## 🎯 Exemples par Cas d'Usage
+## 🎯 Examples by Use Case
 
-### 1. Débuter avec les Traits
+### 1. Getting Started with Traits
 ```bash
-# Commencer par comprendre l'architecture par traits
+# Start by understanding the trait-based architecture
 php examples/TraitBasedPluginExample.php
 
-# Voir l'intégration complète avec traits
+# See complete integration with traits
 php examples/IntegrationExample.php
 ```
 
-### 2. Créer un Plugin avec Traits
-Consultez `TraitBasedPluginExample.php` pour des exemples complets de plugins utilisant l'architecture par traits :
+### 2. Creating a Plugin with Traits
+Refer to `TraitBasedPluginExample.php` for complete examples of plugins using the trait-based architecture:
 
 ```php
-// Configuration de traits dans un plugin
+// Trait configuration in a plugin
 $this->customAttributeConfig = [
     'timeout' => [
         'type' => 'integer',
@@ -59,75 +59,75 @@ $this->customAttributeConfig = [
         'max' => 300,
         'default' => 30,
         'validator' => function($value): array {
-            // Logique de validation personnalisée
+            // Custom validation logic
             return [];
         }
     ]
 ];
 ```
 
-### 3. Utiliser l'API SchemaService avec Traits
+### 3. Using the SchemaService API with Traits
 ```bash
-# API complète avec exemples de traits
+# Complete API with trait examples
 php examples/SchemaServiceApiExample.php
 ```
 
-### 4. Configuration Avancée de Champs
-Consultez `CUSTOM_ATTRIBUTES.md` pour des exemples de configuration de traits :
+### 4. Advanced Field Configuration
+Refer to `CUSTOM_ATTRIBUTES.md` for trait configuration examples:
 
 ```yaml
-# YAML avec traits de configuration
+# YAML with configuration traits
 core:
   model: User
   fields:
     homepage:
       type: url
-      # Traits de configuration
+      # Configuration traits
       schemes: ["https", "http"]
       verify_ssl: true
       timeout: 45
       domain_whitelist: ["trusted.com"]
 ```
 
-## 🧩 Types de Traits Disponibles
+## 🧩 Available Trait Types
 
-### Traits de Validation
-- **Type traits** : `string`, `integer`, `boolean`, `array`
-- **Constraint traits** : `min`, `max`, `required`, `enum`
-- **Custom validator traits** : Validation personnalisée via callbacks
+### Validation Traits
+- **Type traits**: `string`, `integer`, `boolean`, `array`
+- **Constraint traits**: `min`, `max`, `required`, `enum`
+- **Custom validator traits**: Custom validation via callbacks
 
-### Traits de Transformation
-- **Value transformation** : Modification automatique des valeurs
-- **Default value traits** : Application de valeurs par défaut intelligentes
-- **Format traits** : Formatage automatique des données
+### Transformation Traits
+- **Value transformation**: Automatic value modification
+- **Default value traits**: Smart default value application
+- **Format traits**: Automatic data formatting
 
-### Traits de Comportement
-- **Storage traits** : Configuration de stockage (disk, path, encryption)
-- **Processing traits** : Traitement automatique (compression, thumbnails)
-- **Security traits** : Validation de sécurité (virus scan, SSL verification)
+### Behavior Traits
+- **Storage traits**: Storage configuration (disk, path, encryption)
+- **Processing traits**: Automatic processing (compression, thumbnails)
+- **Security traits**: Security validation (virus scan, SSL verification)
 
-## 📖 Documentation Complète
+## 📖 Complete Documentation
 
-### Guides Principaux
-- **[README.md](../README.md)** - Introduction générale avec architecture par traits
-- **[docs/FIELD_TYPE_PLUGINS.md](../docs/FIELD_TYPE_PLUGINS.md)** - Guide complet des plugins par traits
-- **[docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)** - Architecture trait-enhanced
-- **[docs/CUSTOM_FIELD_TYPES_VALIDATION.md](../docs/CUSTOM_FIELD_TYPES_VALIDATION.md)** - Validation par traits
+### Main Guides
+- **[README.md](../README.md)** - General introduction with trait-based architecture
+- **[docs/FIELD_TYPE_PLUGINS.md](../docs/FIELD_TYPE_PLUGINS.md)** - Complete guide to trait-based plugins
+- **[docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)** - Trait-enhanced architecture
+- **[docs/CUSTOM_FIELD_TYPES_VALIDATION.md](../docs/CUSTOM_FIELD_TYPES_VALIDATION.md)** - Trait-based validation
 
-### Exemples de Plugins Modernes
-1. **UrlFieldTypePlugin** - Plugin URL avec traits de sécurité et validation
-2. **FileUploadFieldTypePlugin** - Upload de fichiers avec traits de stockage et sécurité
-3. **GeographicCoordinatesFieldTypePlugin** - Coordonnées géographiques avec traits de validation
-4. **JsonSchemaFieldTypePlugin** - Validation JSON Schema avec traits configurables
+### Modern Plugin Examples
+1. **UrlFieldTypePlugin** - URL plugin with security and validation traits
+2. **FileUploadFieldTypePlugin** - File upload with storage and security traits
+3. **GeographicCoordinatesFieldTypePlugin** - Geographic coordinates with validation traits
+4. **JsonSchemaFieldTypePlugin** - JSON Schema validation with configurable traits
 
-## 🚀 Démarrage Rapide
+## 🚀 Quick Start
 
-### 1. Installation et Configuration
+### 1. Installation and Configuration
 ```bash
 composer require grazulex/laravel-modelschema
 ```
 
-### 2. Enregistrement de Plugins par Traits
+### 2. Trait-Based Plugin Registration
 ```php
 use Grazulex\LaravelModelschema\Support\FieldTypePluginManager;
 
@@ -136,7 +136,7 @@ $manager->registerPlugin(new UrlFieldTypePlugin());
 $manager->registerPlugin(new FileUploadFieldTypePlugin());
 ```
 
-### 3. Utilisation dans un Schema YAML
+### 3. Usage in YAML Schema
 ```yaml
 core:
   model: Website
@@ -144,7 +144,7 @@ core:
   fields:
     logo:
       type: file_upload
-      # Configuration par traits
+      # Trait-based configuration
       allowed_extensions: ["jpg", "png"]
       max_file_size: "2MB"
       auto_optimize: true
@@ -153,43 +153,43 @@ core:
         medium: "300x300"
 ```
 
-### 4. Génération de Fragments
+### 4. Fragment Generation
 ```php
 $schemaService = new SchemaService();
 $generationData = $schemaService->getGenerationDataFromCompleteYaml($yamlContent);
 
-// Les fragments incluent maintenant le traitement des traits
+// Fragments now include trait processing
 $modelFragment = json_decode($generationData['generation_data']['model']['json'], true);
 ```
 
-## 🔄 Migration depuis l'Ancien Système
+## 🔄 Migration from Legacy System
 
-Si vous utilisez l'ancien système de field types, consultez :
-- **[docs/MIGRATION.md](../docs/MIGRATION.md)** - Guide de migration
-- **[UrlFieldType.php](UrlFieldType.php)** - Exemple legacy pour référence
+If you are using the legacy field types system, refer to:
+- **[docs/MIGRATION.md](../docs/MIGRATION.md)** - Migration guide
+- **[UrlFieldType.php](UrlFieldType.php)** - Legacy example for reference
 
-### Avantages de l'Architecture par Traits
-✅ **Flexibilité** : Configuration modulaire et réutilisable  
-✅ **Validation avancée** : Validation par trait avec logique métier  
-✅ **Extensibilité** : Nouveaux traits ajoutables sans modification du core  
-✅ **Maintenabilité** : Séparation claire des responsabilités  
-✅ **Performance** : Traitement optimisé des configurations  
+### Trait-Based Architecture Benefits
+✅ **Flexibility**: Modular and reusable configuration  
+✅ **Advanced validation**: Trait-based validation with business logic  
+✅ **Extensibility**: New traits can be added without core modification  
+✅ **Maintainability**: Clear separation of responsibilities  
+✅ **Performance**: Optimized configuration processing  
 
-## 🤝 Contribuer
+## 🤝 Contributing
 
-Pour contribuer de nouveaux exemples ou améliorer les existants :
+To contribute new examples or improve existing ones:
 
-1. Créez des exemples utilisant l'architecture par traits
-2. Documentez les nouveaux traits et leur usage
-3. Ajoutez des tests pour valider les exemples
-4. Suivez les conventions de nommage établies
+1. Create examples using the trait-based architecture
+2. Document new traits and their usage
+3. Add tests to validate examples
+4. Follow established naming conventions
 
 ## 📞 Support
 
-- **Issues** : [GitHub Issues](https://github.com/Grazulex/laravel-modelschema/issues)
-- **Discussions** : [GitHub Discussions](https://github.com/Grazulex/laravel-modelschema/discussions)
-- **Documentation** : [Wiki](https://github.com/Grazulex/laravel-modelschema/wiki)
+- **Issues**: [GitHub Issues](https://github.com/Grazulex/laravel-modelschema/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Grazulex/laravel-modelschema/discussions)
+- **Documentation**: [Wiki](https://github.com/Grazulex/laravel-modelschema/wiki)
 
 ---
 
-**🎯 L'architecture par traits de Laravel ModelSchema offre une approche moderne et flexible pour la génération de schémas. Explorez les exemples pour découvrir toutes les possibilités !**
+**🎯 The trait-based architecture of Laravel ModelSchema offers a modern and flexible approach for schema generation. Explore the examples to discover all the possibilities!**
