@@ -16,7 +16,7 @@
 ### Services
 - **SchemaService** : API core pour parsing, validation, séparation core/extension
 - **GenerationService** : Coordonne tous les générateurs
-- **Générateurs spécialisés** : ModelGenerator, MigrationGenerator, RequestGenerator, ResourceGenerator, FactoryGenerator, SeederGenerator
+- **Générateurs spécialisés** : ModelGenerator, MigrationGenerator, RequestGenerator, ResourceGenerator, FactoryGenerator, SeederGenerator, ControllerGenerator, TestGenerator, PolicyGenerator
 
 ### API principale pour apps externes
 1. **`parseAndSeparateSchema(yamlContent)`** - Parse et sépare core/extension
@@ -72,8 +72,8 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 
 ### �🏗️ Architecture
 - **SchemaService** : API complète pour parsing, validation, séparation core/extension
-- **GenerationService** : Coordonne 7 générateurs spécialisés
-- **7 Générateurs** : Model, Migration, Requests, Resources, Factory, Seeder, **Controllers**, **Tests**
+- **GenerationService** : Coordonne 8 générateurs spécialisés
+- **8 Générateurs** : Model, Migration, Requests, Resources, Factory, Seeder, **Controllers**, **Tests**, **Policies**
 - **Structure "core"** : Séparation claire entre logique core et extensions d'applications
 
 ### 🧩 Fragments et intégration
@@ -83,10 +83,10 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - **Validation robuste** : Erreurs détaillées et validation core uniquement
 
 ### ✨ Tests et qualité
-- **232 tests** passés avec 1352 assertions
+- **414 tests** passés avec 1964 assertions
 - **Couverture complète** : Tous les services, générateurs, et APIs
 - **Tests d'intégration** : Simulation d'usage par apps parent
-- **Performance validée** : 8.90s pour toute la suite de tests
+- **Performance validée** : 14.75s pour toute la suite de tests
 
 ### 📖 Documentation complète
 - **README** : Vue d'ensemble et exemples d'utilisation

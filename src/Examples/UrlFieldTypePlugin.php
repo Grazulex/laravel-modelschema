@@ -214,7 +214,7 @@ class UrlFieldTypePlugin extends FieldTypePlugin
         $schemes = $config['schemes'] ?? ['http', 'https'];
 
         $parsedUrl = parse_url($url);
-        if ($parsedUrl === 0 || ($parsedUrl === '' || $parsedUrl === '0') || $parsedUrl === [] || $parsedUrl === false || $parsedUrl === null || ! isset($parsedUrl['scheme'])) {
+        if ($parsedUrl === false || ! isset($parsedUrl['scheme'])) {
             return false;
         }
 

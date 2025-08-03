@@ -23,8 +23,9 @@ Laravel ModelSchema provides **schema parsing, validation, and fragment generati
 - **🔍 Schema Parsing & Validation** - Parse YAML schemas with core/extension separation
 - **🧩 Fragment Generation** - Generate insertable JSON/YAML fragments for Laravel artifacts  
 - **🏗️ Clean Architecture** - Separate core schema responsibilities from app-specific generation
-- **🔄 Multi-Generator Support** - Models, Migrations, Requests, Resources, Factories, Seeders
-- **� Integration API** - Complete workflow for external packages (TurboMaker, Arc, etc.)
+- **🔄 Multi-Generator Support** - Models, Migrations, Requests, Resources, Factories, Seeders, Controllers, Tests, Policies
+- **🔌 Plugin System** - Extensible field type plugins for custom functionality
+- **📊 Integration API** - Complete workflow for external packages (TurboMaker, Arc, etc.)
 - **✨ Extensible Design** - Custom field types, generators, and validation rules
 
 ## � Installation
@@ -39,7 +40,8 @@ composer require grazulex/laravel-modelschema
 
 - **`SchemaService`** - Main API for parsing, validation, and core/extension separation
 - **`GenerationService`** - Coordinates all generators to produce insertable fragments
-- **6 Specialized Generators** - Model, Migration, Request, Resource, Factory, Seeder
+- **8 Specialized Generators** - Model, Migration, Request, Resource, Factory, Seeder, Controller, Test, Policy
+- **`FieldTypePluginManager`** - Manages extensible field type plugins for custom functionality
 
 ### Schema Structure
 
@@ -154,6 +156,59 @@ $fragments = $generationService->generateAll($schema);
 | `generateAll()` | Generate all fragments for schema | `array` |
 | `generateSingle()` | Generate single generator fragment | `array` |
 | `getAvailableGenerators()` | List available generators | `array` |
+
+## 🔌 Field Type Plugin System
+
+Laravel ModelSchema features an extensible plugin system for custom field types:
+
+### Plugin Manager
+
+```php
+use Grazulex\LaravelModelschema\Support\FieldTypePluginManager;
+
+$manager = new FieldTypePluginManager();
+
+// Register a custom plugin
+$manager->registerPlugin(new CustomFieldTypePlugin());
+
+// Auto-discover plugins in specific paths
+$manager->discoverPlugins([
+    'App\\FieldTypes\\*Plugin',
+    'Custom\\Packages\\*FieldTypePlugin'
+]);
+
+// Get all registered plugins
+$plugins = $manager->getAllPlugins();
+```
+
+### Creating Custom Plugins
+
+```php
+use Grazulex\LaravelModelschema\Support\FieldTypePlugin;
+
+class UrlFieldTypePlugin extends FieldTypePlugin
+{
+    public function getType(): string
+    {
+        return 'url';
+    }
+
+    public function validateConfig(array $config): array
+    {
+        $errors = [];
+        if (isset($config['schemes'])) {
+            foreach ($config['schemes'] as $scheme) {
+                if (!in_array($scheme, ['http', 'https', 'ftp'])) {
+                    $errors[] = "Invalid URL scheme: {$scheme}";
+                }
+            }
+        }
+        return $errors;
+    }
+}
+```
+
+**📖 See [Field Type Plugins Documentation](docs/FIELD_TYPE_PLUGINS.md) for complete implementation guide.**
 
 ## 📁 Example Schema Files
 
@@ -288,10 +343,24 @@ composer test-coverage
 
 ## 📚 Documentation
 
-- **📖 [Complete Documentation](https://github.com/Grazulex/laravel-modelschema/wiki)** - Full API reference and guides
-- **🚀 [Getting Started](https://github.com/Grazulex/laravel-modelschema/wiki/Getting-Started)** - Installation and basic usage
-- **🏗️ [Architecture Guide](https://github.com/Grazulex/laravel-modelschema/wiki/Architecture)** - Understanding the package structure
-- **🧩 [Integration Guide](https://github.com/Grazulex/laravel-modelschema/wiki/Integration)** - How to integrate with parent applications
+### Core Documentation
+- **🏗️ [Architecture Guide](docs/ARCHITECTURE.md)** - Understanding the package structure and design
+- **� [Migration Guide](docs/MIGRATION.md)** - Upgrading from previous versions
+- **📊 [Fragment Examples](examples/FRAGMENTS.md)** - Understanding generated fragments
+
+### Field Types & Extensions  
+- **� [Field Types Guide](docs/FIELD_TYPES.md)** - Complete field types reference
+- **🔌 [Field Type Plugins](docs/FIELD_TYPE_PLUGINS.md)** - Creating custom field type plugins
+- **✅ [Custom Field Validation](docs/CUSTOM_FIELD_TYPES_VALIDATION.md)** - Validating custom field types
+
+### Advanced Features
+- **📝 [Logging System](docs/LOGGING.md)** - Comprehensive logging and debugging
+- **⚡ [Enhanced Features](docs/enhanced-features.md)** - Advanced capabilities overview
+
+### Integration Examples
+- **🔗 [Integration Example](examples/IntegrationExample.php)** - Complete integration workflow
+- **🛠️ [Schema Service API](examples/SchemaServiceApiExample.php)** - API usage examples
+- **📋 [API Extensions](examples/ApiExtensions.php)** - Extended API implementations
 
 ## 🤝 Contributing
 

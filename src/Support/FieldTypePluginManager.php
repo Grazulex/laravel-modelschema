@@ -303,7 +303,7 @@ class FieldTypePluginManager
 
             foreach ($files as $file) {
                 $plugin = $this->loadPluginFromFile($file);
-                if ($plugin instanceof \Grazulex\LaravelModelschema\Contracts\FieldTypeInterface) {
+                if ($plugin instanceof FieldTypeInterface) {
                     $discovered[] = $plugin;
                 }
             }

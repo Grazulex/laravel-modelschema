@@ -3,13 +3,27 @@
 declare(strict_types=1);
 
 /**
- * Example of a custom field type implementation
- * This file demonstrates how developers can create their own field types
+ * LEGACY EXAMPLE - Traditional Field Type Implementation
  *
- * To use this example:
+ * ⚠️  This example shows the legacy approach for creating custom field types.
+ * ✅  For new implementations, use the Plugin System instead:
+ *     - See: src/Examples/UrlFieldTypePlugin.php
+ *     - Documentation: docs/FIELD_TYPE_PLUGINS.md
+ *
+ * This file demonstrates the traditional way developers could create field types
+ * by extending AbstractFieldType directly. While this still works, the new
+ * Plugin System provides better features:
+ *
+ * - Auto-discovery
+ * - Dependency management
+ * - Configuration validation
+ * - Metadata handling
+ * - Better integration
+ *
+ * To use this legacy approach:
  * 1. Copy this file to your app/FieldTypes directory
  * 2. Adjust the namespace to App\FieldTypes
- * 3. The field type will be automatically discovered and registered
+ * 3. Register manually with FieldTypeRegistry
  */
 
 namespace App\FieldTypes;
@@ -17,8 +31,10 @@ namespace App\FieldTypes;
 use Grazulex\LaravelModelschema\FieldTypes\AbstractFieldType;
 
 /**
- * URL field type implementation
+ * LEGACY: URL field type implementation
  * Example of a specialized string field with URL validation
+ *
+ * 🔄 For modern plugin approach, see: src/Examples/UrlFieldTypePlugin.php
  */
 final class UrlFieldType extends AbstractFieldType
 {
@@ -43,7 +59,7 @@ final class UrlFieldType extends AbstractFieldType
         return 'string';
     }
 
-    public function getCastType(): ?string
+    public function getCastType(array $config = []): ?string
     {
         return 'string';
     }

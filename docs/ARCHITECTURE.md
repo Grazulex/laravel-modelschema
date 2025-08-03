@@ -45,13 +45,21 @@ The package uses a "core" structure in YAML to clearly separate core schema data
 │ ├─ generateSingle()                                        │
 │ └─ getAvailableGenerators()                               │
 │                                                             │
-│ 6 Specialized Generators                                   │
+│ 8 Specialized Generators                                   │
 │ ├─ ModelGenerator                                          │
 │ ├─ MigrationGenerator                                      │
 │ ├─ RequestGenerator                                        │
 │ ├─ ResourceGenerator                                       │
 │ ├─ FactoryGenerator                                        │
-│ └─ SeederGenerator                                         │
+│ ├─ SeederGenerator                                         │
+│ ├─ ControllerGenerator                                     │
+│ ├─ TestGenerator                                           │
+│ └─ PolicyGenerator                                         │
+│                                                             │
+│ Field Type Plugin System                                   │
+│ ├─ FieldTypePluginManager                                  │
+│ ├─ FieldTypePlugin (Base Class)                           │
+│ └─ Custom Plugin Discovery                                 │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -104,6 +112,9 @@ Base class providing common functionality:
 4. **ResourceGenerator** - API resource transformation fragments
 5. **FactoryGenerator** - Model factory fragments
 6. **SeederGenerator** - Database seeder fragments
+7. **ControllerGenerator** - API and web controller fragments
+8. **TestGenerator** - Feature and unit test fragments  
+9. **PolicyGenerator** - Authorization policy fragments
 
 ## Schema Structure
 
@@ -234,6 +245,74 @@ $parentAppGenerator->generateModelFile($modelFragment);
 $parentAppGenerator->generateMigrationFile($migrationFragment);
 // ... etc for all generators
 ```
+
+## Field Type Plugin System
+
+The package features an extensible plugin system for creating custom field types beyond the built-in ones.
+
+### Plugin Architecture
+
+```
+FieldTypePluginManager
+├─ Plugin Registration
+├─ Auto-Discovery
+├─ Dependency Management
+└─ Metadata Handling
+
+FieldTypePlugin (Abstract Base)
+├─ Configuration Validation
+├─ Value Transformation  
+├─ Migration Generation
+└─ Validation Rules
+```
+
+### Plugin Manager
+
+The `FieldTypePluginManager` handles the complete lifecycle of field type plugins:
+
+- **Registration**: Manual and automatic plugin registration
+- **Discovery**: Auto-discovery using configurable patterns
+- **Validation**: Plugin dependency and configuration validation
+- **Metadata**: Plugin metadata management and caching
+
+### Creating Plugins
+
+Custom field type plugins extend the `FieldTypePlugin` abstract class:
+
+```php
+use Grazulex\LaravelModelschema\Support\FieldTypePlugin;
+
+class CustomFieldTypePlugin extends FieldTypePlugin
+{
+    public function getType(): string
+    {
+        return 'custom_type';
+    }
+
+    public function validateConfig(array $config): array
+    {
+        // Custom validation logic
+        return $errors;
+    }
+
+    public function transformValue($value, array $config)
+    {
+        // Value transformation logic
+        return $transformedValue;
+    }
+}
+```
+
+### Integration with Core System
+
+Plugins integrate seamlessly with the existing field type system:
+
+1. **Registration**: Plugins are registered with the `FieldTypeRegistry`
+2. **Discovery**: Automatic discovery using namespace patterns
+3. **Validation**: Full integration with schema validation
+4. **Generation**: Automatic inclusion in all generators
+
+**See [Field Type Plugins Documentation](FIELD_TYPE_PLUGINS.md) for complete implementation guide.**
 
 ## Stub System
 
