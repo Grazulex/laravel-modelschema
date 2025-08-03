@@ -8,6 +8,7 @@ use Exception;
 use Grazulex\LaravelModelschema\Exceptions\SchemaException;
 use Grazulex\LaravelModelschema\Schema\ModelSchema;
 use Grazulex\LaravelModelschema\Services\Validation\EnhancedValidationService;
+use Grazulex\LaravelModelschema\Support\FieldTypePluginManager;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 
@@ -23,15 +24,19 @@ class SchemaService
 
     protected EnhancedValidationService $enhancedValidator;
 
+    protected AutoValidationService $autoValidator;
+
     public function __construct(
         protected Filesystem $filesystem = new Filesystem(),
         ?SchemaCacheService $cache = null,
         ?LoggingService $logger = null,
-        ?EnhancedValidationService $enhancedValidator = null
+        ?EnhancedValidationService $enhancedValidator = null,
+        ?AutoValidationService $autoValidator = null
     ) {
         $this->cache = $cache ?? new SchemaCacheService();
         $this->logger = $logger ?? new LoggingService();
         $this->enhancedValidator = $enhancedValidator ?? new EnhancedValidationService();
+        $this->autoValidator = $autoValidator ?? new AutoValidationService(new FieldTypePluginManager());
     }
 
     /**
@@ -785,6 +790,81 @@ class SchemaService
     }
 
     /**
+     * Generate Laravel validation rules for a schema automatically
+     * Based on field types and custom attributes
+     */
+    public function generateValidationRules(ModelSchema $schema): array
+    {
+        $this->logger->logOperationStart('generateValidationRules', [
+            'model' => $schema->name,
+            'table' => $schema->table,
+            'field_count' => count($schema->getAllFields()),
+        ]);
+
+        try {
+            $rules = $this->autoValidator->generateValidationRules($schema);
+
+            $this->logger->logOperationEnd('generateValidationRules', [
+                'rules_count' => count($rules),
+                'fields_with_rules' => array_keys($rules),
+            ]);
+
+            return $rules;
+        } catch (Exception $e) {
+            $this->logger->logError('Failed to generate validation rules: '.$e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Generate Laravel validation rules from YAML content
+     */
+    public function generateValidationRulesFromYaml(string $yamlContent, string $modelName = 'UnknownModel'): array
+    {
+        $schema = $this->parseYamlContent($yamlContent, $modelName);
+
+        return $this->generateValidationRules($schema);
+    }
+
+    /**
+     * Generate Laravel validation rules from YAML file
+     */
+    public function generateValidationRulesFromFile(string $filePath): array
+    {
+        $schema = $this->parseYamlFile($filePath);
+
+        return $this->generateValidationRules($schema);
+    }
+
+    /**
+     * Generate validation rules in Laravel request format
+     */
+    public function generateValidationRulesForRequest(ModelSchema $schema, string $format = 'array'): array|string
+    {
+        return $this->autoValidator->generateValidationRulesForRequest($schema, $format);
+    }
+
+    /**
+     * Generate user-friendly validation messages
+     */
+    public function generateValidationMessages(ModelSchema $schema): array
+    {
+        return $this->autoValidator->generateValidationMessages($schema);
+    }
+
+    /**
+     * Generate complete validation configuration (rules + messages)
+     */
+    public function generateValidationConfig(ModelSchema $schema): array
+    {
+        return [
+            'rules' => $this->generateValidationRules($schema),
+            'messages' => $this->generateValidationMessages($schema),
+            'attributes' => $this->generateAttributeNames($schema),
+        ];
+    }
+
+    /**
      * Extract description from stub file comments
      */
     protected function getStubDescription(string $stubPath): string
@@ -818,5 +898,20 @@ class SchemaService
         }
 
         return $total;
+    }
+
+    /**
+     * Generate human-readable attribute names for validation
+     */
+    private function generateAttributeNames(ModelSchema $schema): array
+    {
+        $attributes = [];
+
+        foreach ($schema->getAllFields() as $field) {
+            $displayName = ucwords(str_replace('_', ' ', $field->name));
+            $attributes[$field->name] = $displayName;
+        }
+
+        return $attributes;
     }
 }

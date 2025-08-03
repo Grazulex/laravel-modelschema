@@ -83,10 +83,10 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - **Validation robuste** : Erreurs détaillées et validation core uniquement
 
 ### ✨ Tests et qualité
-- **425 tests** passés avec 2003 assertions
+- **449 tests** passés avec 2055 assertions
 - **Couverture complète** : Tous les services, générateurs, et APIs
 - **Tests d'intégration** : Simulation d'usage par apps parent
-- **Performance validée** : 15.26s pour toute la suite de tests
+- **Performance validée** : 2.12s pour toute la suite de tests
 
 ### 📖 Documentation complète
 - **README** : Vue d'ensemble et exemples d'utilisation
@@ -135,7 +135,7 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - [x] **Exemple de type personnalisé** : UrlFieldType dans examples/
 - [x] **Système de plugins pour types de champs personnalisés** ✅ - TERMINÉ : Architecture complète avec FieldTypePlugin, FieldTypePluginManager, découverte automatique, gestion des dépendances, exemples (URL, JsonSchema), tests complets (58 tests) et documentation
 - [x] **Support des attributs de champs personnalisés** ✅ - TERMINÉ : Système complet d'attributs custom avec validation (type, enum, min/max, requis, callbacks), exemples concrets (7 attributs pour UrlFieldType, 8 pour JsonSchemaFieldType), intégration transparente avec attributs Laravel standards, et 11 tests complets
-- [ ] Validation automatique basée sur les types de champs
+- [x] **Validation automatique basée sur les types de champs** ✅ - TERMINÉ : AutoValidationService complet avec génération automatique de règles Laravel basées sur types de champs et attributs custom, intégration avec système plugins, support des contraintes spatiales/enum/foreign keys, génération de messages et configuration validation complète, 24 tests complets, intégré dans SchemaService
 
 ### Performance et optimisation
 - [ ] Optimiser le parsing YAML pour gros schémas
