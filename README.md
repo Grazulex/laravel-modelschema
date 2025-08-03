@@ -165,9 +165,9 @@ $fragments = $generationService->generateAll($schema);
 | `generateSingle()` | Generate single generator fragment | `array` |
 | `getAvailableGenerators()` | List available generators | `array` |
 
-## 🔌 Field Type Plugin System
+## 🔌 Trait-Based Field Type Plugin System
 
-Laravel ModelSchema features an extensible plugin system for custom field types:
+Laravel ModelSchema features an extensible plugin system using a trait-based architecture for custom field types. This modern approach provides powerful customization through traits and configuration objects.
 
 ### Plugin Manager
 
@@ -179,7 +179,7 @@ $manager = new FieldTypePluginManager();
 // Register a custom plugin
 $manager->registerPlugin(new CustomFieldTypePlugin());
 
-// Auto-discover plugins in specific paths
+// Auto-discover plugins in specific paths  
 $manager->discoverPlugins([
     'App\\FieldTypes\\*Plugin',
     'Custom\\Packages\\*FieldTypePlugin'
@@ -189,31 +189,38 @@ $manager->discoverPlugins([
 $plugins = $manager->getAllPlugins();
 ```
 
-### Creating Custom Plugins
+### Creating Custom Plugins with Traits
+
+The new trait-based approach allows you to define field options through configuration arrays rather than hardcoded properties:
 
 ```php
 use Grazulex\LaravelModelschema\Support\FieldTypePlugin;
 
 class UrlFieldTypePlugin extends FieldTypePlugin
 {
+    protected string $version = '1.0.0';
+    protected string $author = 'Your Name';
+    protected string $description = 'Advanced URL field with validation traits';
+
     public function __construct()
     {
-        // Define custom attributes with validation
+        // Define custom attributes using trait-based configuration
         $this->customAttributes = [
-            'schemes', 'verify_ssl', 'timeout', 'domain_whitelist'
+            'schemes', 'verify_ssl', 'timeout', 'domain_whitelist', 'max_redirects'
         ];
         
+        // Configure each attribute with validation traits
         $this->customAttributeConfig = [
             'schemes' => [
                 'type' => 'array',
                 'default' => ['http', 'https'],
                 'enum' => ['http', 'https', 'ftp', 'ftps'],
-                'description' => 'Allowed URL schemes'
+                'description' => 'Allowed URL schemes for validation'
             ],
             'verify_ssl' => [
                 'type' => 'boolean',
                 'default' => true,
-                'description' => 'Enable SSL verification'
+                'description' => 'Enable SSL certificate verification'
             ],
             'timeout' => [
                 'type' => 'integer',
@@ -221,6 +228,20 @@ class UrlFieldTypePlugin extends FieldTypePlugin
                 'max' => 300,
                 'default' => 30,
                 'description' => 'Connection timeout in seconds'
+            ],
+            'domain_whitelist' => [
+                'type' => 'array',
+                'required' => false,
+                'validator' => function ($value): array {
+                    // Custom validation trait for domain lists
+                    if (!is_array($value)) return ['must be an array'];
+                    foreach ($value as $domain) {
+                        if (!filter_var("http://{$domain}", FILTER_VALIDATE_URL)) {
+                            return ["Invalid domain: {$domain}"];
+                        }
+                    }
+                    return [];
+                }
             ]
         ];
     }
@@ -229,20 +250,61 @@ class UrlFieldTypePlugin extends FieldTypePlugin
     {
         return 'url';
     }
+    
+    public function getAliases(): array
+    {
+        return ['website', 'link', 'uri'];
+    }
 }
 ```
 
-### Custom Attributes System
+### Trait-Based Custom Attributes System
 
-The plugin system supports sophisticated custom attributes with:
+The trait-based plugin system supports sophisticated custom attributes through configuration objects:
 
-- **Type validation**: `string`, `int`, `boolean`, `array`, etc.
-- **Constraints**: `min`, `max`, `required`, `enum` values
-- **Default values**: Automatically applied if not provided
-- **Custom validators**: Callback functions for complex validation
-- **Integration**: Seamlessly merged with Laravel's standard attributes
+- **Type validation traits**: `string`, `int`, `boolean`, `array`, etc.
+- **Constraint traits**: `min`, `max`, `required`, `enum` values  
+- **Default value traits**: Automatically applied if not provided
+- **Custom validator traits**: Callback functions for complex validation logic
+- **Transformation traits**: Custom value transformation before storage
+- **Integration traits**: Seamlessly merged with Laravel's standard attributes
 
-**📖 See [Field Type Plugins Documentation](docs/FIELD_TYPE_PLUGINS.md) for complete implementation guide.**
+#### Advanced Trait Examples
+
+```php
+// Numeric validation traits
+'timeout' => [
+    'type' => 'integer',
+    'min' => 1,
+    'max' => 300,
+    'default' => 30,
+    'transform' => fn($value) => (int) $value // Type transformation trait
+],
+
+// Array validation traits with enum constraints
+'schemes' => [
+    'type' => 'array',
+    'enum' => ['http', 'https', 'ftp', 'ftps'],
+    'default' => ['http', 'https'],
+    'validator' => function($schemes): array {
+        // Custom validation trait
+        return array_filter($schemes, fn($s) => in_array($s, ['http', 'https']));
+    }
+],
+
+// Complex custom validator traits
+'domain_pattern' => [
+    'type' => 'string',
+    'validator' => function($pattern): array {
+        if (!preg_match('/^\/.*\/[gimxs]*$/', $pattern)) {
+            return ['Domain pattern must be a valid regex'];
+        }
+        return [];
+    }
+]
+```
+
+**📖 See [Field Type Plugins Documentation](docs/FIELD_TYPE_PLUGINS.md) for complete trait-based implementation guide.**
 
 ## 📁 Example Schema Files
 

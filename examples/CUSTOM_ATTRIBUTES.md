@@ -1,6 +1,35 @@
-# Exemples d'utilisation des Attributs Custom
+# Exemples d'Attributs Personnalisés avec Architecture par Traits
 
-Ce fichier présente des exemples pratiques d'utilisation du système d'attributs custom dans les plugins de types de champs.
+Ce fichier présente des exemples pratiques d'utilisation du système d'attributs personnalisés basé sur les **traits** dans les plugins de types de champs de Laravel ModelSchema.
+
+## Architecture par Traits : Vue d'Ensemble
+
+Le nouveau système utilise une approche par **traits de configuration** qui permet :
+
+1. **Modularité** : Chaque attribut est défini comme un trait réutilisable
+2. **Flexibilité** : Les traits peuvent être combinés et configurés dynamiquement  
+3. **Validation avancée** : Chaque trait a ses propres règles de validation
+4. **Transformation** : Les traits peuvent transformer les valeurs automatiquement
+5. **Documentation** : Chaque trait est autodocumenté
+
+### Structure d'un Trait d'Attribut
+
+```php
+// Dans un plugin FieldTypePlugin
+$this->customAttributeConfig = [
+    'nom_du_trait' => [
+        'type' => 'string|int|boolean|array',    // Type de données du trait
+        'required' => true|false,                // Trait obligatoire ou optionnel
+        'default' => $valeurParDefaut,           // Valeur par défaut du trait
+        'min' => $minimum,                       // Contrainte minimum (numérique)
+        'max' => $maximum,                       // Contrainte maximum (numérique)
+        'enum' => [$valeursAutorisees],          // Valeurs autorisées pour ce trait
+        'validator' => $validateur,              // Fonction de validation personnalisée
+        'transform' => $transformateur,          // Fonction de transformation
+        'description' => 'Description du trait' // Documentation du trait
+    ]
+];
+```
 
 ## Configuration d'un champ URL avec attributs custom
 
