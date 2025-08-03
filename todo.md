@@ -46,13 +46,6 @@ $data = $schemaService->getGenerationDataFromCompleteYaml($yaml);
 $modelData = json_decode($data['generation_data']['model']['json'], true);
 ```
 
-## a faire :
-
-### APIs de validation et d'introspection
-- [ ] `validateYamlAndReturnResult(yamlContent)` - Fonction pour valider un YAML et retourner le résultat en JSON/PHP
-- [ ] `listYamlElements(yamlContent)` - Fonction pour lister tous les éléments d'un YAML et retourner le résultat en JSON/PHP  
-- [ ] `getElementInFinalFormat(yamlContent, elementType)` - Fonction pour retourner un élément spécifique (model, migration, resource, etc.) dans son format final
-
 ## 📚 Documentation et exemples - COMPLETÉ ✅
 
 - [x] README.md mis à jour avec l'architecture actuelle
@@ -67,23 +60,33 @@ $modelData = json_decode($data['generation_data']['model']['json'], true);
 
 Le package Laravel ModelSchema est **architecturalement complet** et prêt pour la production :
 
-### 🏗️ Architecture
+### � Philosophie du package
+**Ce package est une LIBRAIRIE DE SERVICES** qui fournit des APIs pour :
+- ✅ Parser et valider des schémas YAML
+- ✅ Générer des fragments JSON/YAML insertables
+- ✅ Séparer core/extension data
+- ✅ Fournir des données structurées pour génération
+
+**Il ne génère PAS de fichiers PHP** - Cette responsabilité appartient aux applications parent (TurboMaker, Arc, etc.)
+**Il ne fournit PAS de CLI** - Les applications parent implémentent leurs propres commandes en utilisant les APIs
+
+### �🏗️ Architecture
 - **SchemaService** : API complète pour parsing, validation, séparation core/extension
-- **GenerationService** : Coordonne 6 générateurs spécialisés
-- **6 Générateurs** : Model, Migration, Requests, Resources, Factory, Seeder
+- **GenerationService** : Coordonne 7 générateurs spécialisés
+- **7 Générateurs** : Model, Migration, Requests, Resources, Factory, Seeder, **Controllers**
 - **Structure "core"** : Séparation claire entre logique core et extensions d'applications
 
 ### 🧩 Fragments et intégration
 - **Fragments insertables** : JSON/YAML prêts pour intégration dans apps parent
 - **API d'intégration** : Workflow complet pour TurboMaker, Arc, etc.
-- **12 stubs** : Templates pour génération de fragments
+- **14 stubs** : Templates pour génération de fragments (y compris controllers)
 - **Validation robuste** : Erreurs détaillées et validation core uniquement
 
 ### ✨ Tests et qualité
-- **151 tests** passés avec 743 assertions
+- **197 tests** passés avec 1208 assertions
 - **Couverture complète** : Tous les services, générateurs, et APIs
 - **Tests d'intégration** : Simulation d'usage par apps parent
-- **Performance validée** : 4.11s pour toute la suite de tests
+- **Performance validée** : 7.86s pour toute la suite de tests
 
 ### 📖 Documentation complète
 - **README** : Vue d'ensemble et exemples d'utilisation
@@ -92,39 +95,50 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - **Guide de migration** : Passage de v1 à v2
 - **Documentation des fragments** : Structure et utilisation
 
-## a faire :
-
-### APIs de validation et d'introspection
+### 🔧 APIs de validation et d'introspection - COMPLÉTÉES ✅
 - [x] **IMPLÉMENTÉES DANS** `examples/ApiExtensions.php`
 - [x] `validateYamlAndReturnResult(yamlContent)` - Fonction pour valider un YAML et retourner le résultat en JSON/PHP
 - [x] `listYamlElements(yamlContent)` - Fonction pour lister tous les éléments d'un YAML et retourner le résultat en JSON/PHP  
 - [x] `getElementInFinalFormat(yamlContent, elementType)` - Fonction pour retourner un élément spécifique (model, migration, resource, etc.) dans son format final
 
-### Documentation et exemples
+## À faire 📋
 
-### Améliorations des générateurs
-- [ ] Ajouter générateur de Controllers (API et Web)
+### 🚀 Priorités immédiates (Prêtes à implémenter)
+1. **EnumFieldType et SetFieldType** - Configuration existe, classes à créer
+2. **Implémentation du cache** - Configuration existe, logique à ajouter dans les services
+3. **Générateur de Tests** - Stubs et générateur à créer pour fournir fragments JSON/YAML
+4. **Générateur de Policies** - Stubs et générateur à créer pour fournir fragments JSON/YAML
+
+### 🎯 Améliorations importantes Améliorations des générateurs
+- [x] **Ajouter générateur de Controllers (API et Web)** ✅ - DÉJÀ IMPLÉMENTÉ
 - [ ] Ajouter générateur de Tests (Feature et Unit)
 - [ ] Améliorer générateur de Resources avec relations imbriquées
 - [ ] Ajouter support des Form Requests personnalisées
 - [ ] Ajouter générateur de Policies
 
-### Validation et robustesse
+### Validation et robustesse - PARTIELLEMENT COMPLÉTÉ ✅
+- [x] **Service de validation étendu** : EnhancedValidationService avec détection des dépendances circulaires, validation des types, analyse de performance
 - [ ] Améliorer validation des relations (vérifier que les modèles cibles existent)
 - [ ] Ajouter validation des règles Laravel personnalisées
 - [ ] Ajouter validation des types de champs personnalisés
-- [ ] Implémenter cache pour les schémas parsés
+- [x] **Configuration cache pour les schémas parsés** ✅ - Configuration présente dans `config/modelschema.php`
+- [ ] **Implémentation cache** - Logique de mise en cache à implémenter dans les services
 - [ ] Ajouter logs détaillés pour le debugging
 
-### Extensions du système de champs
-- [ ] Ajouter plus de types de champs (enum, set, geometry, etc.)
+### Extensions du système de champs - PARTIELLEMENT COMPLÉTÉ ✅
+- [x] **Nombreux types de champs disponibles** : string, text, longText, mediumText, integer, bigInteger, smallInteger, tinyInteger, unsignedBigInteger, float, double, decimal, boolean, date, dateTime, time, timestamp, json, uuid, email, binary, morphs, foreignId
+- [x] **Types avancés configurés mais pas implémentés** : enum, set (listés dans config et ModelSchemaManager)
+- [ ] **Implémenter classes manquantes** : EnumFieldType, SetFieldType 
+- [ ] **Ajouter types géométriques** : geometry, point, polygon
+- [x] **Exemple de type personnalisé** : UrlFieldType dans examples/
 - [ ] Système de plugins pour types de champs personnalisés
 - [ ] Support des attributs de champs personnalisés
 - [ ] Validation automatique basée sur les types de champs
 
 ### Performance et optimisation
 - [ ] Optimiser le parsing YAML pour gros schémas
-- [ ] Implémenter mise en cache des stubs
+- [x] **Configuration mise en cache des stubs** ✅ - Configuration présente
+- [ ] **Implémentation mise en cache** - À implémenter dans le code
 - [ ] Ajouter support du processing asynchrone
 - [ ] Optimiser génération de fragments multiples
 
@@ -134,11 +148,12 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - [ ] Support des schémas versionnés
 - [ ] Migration automatique de schémas anciens
 
-### Outils de développement
-- [ ] CLI pour valider des schémas
-- [ ] CLI pour générer des exemples de schémas
-- [ ] Outil de visualisation des schémas
-- [ ] Outil de comparaison de schémas (diff)
+### APIs d'introspection et d'analyse (responsabilité des apps parent)
+- [x] **APIs de validation** ✅ - Implémentées dans `examples/ApiExtensions.php`
+- [x] **APIs de listing d'éléments** ✅ - Disponibles via SchemaService
+- [x] **APIs de comparaison** ✅ - Via validateYamlAndReturnResult()
+- [ ] API pour différences entre schémas (schema diff)
+- [ ] API pour suggestions d'optimisation
 
 ### Tests et qualité
 - [ ] Ajouter tests de performance
