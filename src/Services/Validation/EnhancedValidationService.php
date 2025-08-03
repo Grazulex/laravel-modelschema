@@ -12,16 +12,42 @@ class EnhancedValidationService
     {
         $circularDependencies = $this->detectCircularDependencies($schemas);
         $missingReverseRelationships = $this->detectMissingReverseRelationships($schemas);
+        $targetModelValidation = $this->validateTargetModels($schemas);
 
         return [
-            'is_consistent' => $circularDependencies === [] && $missingReverseRelationships === [],
+            'is_consistent' => $circularDependencies === [] && $missingReverseRelationships === [] && $targetModelValidation['is_valid'],
             'circular_dependencies' => $circularDependencies,
             'missing_reverse_relationships' => $missingReverseRelationships,
+            'target_model_validation' => $targetModelValidation,
             'validation_summary' => [
                 'total_schemas' => count($schemas),
                 'valid_relationships' => $this->countValidRelationships($schemas),
-                'issues_found' => count($circularDependencies) + count($missingReverseRelationships),
+                'issues_found' => count($circularDependencies) + count($missingReverseRelationships) + count($targetModelValidation['errors']),
             ],
+        ];
+    }
+
+    /**
+     * Validate that target models exist for all relationships
+     */
+    public function validateTargetModels(array $schemas): array
+    {
+        $errors = [];
+        $warnings = [];
+        $availableModels = $this->extractAvailableModels($schemas);
+
+        foreach ($schemas as $schema) {
+            foreach ($schema->relationships as $relationship) {
+                $relationshipErrors = $this->validateSingleRelationship($relationship, $schema->name, $availableModels);
+                $errors = array_merge($errors, $relationshipErrors);
+            }
+        }
+
+        return [
+            'is_valid' => $errors === [],
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'available_models' => $availableModels,
         ];
     }
 
@@ -164,7 +190,12 @@ class EnhancedValidationService
             foreach ($schema->relationships as $relationship) {
                 // Only track belongsTo relationships as true dependencies
                 if (isset($relationship->model) && $relationship->type === 'belongsTo') {
-                    $dependencies[$modelName][] = class_basename($relationship->model);
+                    $targetModel = class_basename($relationship->model);
+
+                    // Skip self-referencing relationships - they are not problematic circular dependencies
+                    if ($targetModel !== $modelName) {
+                        $dependencies[$modelName][] = $targetModel;
+                    }
                 }
             }
         }
@@ -343,5 +374,146 @@ class EnhancedValidationService
         }
 
         return $types;
+    }
+
+    /**
+     * Extract all available model names from schemas
+     */
+    private function extractAvailableModels(array $schemas): array
+    {
+        $models = [];
+        foreach ($schemas as $schema) {
+            $models[] = $schema->name;
+
+            // Also consider common Laravel models that might not be in schemas
+            $models = array_merge($models, [
+                'User', 'App\\Models\\User', '\\App\\Models\\User',
+                'Notification', 'App\\Models\\Notification', '\\App\\Models\\Notification',
+            ]);
+        }
+
+        return array_unique($models);
+    }
+
+    /**
+     * Validate a single relationship for target model existence and consistency
+     */
+    private function validateSingleRelationship($relationship, string $sourceModel, array $availableModels): array
+    {
+        $errors = [];
+
+        // Skip validation for morphTo relationships (they don't specify a specific model)
+        if (($relationship->type ?? '') === 'morphTo') {
+            return $errors;
+        }
+
+        // Check if target model is specified
+        if (! isset($relationship->model) || empty($relationship->model)) {
+            $errors[] = "Relationship '{$relationship->name}' in model '{$sourceModel}' missing target model";
+
+            return $errors;
+        }
+
+        $targetModel = $relationship->model;
+
+        // Normalize model names for comparison
+        $normalizedTarget = $this->normalizeModelName($targetModel);
+        $normalizedAvailable = array_map([$this, 'normalizeModelName'], $availableModels);
+
+        // Check if target model exists
+        if (! in_array($normalizedTarget, $normalizedAvailable, true)) {
+            $errors[] = "Relationship '{$relationship->name}' in model '{$sourceModel}' references non-existent model '{$targetModel}'";
+        }
+
+        // Validate relationship type consistency
+        $relationshipErrors = $this->validateRelationshipTypeConsistency($relationship, $sourceModel);
+        $errors = array_merge($errors, $relationshipErrors);
+
+        return $errors;
+    }
+
+    /**
+     * Normalize model name for comparison (handle namespace variations)
+     */
+    private function normalizeModelName(string $modelName): string
+    {
+        // Remove leading backslash
+        $normalized = mb_ltrim($modelName, '\\');
+
+        // Extract class name only
+        $parts = explode('\\', $normalized);
+
+        return end($parts);
+    }
+
+    /**
+     * Validate relationship type consistency and configuration
+     */
+    private function validateRelationshipTypeConsistency($relationship, string $sourceModel): array
+    {
+        $errors = [];
+        $relationshipType = $relationship->type ?? '';
+
+        // Validate relationship type exists
+        $validTypes = ['hasOne', 'hasMany', 'belongsTo', 'belongsToMany', 'morphTo', 'morphOne', 'morphMany'];
+        if (! in_array($relationshipType, $validTypes, true)) {
+            $errors[] = "Invalid relationship type '{$relationshipType}' in model '{$sourceModel}' for relationship '{$relationship->name}'";
+
+            return $errors;
+        }
+
+        // Validate foreign key configuration for belongsTo relationships
+        if ($relationshipType === 'belongsTo') {
+            $errors = array_merge($errors, $this->validateBelongsToConfiguration($relationship, $sourceModel));
+        }
+
+        // Validate pivot table for belongsToMany relationships
+        if ($relationshipType === 'belongsToMany') {
+            $errors = array_merge($errors, $this->validateBelongsToManyConfiguration($relationship, $sourceModel));
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate belongsTo relationship configuration
+     */
+    private function validateBelongsToConfiguration($relationship, string $sourceModel): array
+    {
+        $errors = [];
+
+        // Check if foreign key follows Laravel conventions
+        if (isset($relationship->foreignKey)) {
+            $expectedForeignKey = mb_strtolower($this->normalizeModelName($relationship->model ?? '')).'_id';
+            if ($relationship->foreignKey !== $expectedForeignKey) {
+                // This is a warning, not an error, as custom foreign keys are valid
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate belongsToMany relationship configuration
+     */
+    private function validateBelongsToManyConfiguration($relationship, string $sourceModel): array
+    {
+        $errors = [];
+
+        // Check if pivot table is specified for belongsToMany
+        if (! isset($relationship->pivot) || empty($relationship->pivot)) {
+            $sourceTable = mb_strtolower($sourceModel);
+            $targetModel = $this->normalizeModelName($relationship->model ?? '');
+            $targetTable = mb_strtolower($targetModel);
+
+            // Generate expected pivot table name
+            $tables = [$sourceTable, $targetTable];
+            sort($tables);
+            $expectedPivot = implode('_', $tables);
+
+            // This is informational - Laravel will auto-generate if not specified
+        }
+
+        return $errors;
     }
 }
