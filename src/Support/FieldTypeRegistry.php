@@ -17,12 +17,15 @@ use Grazulex\LaravelModelschema\FieldTypes\EmailFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\EnumFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\FloatFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\ForeignIdFieldType;
+use Grazulex\LaravelModelschema\FieldTypes\GeometryFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\IntegerFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\JsonFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\LongTextFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\MediumIntegerFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\MediumTextFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\MorphsFieldType;
+use Grazulex\LaravelModelschema\FieldTypes\PointFieldType;
+use Grazulex\LaravelModelschema\FieldTypes\PolygonFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\SetFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\SmallIntegerFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\StringFieldType;
@@ -86,6 +89,11 @@ class FieldTypeRegistry
         self::register('foreignId', ForeignIdFieldType::class);
         self::register('morphs', MorphsFieldType::class);
 
+        // Geometric field types
+        self::register('point', PointFieldType::class);
+        self::register('geometry', GeometryFieldType::class);
+        self::register('polygon', PolygonFieldType::class);
+
         // Register aliases
         self::registerAlias('varchar', 'string');
         self::registerAlias('char', 'string');
@@ -114,6 +122,17 @@ class FieldTypeRegistry
         self::registerAlias('foreign_id', 'foreignId');
         self::registerAlias('fk', 'foreignId');
         self::registerAlias('polymorphic', 'morphs');
+
+        // Geometric field type aliases
+        self::registerAlias('geopoint', 'point');
+        self::registerAlias('coordinates', 'point');
+        self::registerAlias('latlng', 'point');
+        self::registerAlias('geom', 'geometry');
+        self::registerAlias('spatial', 'geometry');
+        self::registerAlias('geo', 'geometry');
+        self::registerAlias('area', 'polygon');
+        self::registerAlias('boundary', 'polygon');
+        self::registerAlias('region', 'polygon');
     }
 
     /**

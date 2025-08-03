@@ -317,10 +317,10 @@ class ControllerGenerator extends AbstractGenerator
             'update' => [],
         ];
 
-        foreach ($schema->getAllFields() as $field) {
-            if (! in_array($field->name, ['id', 'created_at', 'updated_at', 'deleted_at'])) {
-                $fieldRules = $field->rules ?? [];
+        foreach ($schema->getFillableFields() as $field) {
+            $fieldRules = $field->getValidationRules();
 
+            if (! empty($fieldRules)) {
                 // Add unique rule modifications for update
                 $updateRules = array_map(function ($rule) use ($field) {
                     if (str_contains($rule, 'unique:')) {

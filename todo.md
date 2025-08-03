@@ -114,7 +114,7 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - [x] Ajouter générateur de Tests (Feature et Unit) ✅ - TERMINÉ avec TestGenerator intégré
 - [x] Ajouter générateur de Policies ✅ - TERMINÉ avec PolicyGenerator intégré
 - [x] **Améliorer générateur de Resources avec relations imbriquées** ✅ - TERMINÉ avec relations multi-niveaux, contrôle de profondeur, prévention des références circulaires, et champs optimisés par niveau
-- [ ] Ajouter support des Form Requests personnalisées
+- [x] **Ajouter support des Form Requests personnalisées** ✅ - TERMINÉ avec RequestGenerator amélioré : autorisation customisable, messages de validation personnalisés, validation de relations, règles conditionnelles, méthodes personnalisées et support multi-requests
 
 ### Validation et robustesse - PARTIELLEMENT COMPLÉTÉ ✅
 - [x] **Service de validation étendu** : EnhancedValidationService avec détection des dépendances circulaires, validation des types, analyse de performance
@@ -130,7 +130,8 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - [x] **EnumFieldType et SetFieldType** ✅ - IMPLÉMENTÉS avec tests complets
 - [x] **Types enum/set configurés et implémentés** : classes complètes avec validation, transformation, et génération
 - [x] **Alias pour nouveaux types** : enumeration, multi_select, multiple_choice
-- [ ] **Ajouter types géométriques** : geometry, point, polygon
+- [x] **Types géométriques** ✅ - IMPLÉMENTÉS : PointFieldType, GeometryFieldType, PolygonFieldType avec support WKT, SRID, calculs spatiaux et tests complets
+- [x] **Alias pour types géométriques** ✅ - geopoint, coordinates, latlng, geom, spatial, geo, area, boundary, region
 - [x] **Exemple de type personnalisé** : UrlFieldType dans examples/
 - [ ] Système de plugins pour types de champs personnalisés
 - [ ] Support des attributs de champs personnalisés

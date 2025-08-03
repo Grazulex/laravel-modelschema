@@ -13,9 +13,24 @@ This is a complete architectural rewrite focused on fragment-based generation fo
 
 ### Added
 - **Fragment-Based Generation System**
-  - 6 specialized generators (Model, Migration, Requests, Resources, Factory, Seeder)
+  - 8 specialized generators (Model, Migration, Requests, Resources, Factory, Seeder, Controllers, Tests, Policies)
   - JSON and YAML output formats for all generators
   - Insertable fragments for parent application integration
+
+- **Enhanced Request Generator with Custom Form Requests Support** ⭐ NEW
+  - **Configurable Authorization Logic**: Different authorization rules for store/update/custom actions
+  - **Custom Validation Messages**: Field-specific validation messages based on field types and rules
+  - **Relationship Validation**: Automatic validation rules for belongsTo, belongsToMany, hasMany relationships
+  - **Conditional Validation Rules**: Dynamic validation based on field dependencies (e.g., enum values)
+  - **Custom Methods Generation**: prepareForValidation(), custom validation methods, and action-specific logic
+  - **Multi-Request Support**: Generate custom request types (bulk operations, publish actions, etc.)
+  - **Enhanced/Traditional Modes**: Backward compatibility with traditional structure
+  - **Complete Test Coverage**: 5 comprehensive tests validating all enhanced features
+
+- **Code Quality Improvements**
+  - **PHPStan Level 9 Compliance**: Fixed all static analysis errors for production-ready code
+  - **GeometryFieldType Constructor**: Added proper initialization and config handling
+  - **Type Safety**: Resolved undefined property access and logical comparisons
 
 - **Core/Extension Separation**
   - New YAML structure with `core:` section
