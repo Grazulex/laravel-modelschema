@@ -51,6 +51,54 @@ class EnhancedValidationService
         ];
     }
 
+    /**
+     * Validate Laravel custom validation rules used in field configurations
+     */
+    public function validateLaravelRules(array $schemas): array
+    {
+        $errors = [];
+        $warnings = [];
+        $validatedRules = [];
+
+        foreach ($schemas as $schema) {
+            foreach ($schema->getAllFields() as $field) {
+                // Check both 'validation' and 'rules' properties
+                $customRules = array_merge($field->validation, $field->rules);
+
+                foreach ($customRules as $customRule) {
+                    $ruleValidation = $this->validateSingleLaravelRule($customRule, $field, $schema, $schemas);
+
+                    if (! $ruleValidation['is_valid']) {
+                        $errors = array_merge($errors, $ruleValidation['errors']);
+                    }
+
+                    $warnings = array_merge($warnings, $ruleValidation['warnings']);
+                    $validatedRules[] = [
+                        'field' => $field->name,
+                        'model' => $schema->name,
+                        'rule' => $customRule,
+                        'is_valid' => $ruleValidation['is_valid'],
+                        'rule_type' => $ruleValidation['rule_type'],
+                        'is_custom' => true,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'is_valid' => $errors === [],
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'validated_rules' => $validatedRules,
+            'statistics' => [
+                'total_rules' => count($validatedRules),
+                'valid_rules' => count(array_filter($validatedRules, fn ($r) => $r['is_valid'])),
+                'invalid_rules' => count(array_filter($validatedRules, fn ($r): bool => ! $r['is_valid'])),
+                'custom_rules' => count($validatedRules), // All rules are custom since we only check custom ones
+            ],
+        ];
+    }
+
     public function validateFieldTypes(ModelSchema $schema): array
     {
         $fields = $schema->getAllFields();
@@ -139,6 +187,11 @@ class EnhancedValidationService
         $fieldValidation = $this->validateFieldTypes($schema);
         $errors = array_merge($errors, $fieldValidation['field_errors']);
 
+        // Validate Laravel custom rules
+        $laravelRulesValidation = $this->validateLaravelRules([$schema]);
+        $errors = array_merge($errors, $laravelRulesValidation['errors']);
+        $warnings = array_merge($warnings, $laravelRulesValidation['warnings']);
+
         // Get recommendations from performance analysis
         $performanceAnalysis = $this->analyzePerformance($schema);
         $recommendations = $performanceAnalysis['recommendations'];
@@ -150,6 +203,7 @@ class EnhancedValidationService
             'recommendations' => $recommendations,
             'performance_analysis' => $performanceAnalysis,
             'field_validation' => $fieldValidation,
+            'laravel_rules_validation' => $laravelRulesValidation,
             'relationship_validation' => [
                 'relationship_types' => $this->analyzeRelationshipTypesForSchema($schema),
                 'total_relationships' => count($schema->relationships),
@@ -171,6 +225,7 @@ class EnhancedValidationService
             'recommendations' => $schemaValidation['recommendations'],
             'performance_analysis' => $performanceAnalysis,
             'field_validation' => $fieldValidation,
+            'laravel_rules_validation' => $schemaValidation['laravel_rules_validation'],
             'relationship_validation' => [
                 'relationship_types' => $this->analyzeRelationshipTypesForSchema($schema),
                 'total_relationships' => count($schema->relationships),
@@ -446,6 +501,338 @@ class EnhancedValidationService
     }
 
     /**
+     * Validate a single Laravel validation rule
+     */
+    private function validateSingleLaravelRule(string $rule, object $field, object $schema, array $schemas): array
+    {
+        $errors = [];
+        $warnings = [];
+        $ruleType = $this->identifyRuleType($rule);
+
+        switch ($ruleType) {
+            case 'exists':
+                $existsValidation = $this->validateExistsRule($rule, $field, $schema, $schemas);
+                $errors = array_merge($errors, $existsValidation['errors']);
+                $warnings = array_merge($warnings, $existsValidation['warnings']);
+                break;
+
+            case 'unique':
+                $uniqueValidation = $this->validateUniqueRule($rule, $field, $schema, $schemas);
+                $errors = array_merge($errors, $uniqueValidation['errors']);
+                $warnings = array_merge($warnings, $uniqueValidation['warnings']);
+                break;
+
+            case 'in':
+                $inValidation = $this->validateInRule($rule, $field);
+                $errors = array_merge($errors, $inValidation['errors']);
+                $warnings = array_merge($warnings, $inValidation['warnings']);
+                break;
+
+            case 'regex':
+                $regexValidation = $this->validateRegexRule($rule, $field);
+                $errors = array_merge($errors, $regexValidation['errors']);
+                $warnings = array_merge($warnings, $regexValidation['warnings']);
+                break;
+
+            case 'size_constraint':
+                $sizeValidation = $this->validateSizeConstraintRule($rule, $field);
+                $errors = array_merge($errors, $sizeValidation['errors']);
+                $warnings = array_merge($warnings, $sizeValidation['warnings']);
+                break;
+
+            case 'conditional':
+                $conditionalValidation = $this->validateConditionalRule($rule, $field, $schema);
+                $errors = array_merge($errors, $conditionalValidation['errors']);
+                $warnings = array_merge($warnings, $conditionalValidation['warnings']);
+                break;
+
+            case 'basic':
+                // Basic rules like 'required', 'nullable', 'string' are always valid
+                break;
+
+            case 'unknown':
+                $warnings[] = "Unknown validation rule '{$rule}' for field '{$field->name}' in model '{$schema->name}'";
+                break;
+        }
+
+        return [
+            'is_valid' => $errors === [],
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'rule_type' => $ruleType,
+        ];
+    }
+
+    /**
+     * Identify the type of validation rule
+     */
+    private function identifyRuleType(string $rule): string
+    {
+        // Handle rule with parameters (e.g., "exists:users,id")
+        $ruleName = explode(':', $rule)[0];
+
+        // Database rules
+        if (in_array($ruleName, ['exists', 'unique'])) {
+            return $ruleName;
+        }
+
+        // List validation
+        if ($ruleName === 'in' || $ruleName === 'not_in') {
+            return 'in';
+        }
+
+        // Pattern matching
+        if ($ruleName === 'regex' || $ruleName === 'not_regex') {
+            return 'regex';
+        }
+
+        // Size constraints
+        if (in_array($ruleName, ['min', 'max', 'between', 'size', 'digits', 'digits_between'])) {
+            return 'size_constraint';
+        }
+
+        // Conditional rules
+        if (in_array($ruleName, ['required_if', 'required_unless', 'required_with', 'required_without', 'required_with_all', 'required_without_all'])) {
+            return 'conditional';
+        }
+
+        // Basic validation rules
+        if (in_array($ruleName, [
+            'required', 'nullable', 'string', 'integer', 'numeric', 'boolean', 'array', 'object',
+            'email', 'url', 'uuid', 'date', 'date_format', 'before', 'after', 'confirmed',
+            'alpha', 'alpha_dash', 'alpha_num', 'ip', 'ipv4', 'ipv6', 'json', 'file', 'image',
+        ])) {
+            return 'basic';
+        }
+
+        return 'unknown';
+    }
+
+    /**
+     * Validate exists rule (e.g., "exists:users,id")
+     */
+    private function validateExistsRule(string $rule, object $field, object $schema, array $schemas): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        // Parse the exists rule
+        $parts = explode(':', $rule, 2);
+        if (count($parts) < 2) {
+            $errors[] = "Invalid exists rule format for field '{$field->name}' in model '{$schema->name}': '{$rule}'";
+
+            return ['errors' => $errors, 'warnings' => $warnings];
+        }
+
+        $parameters = explode(',', $parts[1]);
+        $tableName = $parameters[0];
+        $columnName = $parameters[1] ?? 'id';
+
+        // Find matching schema for the table
+        $targetSchema = $this->findSchemaByTableName($tableName, $schemas);
+
+        if (! $targetSchema) {
+            $errors[] = "Exists rule references non-existent table '{$tableName}' for field '{$field->name}' in model '{$schema->name}'";
+
+            return ['errors' => $errors, 'warnings' => $warnings];
+        }
+
+        // Check if column exists in target schema
+        $targetField = $this->findFieldInSchema($columnName, $targetSchema);
+        if (! $targetField) {
+            $errors[] = "Exists rule references non-existent column '{$columnName}' in table '{$tableName}' for field '{$field->name}' in model '{$schema->name}'";
+        }
+
+        // Type compatibility warning
+        if ($targetField && $field->type !== $targetField->type) {
+            $warnings[] = "Type mismatch in exists rule: field '{$field->name}' ({$field->type}) references '{$columnName}' ({$targetField->type}) in table '{$tableName}'";
+        }
+
+        return ['errors' => $errors, 'warnings' => $warnings];
+    }
+
+    /**
+     * Validate unique rule (e.g., "unique:users,email")
+     */
+    private function validateUniqueRule(string $rule, object $field, object $schema, array $schemas): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        // Parse the unique rule
+        $parts = explode(':', $rule, 2);
+        if (count($parts) < 2) {
+            $errors[] = "Invalid unique rule format for field '{$field->name}' in model '{$schema->name}': '{$rule}'";
+
+            return ['errors' => $errors, 'warnings' => $warnings];
+        }
+
+        $parameters = explode(',', $parts[1]);
+        $tableName = $parameters[0];
+        $columnName = $parameters[1] ?? $field->name;
+
+        // Validate table exists
+        $targetSchema = $this->findSchemaByTableName($tableName, $schemas);
+        if (! $targetSchema) {
+            $errors[] = "Unique rule references non-existent table '{$tableName}' for field '{$field->name}' in model '{$schema->name}'";
+
+            return ['errors' => $errors, 'warnings' => $warnings];
+        }
+
+        // Validate column exists
+        $targetField = $this->findFieldInSchema($columnName, $targetSchema);
+        if (! $targetField) {
+            $errors[] = "Unique rule references non-existent column '{$columnName}' in table '{$tableName}' for field '{$field->name}' in model '{$schema->name}'";
+        }
+
+        // Check if field is suitable for unique constraint
+        if ($targetField && in_array($targetField->type, ['text', 'longText', 'mediumText', 'json'])) {
+            $warnings[] = "Unique rule on field '{$columnName}' of type '{$targetField->type}' may cause performance issues";
+        }
+
+        return ['errors' => $errors, 'warnings' => $warnings];
+    }
+
+    /**
+     * Validate 'in' rule (e.g., "in:active,inactive,pending")
+     */
+    private function validateInRule(string $rule, object $field): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        $parts = explode(':', $rule, 2);
+        if (count($parts) < 2) {
+            $errors[] = "Invalid 'in' rule format for field '{$field->name}': '{$rule}'";
+
+            return ['errors' => $errors, 'warnings' => $warnings];
+        }
+
+        $values = explode(',', $parts[1]);
+        if (count($values) === 1 && mb_trim($values[0]) === '') {
+            $errors[] = "Empty values list in 'in' rule for field '{$field->name}': '{$rule}'";
+        }
+
+        // Warn about potential performance issues with too many values
+        if (count($values) > 50) {
+            $warnings[] = 'Large number of values ('.count($values).") in 'in' rule for field '{$field->name}' may impact performance";
+        }
+
+        return ['errors' => $errors, 'warnings' => $warnings];
+    }
+
+    /**
+     * Validate regex rule (e.g., "regex:/^[a-zA-Z0-9]+$/")
+     */
+    private function validateRegexRule(string $rule, object $field): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        $parts = explode(':', $rule, 2);
+        if (count($parts) < 2) {
+            $errors[] = "Invalid regex rule format for field '{$field->name}': '{$rule}'";
+
+            return ['errors' => $errors, 'warnings' => $warnings];
+        }
+
+        $pattern = $parts[1];
+
+        // Validate regex syntax
+        if (@preg_match($pattern, '') === false) {
+            $errors[] = "Invalid regex pattern for field '{$field->name}': '{$pattern}'";
+        }
+
+        return ['errors' => $errors, 'warnings' => $warnings];
+    }
+
+    /**
+     * Validate size constraint rules (e.g., "min:5", "max:100", "between:1,10")
+     */
+    private function validateSizeConstraintRule(string $rule, object $field): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        $parts = explode(':', $rule, 2);
+        $ruleName = $parts[0];
+        $parameter = $parts[1] ?? null;
+
+        if (in_array($ruleName, ['min', 'max', 'size', 'digits']) && ! is_numeric($parameter)) {
+            $errors[] = "Invalid parameter for '{$ruleName}' rule on field '{$field->name}': '{$parameter}'";
+        }
+
+        if (in_array($ruleName, ['between', 'digits_between'])) {
+            $values = explode(',', $parameter ?? '');
+            if (count($values) !== 2 || ! is_numeric($values[0]) || ! is_numeric($values[1])) {
+                $errors[] = "Invalid parameters for '{$ruleName}' rule on field '{$field->name}': '{$parameter}'";
+            } elseif ((float) $values[0] >= (float) $values[1]) {
+                $errors[] = "Invalid range for '{$ruleName}' rule on field '{$field->name}': minimum must be less than maximum";
+            }
+        }
+
+        return ['errors' => $errors, 'warnings' => $warnings];
+    }
+
+    /**
+     * Validate conditional rules (e.g., "required_if:status,active")
+     */
+    private function validateConditionalRule(string $rule, object $field, object $schema): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        $parts = explode(':', $rule, 2);
+        $ruleName = $parts[0];
+        $parameters = $parts[1] ?? '';
+
+        if ($parameters === '' || $parameters === '0') {
+            $errors[] = "Missing parameters for conditional rule '{$ruleName}' on field '{$field->name}'";
+
+            return ['errors' => $errors, 'warnings' => $warnings];
+        }
+
+        $paramList = explode(',', $parameters);
+        $referencedField = $paramList[0];
+
+        // Check if referenced field exists in the same schema
+        $targetField = $this->findFieldInSchema($referencedField, $schema);
+        if (! $targetField) {
+            $errors[] = "Conditional rule '{$ruleName}' on field '{$field->name}' references non-existent field '{$referencedField}'";
+        }
+
+        return ['errors' => $errors, 'warnings' => $warnings];
+    }
+
+    /**
+     * Find schema by table name
+     */
+    private function findSchemaByTableName(string $tableName, array $schemas): ?object
+    {
+        foreach ($schemas as $schema) {
+            if (($schema->table ?? mb_strtolower($schema->name)) === $tableName) {
+                return $schema;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find field in schema by name
+     */
+    private function findFieldInSchema(string $fieldName, object $schema): ?object
+    {
+        foreach ($schema->getAllFields() as $field) {
+            if ($field->name === $fieldName) {
+                return $field;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Validate relationship type consistency and configuration
      */
     private function validateRelationshipTypeConsistency(object $relationship, string $sourceModel): array
@@ -477,7 +864,7 @@ class EnhancedValidationService
     /**
      * Validate belongsTo relationship configuration
      */
-    private function validateBelongsToConfiguration($relationship): array
+    private function validateBelongsToConfiguration(object $relationship): array
     {
         $errors = [];
 
@@ -495,7 +882,7 @@ class EnhancedValidationService
     /**
      * Validate belongsToMany relationship configuration
      */
-    private function validateBelongsToManyConfiguration($relationship, string $sourceModel): array
+    private function validateBelongsToManyConfiguration(object $relationship, string $sourceModel): array
     {
         $errors = [];
 
