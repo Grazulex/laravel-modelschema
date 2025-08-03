@@ -26,17 +26,21 @@ class SchemaService
 
     protected AutoValidationService $autoValidator;
 
+    protected SchemaDiffService $diffService;
+
     public function __construct(
         protected Filesystem $filesystem = new Filesystem(),
         ?SchemaCacheService $cache = null,
         ?LoggingService $logger = null,
         ?EnhancedValidationService $enhancedValidator = null,
-        ?AutoValidationService $autoValidator = null
+        ?AutoValidationService $autoValidator = null,
+        ?SchemaDiffService $diffService = null
     ) {
         $this->cache = $cache ?? new SchemaCacheService();
         $this->logger = $logger ?? new LoggingService();
         $this->enhancedValidator = $enhancedValidator ?? new EnhancedValidationService();
         $this->autoValidator = $autoValidator ?? new AutoValidationService(new FieldTypePluginManager());
+        $this->diffService = $diffService ?? new SchemaDiffService($this->logger);
     }
 
     /**
@@ -862,6 +866,86 @@ class SchemaService
             'messages' => $this->generateValidationMessages($schema),
             'attributes' => $this->generateAttributeNames($schema),
         ];
+    }
+
+    /**
+     * Compare two schemas and return a comprehensive diff
+     */
+    public function compareSchemas(ModelSchema $oldSchema, ModelSchema $newSchema): array
+    {
+        return $this->diffService->compareSchemas($oldSchema, $newSchema);
+    }
+
+    /**
+     * Compare schemas from YAML files
+     */
+    public function compareSchemasFromFiles(string $oldFilePath, string $newFilePath): array
+    {
+        $oldSchema = $this->parseYamlFile($oldFilePath);
+        $newSchema = $this->parseYamlFile($newFilePath);
+
+        return $this->compareSchemas($oldSchema, $newSchema);
+    }
+
+    /**
+     * Compare schemas from YAML content
+     */
+    public function compareSchemasFromYaml(string $oldYaml, string $newYaml, string $modelName = 'UnknownModel'): array
+    {
+        $oldSchema = $this->parseYamlContent($oldYaml, $modelName);
+        $newSchema = $this->parseYamlContent($newYaml, $modelName);
+
+        return $this->compareSchemas($oldSchema, $newSchema);
+    }
+
+    /**
+     * Generate a human-readable diff report
+     */
+    public function generateSchemaDiffReport(ModelSchema $oldSchema, ModelSchema $newSchema): string
+    {
+        $diff = $this->compareSchemas($oldSchema, $newSchema);
+
+        return $this->diffService->generateDiffReport($diff);
+    }
+
+    /**
+     * Generate diff report from YAML files
+     */
+    public function generateDiffReportFromFiles(string $oldFilePath, string $newFilePath): string
+    {
+        $diff = $this->compareSchemasFromFiles($oldFilePath, $newFilePath);
+
+        return $this->diffService->generateDiffReport($diff);
+    }
+
+    /**
+     * Check if schema changes are breaking
+     */
+    public function hasBreakingChanges(ModelSchema $oldSchema, ModelSchema $newSchema): bool
+    {
+        $diff = $this->compareSchemas($oldSchema, $newSchema);
+
+        return ! empty($diff['breaking_changes']);
+    }
+
+    /**
+     * Get migration impact analysis
+     */
+    public function getMigrationImpact(ModelSchema $oldSchema, ModelSchema $newSchema): array
+    {
+        $diff = $this->compareSchemas($oldSchema, $newSchema);
+
+        return $diff['migration_impact'] ?? [];
+    }
+
+    /**
+     * Get validation changes between schemas
+     */
+    public function getValidationChanges(ModelSchema $oldSchema, ModelSchema $newSchema): array
+    {
+        $diff = $this->compareSchemas($oldSchema, $newSchema);
+
+        return $diff['validation_impact'] ?? [];
     }
 
     /**
