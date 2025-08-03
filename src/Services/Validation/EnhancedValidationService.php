@@ -427,9 +427,8 @@ class EnhancedValidationService
 
         // Validate relationship type consistency
         $relationshipErrors = $this->validateRelationshipTypeConsistency($relationship, $sourceModel);
-        $errors = array_merge($errors, $relationshipErrors);
 
-        return $errors;
+        return array_merge($errors, $relationshipErrors);
     }
 
     /**
@@ -449,7 +448,7 @@ class EnhancedValidationService
     /**
      * Validate relationship type consistency and configuration
      */
-    private function validateRelationshipTypeConsistency($relationship, string $sourceModel): array
+    private function validateRelationshipTypeConsistency(object $relationship, string $sourceModel): array
     {
         $errors = [];
         $relationshipType = $relationship->type ?? '';
@@ -464,12 +463,12 @@ class EnhancedValidationService
 
         // Validate foreign key configuration for belongsTo relationships
         if ($relationshipType === 'belongsTo') {
-            $errors = array_merge($errors, $this->validateBelongsToConfiguration($relationship, $sourceModel));
+            $errors = array_merge($errors, $this->validateBelongsToConfiguration($relationship));
         }
 
         // Validate pivot table for belongsToMany relationships
         if ($relationshipType === 'belongsToMany') {
-            $errors = array_merge($errors, $this->validateBelongsToManyConfiguration($relationship, $sourceModel));
+            return array_merge($errors, $this->validateBelongsToManyConfiguration($relationship, $sourceModel));
         }
 
         return $errors;
@@ -478,7 +477,7 @@ class EnhancedValidationService
     /**
      * Validate belongsTo relationship configuration
      */
-    private function validateBelongsToConfiguration($relationship, string $sourceModel): array
+    private function validateBelongsToConfiguration($relationship): array
     {
         $errors = [];
 
