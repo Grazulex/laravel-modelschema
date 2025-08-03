@@ -52,8 +52,9 @@ describe('GenerationService with Enhanced Generators', function () {
         expect($generators)->toContain('seeder');
         expect($generators)->toContain('controller');
         expect($generators)->toContain('test');
+        expect($generators)->toContain('policies');
 
-        expect(count($generators))->toBe(8); // Maintenant 8 avec TestGenerator
+        expect(count($generators))->toBe(9); // Maintenant 9 avec TestGenerator et PolicyGenerator
     });
 
     it('can generate controllers through the service', function () {

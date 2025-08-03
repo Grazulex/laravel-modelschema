@@ -11,6 +11,7 @@ use Grazulex\LaravelModelschema\Services\Generation\Generators\ControllerGenerat
 use Grazulex\LaravelModelschema\Services\Generation\Generators\FactoryGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\MigrationGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ModelGenerator;
+use Grazulex\LaravelModelschema\Services\Generation\Generators\PolicyGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\RequestGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ResourceGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\SeederGenerator;
@@ -33,6 +34,7 @@ class GenerationService
         protected SeederGenerator $seederGenerator = new SeederGenerator(),
         protected ControllerGenerator $controllerGenerator = new ControllerGenerator(),
         protected TestGenerator $testGenerator = new TestGenerator(),
+        protected PolicyGenerator $policyGenerator = new PolicyGenerator(),
     ) {}
 
     /**
@@ -72,6 +74,10 @@ class GenerationService
 
         if ($options['tests'] ?? false) {
             $results['tests'] = $this->generateTests($schema, $options);
+        }
+
+        if ($options['policies'] ?? false) {
+            $results['policies'] = $this->generatePolicies($schema, $options);
         }
 
         return $results;
@@ -152,6 +158,14 @@ class GenerationService
     }
 
     /**
+     * Generate Policies
+     */
+    public function generatePolicies(ModelSchema $schema, array $options = []): array
+    {
+        return $this->policyGenerator->generate($schema, $options);
+    }
+
+    /**
      * Get all available generation types
      */
     public function getAvailableGenerators(): array
@@ -197,6 +211,11 @@ class GenerationService
                 'description' => 'Generate structured data for Feature and Unit Tests with factories and relationships (insertable in parent JSON/YAML)',
                 'outputs' => ['json', 'yaml'],
             ],
+            'policies' => [
+                'name' => 'Policies Data',
+                'description' => 'Generate structured data for Policy classes with authorization logic and gate definitions (insertable in parent JSON/YAML)',
+                'outputs' => ['json', 'yaml'],
+            ],
         ];
     }
 
@@ -233,6 +252,7 @@ class GenerationService
             'seeder' => $this->generateSeeder($schema, $options),
             'controllers', 'controller' => $this->generateControllers($schema, $options),
             'tests', 'test' => $this->generateTests($schema, $options),
+            'policies', 'policy' => $this->generatePolicies($schema, $options),
             default => throw new InvalidArgumentException("Unknown generator type: {$type}")
         };
     }
@@ -251,6 +271,7 @@ class GenerationService
             'seeder' => $this->seederGenerator,
             'controllers' => $this->controllerGenerator,
             'tests' => $this->testGenerator,
+            'policies' => $this->policyGenerator,
             default => throw new InvalidArgumentException("Unknown generator type: {$type}")
         };
     }
