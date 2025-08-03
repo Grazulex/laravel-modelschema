@@ -37,7 +37,7 @@ class SchemaService
 
         // Try to get from cache first
         $cached = $this->cache->getSchemaByFile($filePath);
-        if ($cached instanceof \Grazulex\LaravelModelschema\Schema\ModelSchema) {
+        if ($cached instanceof ModelSchema) {
             return $cached;
         }
 
@@ -56,7 +56,7 @@ class SchemaService
     {
         // Try to get from cache first
         $cached = $this->cache->getSchemaByContent($yamlContent, $modelName);
-        if ($cached instanceof \Grazulex\LaravelModelschema\Schema\ModelSchema) {
+        if ($cached instanceof ModelSchema) {
             return $cached;
         }
 

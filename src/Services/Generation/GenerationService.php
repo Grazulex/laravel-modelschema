@@ -14,6 +14,7 @@ use Grazulex\LaravelModelschema\Services\Generation\Generators\ModelGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\RequestGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ResourceGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\SeederGenerator;
+use Grazulex\LaravelModelschema\Services\Generation\Generators\TestGenerator;
 use Grazulex\LaravelModelschema\Services\Validation\EnhancedValidationService;
 use InvalidArgumentException;
 
@@ -31,6 +32,7 @@ class GenerationService
         protected FactoryGenerator $factoryGenerator = new FactoryGenerator(),
         protected SeederGenerator $seederGenerator = new SeederGenerator(),
         protected ControllerGenerator $controllerGenerator = new ControllerGenerator(),
+        protected TestGenerator $testGenerator = new TestGenerator(),
     ) {}
 
     /**
@@ -66,6 +68,10 @@ class GenerationService
 
         if ($options['controllers'] ?? false) {
             $results['controllers'] = $this->generateControllers($schema, $options);
+        }
+
+        if ($options['tests'] ?? false) {
+            $results['tests'] = $this->generateTests($schema, $options);
         }
 
         return $results;
@@ -138,6 +144,14 @@ class GenerationService
     }
 
     /**
+     * Generate Tests (Feature and Unit)
+     */
+    public function generateTests(ModelSchema $schema, array $options = []): array
+    {
+        return $this->testGenerator->generate($schema, $options);
+    }
+
+    /**
      * Get all available generation types
      */
     public function getAvailableGenerators(): array
@@ -178,6 +192,11 @@ class GenerationService
                 'description' => 'Generate structured data for API and Web Controllers with routes and middleware (insertable in parent JSON/YAML)',
                 'outputs' => ['json', 'yaml'],
             ],
+            'tests' => [
+                'name' => 'Tests Data (Feature and Unit)',
+                'description' => 'Generate structured data for Feature and Unit Tests with factories and relationships (insertable in parent JSON/YAML)',
+                'outputs' => ['json', 'yaml'],
+            ],
         ];
     }
 
@@ -194,6 +213,7 @@ class GenerationService
                 'requests' => 'request',
                 'resources' => 'resource',
                 'controllers' => 'controller',
+                'tests' => 'test',
                 default => $key
             };
         }, $generators);
@@ -212,6 +232,7 @@ class GenerationService
             'factory' => $this->generateFactory($schema, $options),
             'seeder' => $this->generateSeeder($schema, $options),
             'controllers', 'controller' => $this->generateControllers($schema, $options),
+            'tests', 'test' => $this->generateTests($schema, $options),
             default => throw new InvalidArgumentException("Unknown generator type: {$type}")
         };
     }
@@ -229,6 +250,7 @@ class GenerationService
             'factory' => $this->factoryGenerator,
             'seeder' => $this->seederGenerator,
             'controllers' => $this->controllerGenerator,
+            'tests' => $this->testGenerator,
             default => throw new InvalidArgumentException("Unknown generator type: {$type}")
         };
     }

@@ -51,8 +51,9 @@ describe('GenerationService with Enhanced Generators', function () {
         expect($generators)->toContain('factory');
         expect($generators)->toContain('seeder');
         expect($generators)->toContain('controller');
+        expect($generators)->toContain('test');
 
-        expect(count($generators))->toBe(7);
+        expect(count($generators))->toBe(8); // Maintenant 8 avec TestGenerator
     });
 
     it('can generate controllers through the service', function () {
@@ -71,6 +72,25 @@ describe('GenerationService with Enhanced Generators', function () {
 
         expect($controllers['api_controller']['name'])->toBe('ProductApiController');
         expect($controllers['web_controller']['name'])->toBe('ProductController');
+    });
+
+    it('can generate tests through the service', function () {
+        $result = $this->service->generateTests($this->schema);
+
+        expect($result)->toHaveKey('json');
+        expect($result)->toHaveKey('yaml');
+
+        $jsonData = json_decode($result['json'], true);
+        expect($jsonData)->toHaveKey('tests');
+
+        $tests = $jsonData['tests'];
+        expect($tests)->toHaveKey('feature_tests');
+        expect($tests)->toHaveKey('unit_tests');
+        expect($tests)->toHaveKey('test_traits');
+        expect($tests)->toHaveKey('factories_needed');
+
+        expect($tests['feature_tests'])->toBeArray();
+        expect($tests['unit_tests'])->toBeArray();
     });
 
     it('can generate all components including enhanced resources and controllers', function () {

@@ -73,7 +73,7 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 ### �🏗️ Architecture
 - **SchemaService** : API complète pour parsing, validation, séparation core/extension
 - **GenerationService** : Coordonne 7 générateurs spécialisés
-- **7 Générateurs** : Model, Migration, Requests, Resources, Factory, Seeder, **Controllers**
+- **7 Générateurs** : Model, Migration, Requests, Resources, Factory, Seeder, **Controllers**, **Tests**
 - **Structure "core"** : Séparation claire entre logique core et extensions d'applications
 
 ### 🧩 Fragments et intégration
@@ -83,7 +83,7 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - **Validation robuste** : Erreurs détaillées et validation core uniquement
 
 ### ✨ Tests et qualité
-- **223 tests** passés avec 1291 assertions
+- **232 tests** passés avec 1352 assertions
 - **Couverture complète** : Tous les services, générateurs, et APIs
 - **Tests d'intégration** : Simulation d'usage par apps parent
 - **Performance validée** : 8.90s pour toute la suite de tests
@@ -106,12 +106,12 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 ### 🚀 Priorités immédiates (Prêtes à implémenter)
 1. [x] **EnumFieldType et SetFieldType** ✅ - TERMINÉ avec tests complets
 2. [x] **Implémentation du cache** ✅ - SchemaCacheService créé et intégré dans SchemaService
-3. **Générateur de Tests** - Stubs et générateur à créer pour fournir fragments JSON/YAML
+3. [x] **Générateur de Tests** ✅ - TestGenerator créé avec support Feature/Unit tests et intégré
 4. **Générateur de Policies** - Stubs et générateur à créer pour fournir fragments JSON/YAML
 
 ### 🎯 Améliorations importantes Améliorations des générateurs
 - [x] **Ajouter générateur de Controllers (API et Web)** ✅ - DÉJÀ IMPLÉMENTÉ
-- [ ] Ajouter générateur de Tests (Feature et Unit)
+- [x] Ajouter générateur de Tests (Feature et Unit) ✅ - TERMINÉ avec TestGenerator intégré
 - [ ] Améliorer générateur de Resources avec relations imbriquées
 - [ ] Ajouter support des Form Requests personnalisées
 - [ ] Ajouter générateur de Policies
