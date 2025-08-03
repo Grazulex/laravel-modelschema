@@ -45,6 +45,7 @@ composer require grazulex/laravel-modelschema
 
 - **`SchemaService`** - Main API for parsing, validation, and core/extension separation
 - **`GenerationService`** - Coordinates all generators to produce insertable fragments
+- **`YamlOptimizationService`** - Advanced YAML parsing with lazy loading, streaming, and intelligent caching
 - **`SchemaDiffService`** - Advanced schema comparison and difference analysis
 - **`SchemaOptimizationService`** - Performance analysis and optimization recommendations
 - **8 Specialized Generators** - Model, Migration, Request, Resource, Factory, Seeder, Controller, Test, Policy
@@ -389,13 +390,15 @@ composer test-coverage
 ### Advanced Features
 - **📝 [Logging System](docs/LOGGING.md)** - Comprehensive logging and debugging
 - **⚡ [Enhanced Features](docs/enhanced-features.md)** - Advanced capabilities overview
-- **🔍 [Schema Optimization](docs/SCHEMA_OPTIMIZATION.md)** - Schema analysis and optimization tools
+- **� [YAML Optimization](docs/YAML-OPTIMIZATION.md)** - High-performance YAML parsing with intelligent caching and streaming
+- **�🔍 [Schema Optimization](docs/SCHEMA_OPTIMIZATION.md)** - Schema analysis and optimization tools
 - **🔒 [Security Features](docs/SECURITY.md)** - Comprehensive security validation and protection
 
 ### Integration Examples
 - **🔗 [Integration Example](examples/IntegrationExample.php)** - Complete integration workflow
 - **🛠️ [Schema Service API](examples/SchemaServiceApiExample.php)** - API usage examples
 - **📋 [API Extensions](examples/ApiExtensions.php)** - Extended API implementations
+- **🚀 [YAML Optimization Examples](examples/YamlOptimizationExamples.php)** - Performance optimization usage and examples
 - **⚡ [Schema Optimization Usage](examples/SchemaOptimizationUsage.php)** - Advanced schema analysis examples
 - **🔒 [Security Usage Examples](examples/SecurityUsageExamples.php)** - Security validation and protection examples
 

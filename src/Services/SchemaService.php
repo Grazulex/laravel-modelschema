@@ -30,6 +30,8 @@ class SchemaService
 
     protected SecurityValidationService $securityValidator;
 
+    protected YamlOptimizationService $yamlOptimizer;
+
     public function __construct(
         protected Filesystem $filesystem = new Filesystem(),
         ?SchemaCacheService $cache = null,
@@ -37,7 +39,8 @@ class SchemaService
         ?EnhancedValidationService $enhancedValidator = null,
         ?AutoValidationService $autoValidator = null,
         ?SchemaDiffService $diffService = null,
-        ?SecurityValidationService $securityValidator = null
+        ?SecurityValidationService $securityValidator = null,
+        ?YamlOptimizationService $yamlOptimizer = null
     ) {
         $this->cache = $cache ?? new SchemaCacheService();
         $this->logger = $logger ?? new LoggingService();
@@ -45,6 +48,7 @@ class SchemaService
         $this->autoValidator = $autoValidator ?? new AutoValidationService(new FieldTypePluginManager());
         $this->diffService = $diffService ?? new SchemaDiffService($this->logger);
         $this->securityValidator = $securityValidator ?? new SecurityValidationService();
+        $this->yamlOptimizer = $yamlOptimizer ?? new YamlOptimizationService($this->logger, $this->cache);
     }
 
     /**
@@ -434,7 +438,10 @@ class SchemaService
     public function parseAndSeparateSchema(string $yamlContent): array
     {
         try {
-            $fullData = Yaml::parse($yamlContent);
+            // Utiliser l'optimiseur YAML pour les gros fichiers
+            $fullData = $this->yamlOptimizer->parseYamlContent($yamlContent, [
+                'sections' => ['core', 'model', 'fields', 'relationships'], // Sections principales
+            ]);
         } catch (Exception $e) {
             throw new SchemaException('Invalid YAML content: '.$e->getMessage());
         }
@@ -630,7 +637,10 @@ class SchemaService
     public function validateFromCompleteAppYaml(string $completeYaml): array
     {
         try {
-            $fullData = Yaml::parse($completeYaml);
+            // Utiliser l'optimiseur YAML pour validation rapide
+            $fullData = $this->yamlOptimizer->parseYamlContent($completeYaml, [
+                'sections' => ['core'], // Pour validation, on n'a besoin que de la section core
+            ]);
         } catch (Exception $e) {
             return ['Invalid YAML format: '.$e->getMessage()];
         }
@@ -1113,6 +1123,50 @@ class SchemaService
             'warnings' => $warnings,
             'is_valid' => $errors === [],
         ];
+    }
+
+    // ==============================================
+    // YAML OPTIMIZATION METHODS
+    // ==============================================
+
+    /**
+     * Parse rapidement seulement une section d'un YAML
+     */
+    public function parseSectionOnly(string $yamlContent, string $sectionName): array
+    {
+        return $this->yamlOptimizer->parseSectionOnly($yamlContent, $sectionName);
+    }
+
+    /**
+     * Validation rapide de structure YAML sans parsing complet
+     */
+    public function quickValidateYaml(string $yamlContent): array
+    {
+        return $this->yamlOptimizer->quickValidate($yamlContent);
+    }
+
+    /**
+     * Obtenir les métriques de performance du parsing YAML
+     */
+    public function getYamlPerformanceMetrics(): array
+    {
+        return $this->yamlOptimizer->getPerformanceMetrics();
+    }
+
+    /**
+     * Nettoyer les caches d'optimisation YAML
+     */
+    public function clearYamlOptimizationCache(): void
+    {
+        $this->yamlOptimizer->clearCache();
+    }
+
+    /**
+     * Parse avec optimisations automatiques basées sur la taille
+     */
+    public function parseYamlOptimized(string $yamlContent, array $options = []): array
+    {
+        return $this->yamlOptimizer->parseYamlContent($yamlContent, $options);
     }
 
     /**
