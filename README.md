@@ -4,7 +4,11 @@
 
 A foundational Laravel package for schema-driven development. Parse YAML schemas, generate insertable fragments for models, migrations, requests, resources, factories, and seeders. Built to power Laravel TurboMaker, Arc, and other schema-based packages.
 
-[![Latest Version](https://img.shields.io/packagist/v/grazulex/laravel-modelschema.svg?style=flat-square)](https://packagist.org/packages/grazulex/laravel-modelschema)
+[![Latest Version](https://img.shi### Field Types & Extensions  
+- **📋 [Field Types Guide](docs/FIELD_TYPES.md)** - Complete field types reference
+- **🔌 [Field Type Plugins](docs/FIELD_TYPE_PLUGINS.md)** - Creating custom field type plugins
+- **✨ [Custom Attributes Examples](examples/CUSTOM_ATTRIBUTES.md)** - Practical examples of custom attributes usage
+- **✅ [Custom Field Validation](docs/CUSTOM_FIELD_TYPES_VALIDATION.md)** - Validating custom field types.io/packagist/v/grazulex/laravel-modelschema.svg?style=flat-square)](https://packagist.org/packages/grazulex/laravel-modelschema)
 [![Total Downloads](https://img.shields.io/packagist/dt/grazulex/laravel-modelschema.svg?style=flat-square)](https://packagist.org/packages/grazulex/laravel-modelschema)
 [![License](https://img.shields.io/github/license/grazulex/laravel-modelschema.svg?style=flat-square)](https://github.com/Grazulex/laravel-modelschema/blob/main/LICENSE.md)
 [![PHP Version](https://img.shields.io/packagist/php-v/grazulex/laravel-modelschema.svg?style=flat-square)](https://php.net/)
@@ -188,25 +192,51 @@ use Grazulex\LaravelModelschema\Support\FieldTypePlugin;
 
 class UrlFieldTypePlugin extends FieldTypePlugin
 {
+    public function __construct()
+    {
+        // Define custom attributes with validation
+        $this->customAttributes = [
+            'schemes', 'verify_ssl', 'timeout', 'domain_whitelist'
+        ];
+        
+        $this->customAttributeConfig = [
+            'schemes' => [
+                'type' => 'array',
+                'default' => ['http', 'https'],
+                'enum' => ['http', 'https', 'ftp', 'ftps'],
+                'description' => 'Allowed URL schemes'
+            ],
+            'verify_ssl' => [
+                'type' => 'boolean',
+                'default' => true,
+                'description' => 'Enable SSL verification'
+            ],
+            'timeout' => [
+                'type' => 'integer',
+                'min' => 1,
+                'max' => 300,
+                'default' => 30,
+                'description' => 'Connection timeout in seconds'
+            ]
+        ];
+    }
+
     public function getType(): string
     {
         return 'url';
     }
-
-    public function validateConfig(array $config): array
-    {
-        $errors = [];
-        if (isset($config['schemes'])) {
-            foreach ($config['schemes'] as $scheme) {
-                if (!in_array($scheme, ['http', 'https', 'ftp'])) {
-                    $errors[] = "Invalid URL scheme: {$scheme}";
-                }
-            }
-        }
-        return $errors;
-    }
 }
 ```
+
+### Custom Attributes System
+
+The plugin system supports sophisticated custom attributes with:
+
+- **Type validation**: `string`, `int`, `boolean`, `array`, etc.
+- **Constraints**: `min`, `max`, `required`, `enum` values
+- **Default values**: Automatically applied if not provided
+- **Custom validators**: Callback functions for complex validation
+- **Integration**: Seamlessly merged with Laravel's standard attributes
 
 **📖 See [Field Type Plugins Documentation](docs/FIELD_TYPE_PLUGINS.md) for complete implementation guide.**
 

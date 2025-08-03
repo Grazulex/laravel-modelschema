@@ -83,10 +83,10 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - **Validation robuste** : Erreurs détaillées et validation core uniquement
 
 ### ✨ Tests et qualité
-- **414 tests** passés avec 1964 assertions
+- **425 tests** passés avec 2003 assertions
 - **Couverture complète** : Tous les services, générateurs, et APIs
 - **Tests d'intégration** : Simulation d'usage par apps parent
-- **Performance validée** : 14.75s pour toute la suite de tests
+- **Performance validée** : 15.26s pour toute la suite de tests
 
 ### 📖 Documentation complète
 - **README** : Vue d'ensemble et exemples d'utilisation
@@ -134,7 +134,7 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - [x] **Alias pour types géométriques** ✅ - geopoint, coordinates, latlng, geom, spatial, geo, area, boundary, region
 - [x] **Exemple de type personnalisé** : UrlFieldType dans examples/
 - [x] **Système de plugins pour types de champs personnalisés** ✅ - TERMINÉ : Architecture complète avec FieldTypePlugin, FieldTypePluginManager, découverte automatique, gestion des dépendances, exemples (URL, JsonSchema), tests complets (58 tests) et documentation
-- [ ] Support des attributs de champs personnalisés
+- [x] **Support des attributs de champs personnalisés** ✅ - TERMINÉ : Système complet d'attributs custom avec validation (type, enum, min/max, requis, callbacks), exemples concrets (7 attributs pour UrlFieldType, 8 pour JsonSchemaFieldType), intégration transparente avec attributs Laravel standards, et 11 tests complets
 - [ ] Validation automatique basée sur les types de champs
 
 ### Performance et optimisation

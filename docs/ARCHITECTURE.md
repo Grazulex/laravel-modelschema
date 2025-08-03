@@ -59,6 +59,7 @@ The package uses a "core" structure in YAML to clearly separate core schema data
 │ Field Type Plugin System                                   │
 │ ├─ FieldTypePluginManager                                  │
 │ ├─ FieldTypePlugin (Base Class)                           │
+│ ├─ Custom Attributes System ✨                           │
 │ └─ Custom Plugin Discovery                                 │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -311,6 +312,52 @@ Plugins integrate seamlessly with the existing field type system:
 2. **Discovery**: Automatic discovery using namespace patterns
 3. **Validation**: Full integration with schema validation
 4. **Generation**: Automatic inclusion in all generators
+
+### Custom Attributes System ✨
+
+The plugin system now supports sophisticated custom attributes beyond Laravel's standard field attributes:
+
+#### Key Features
+- **Type Validation**: Strict type checking (string, int, boolean, array, etc.)
+- **Constraints**: Min/max values, required fields, enum restrictions
+- **Default Values**: Automatic application of default values
+- **Custom Validators**: Callback functions for complex validation logic
+- **Integration**: Seamless merge with Laravel standard attributes
+
+#### Example Implementation
+```php
+class UrlFieldTypePlugin extends FieldTypePlugin
+{
+    public function __construct()
+    {
+        $this->customAttributes = ['schemes', 'verify_ssl', 'timeout'];
+        
+        $this->customAttributeConfig = [
+            'schemes' => [
+                'type' => 'array',
+                'enum' => ['http', 'https', 'ftp'],
+                'default' => ['http', 'https']
+            ],
+            'timeout' => [
+                'type' => 'integer',
+                'min' => 1,
+                'max' => 300,
+                'default' => 30
+            ]
+        ];
+    }
+}
+```
+
+#### Usage in Schemas
+```yaml
+fields:
+  website:
+    type: url
+    schemes: ['https']
+    verify_ssl: true
+    timeout: 45
+```
 
 **See [Field Type Plugins Documentation](FIELD_TYPE_PLUGINS.md) for complete implementation guide.**
 

@@ -587,3 +587,347 @@ public function getMigrationCall(string $fieldName, array $config): string
 ## Conclusion
 
 Le système de plugins de Laravel ModelSchema offre une extensibilité puissante et flexible pour créer des types de champs personnalisés. Il permet aux développeurs d'étendre les capacités du package tout en maintenant la cohérence et la qualité du code grâce à la validation automatique et aux tests intégrés.
+
+## ✨ Système d'Attributs Custom
+
+### Vue d'ensemble
+
+Le système d'attributs custom permet aux plugins de définir des attributs spécifiques au-delà des attributs Laravel standards. Ces attributs peuvent avoir leur propre validation, valeurs par défaut et logique de transformation.
+
+### Définition des Attributs Custom
+
+#### Structure de Base
+
+```php
+class UrlFieldTypePlugin extends FieldTypePlugin
+{
+    public function __construct()
+    {
+        // Définir les attributs custom supportés
+        $this->customAttributes = [
+            'schemes',
+            'verify_ssl',
+            'allow_query_params',
+            'max_redirects',
+            'timeout',
+            'domain_whitelist',
+            'domain_blacklist'
+        ];
+
+        // Configuration détaillée pour chaque attribut
+        $this->customAttributeConfig = [
+            'schemes' => [
+                'type' => 'array',
+                'required' => false,
+                'default' => ['http', 'https'],
+                'enum' => ['http', 'https', 'ftp', 'ftps', 'file'],
+                'description' => 'Schémas d\'URL autorisés pour la validation'
+            ],
+            'verify_ssl' => [
+                'type' => 'boolean',
+                'required' => false,
+                'default' => true,
+                'description' => 'Active la vérification des certificats SSL'
+            ],
+            'timeout' => [
+                'type' => 'integer',
+                'required' => false,
+                'default' => 30,
+                'min' => 1,
+                'max' => 300,
+                'description' => 'Timeout de connexion en secondes'
+            ]
+        ];
+    }
+}
+```
+
+### Types de Validation Disponibles
+
+#### 1. Validation de Type
+```php
+'type' => 'string|int|integer|float|double|bool|boolean|array|object|null|numeric'
+```
+Valide le type de données de l'attribut.
+
+#### 2. Validation Requis
+```php
+'required' => true|false
+```
+Détermine si l'attribut doit être fourni.
+
+#### 3. Valeurs par Défaut
+```php
+'default' => 'any_value'
+```
+Appliquée automatiquement si l'attribut n'est pas fourni.
+
+#### 4. Contraintes Numériques
+```php
+'min' => 1,        // Valeur minimum
+'max' => 100       // Valeur maximum
+```
+Pour les types numériques uniquement.
+
+#### 5. Validation Enum
+```php
+'enum' => ['value1', 'value2', 'value3']
+```
+Restreint les valeurs à un ensemble spécifique. Fonctionne avec :
+- **Valeurs scalaires** : Validation directe
+- **Arrays** : Validation de chaque élément du tableau
+
+#### 6. Validateurs Custom
+```php
+'validator' => function ($value, $attribute) {
+    $errors = [];
+    
+    if (!$this->customValidationLogic($value)) {
+        $errors[] = "Validation custom échouée pour {$attribute}";
+    }
+    
+    return $errors; // Retourner array d'erreurs (vide = valide)
+}
+```
+
+### Exemple Complet : JsonSchemaFieldTypePlugin
+
+```php
+class JsonSchemaFieldTypePlugin extends FieldTypePlugin
+{
+    public function __construct()
+    {
+        $this->customAttributes = [
+            'schema',
+            'strict_validation',
+            'allow_additional_properties',
+            'schema_format',
+            'validation_mode',
+            'error_format',
+            'schema_cache_ttl',
+            'schema_version'
+        ];
+
+        $this->customAttributeConfig = [
+            'schema' => [
+                'type' => 'array',
+                'required' => true,
+                'description' => 'Définition du JSON Schema pour validation',
+                'validator' => function ($value) {
+                    return $this->validateJsonSchema($value);
+                }
+            ],
+            'strict_validation' => [
+                'type' => 'boolean',
+                'required' => false,
+                'default' => true,
+                'description' => 'Active le mode de validation stricte'
+            ],
+            'schema_format' => [
+                'type' => 'string',
+                'required' => false,
+                'default' => 'draft-07',
+                'enum' => ['draft-04', 'draft-06', 'draft-07', 'draft-2019-09', 'draft-2020-12'],
+                'description' => 'Version de la spécification JSON Schema'
+            ],
+            'validation_mode' => [
+                'type' => 'string',
+                'required' => false,
+                'default' => 'strict',
+                'enum' => ['strict', 'loose', 'type_only'],
+                'description' => 'Mode de validation des données JSON'
+            ],
+            'schema_cache_ttl' => [
+                'type' => 'integer',
+                'required' => false,
+                'default' => 3600,
+                'min' => 0,
+                'max' => 86400,
+                'description' => 'TTL du cache de schéma en secondes (0 = pas de cache)'
+            ]
+        ];
+    }
+}
+```
+
+### Utilisation dans les Schémas YAML
+
+```yaml
+core:
+  model: Website
+  table: websites
+  fields:
+    homepage:
+      type: url
+      nullable: false
+      # Attributs Laravel standards
+      max_length: 500
+      # Attributs custom du UrlFieldTypePlugin
+      schemes: ['https', 'http']
+      verify_ssl: true
+      timeout: 45
+      domain_whitelist: ['example.com', 'trusted.org']
+      domain_blacklist: ['malicious.com']
+      
+    api_config:
+      type: json_schema
+      nullable: true
+      # Attributs custom du JsonSchemaFieldTypePlugin
+      schema:
+        type: object
+        properties:
+          endpoint:
+            type: string
+          method:
+            type: string
+            enum: ['GET', 'POST', 'PUT', 'DELETE']
+          timeout:
+            type: integer
+            minimum: 1
+            maximum: 300
+        required: ['endpoint', 'method']
+      strict_validation: true
+      schema_format: 'draft-07'
+      validation_mode: 'strict'
+      schema_cache_ttl: 7200
+```
+
+### Intégration avec la Validation
+
+Les attributs custom sont automatiquement intégrés dans le processus de validation :
+
+```php
+public function validate(array $config): array
+{
+    $errors = [];
+
+    // Validation des attributs Laravel standards
+    // ...
+
+    // Validation automatique des attributs custom
+    foreach ($this->getCustomAttributes() as $attribute) {
+        if (isset($config[$attribute])) {
+            $customErrors = $this->validateCustomAttribute($attribute, $config[$attribute]);
+            $errors = array_merge($errors, $customErrors);
+        }
+    }
+
+    // Vérification des attributs requis manquants
+    $missingRequired = $this->getMissingRequiredCustomAttributes($config);
+    if (!empty($missingRequired)) {
+        $errors[] = 'Attributs requis manquants : ' . implode(', ', $missingRequired);
+    }
+
+    return $errors;
+}
+```
+
+### Transformation et Processing
+
+Les attributs custom peuvent être transformés automatiquement :
+
+```php
+// Application automatique des valeurs par défaut
+$processedConfig = $plugin->processCustomAttributes($config);
+
+// Les valeurs par défaut sont appliquées pour les attributs non fournis
+// Exemple : si 'timeout' n'est pas fourni, il sera défini à 30 (sa valeur par défaut)
+```
+
+### Ordre de Validation
+
+1. **Validation de type** (prioritaire, arrête si échec)
+2. **Validation requis**
+3. **Validation min/max** (pour les numériques)
+4. **Validation enum**
+5. **Validateurs custom**
+
+### Méthodes API Disponibles
+
+```php
+// Récupérer les attributs custom supportés
+$customAttributes = $plugin->getCustomAttributes();
+
+// Valider un attribut custom spécifique
+$errors = $plugin->validateCustomAttribute('timeout', 45);
+
+// Traiter les attributs custom (appliquer défauts, etc.)
+$processedConfig = $plugin->processCustomAttributes($fieldConfig);
+
+// Récupérer les attributs requis manquants
+$missing = $plugin->getMissingRequiredCustomAttributes($config);
+
+// Fusion avec attributs Laravel standards
+$allAttributes = $plugin->getSupportedAttributesList();
+// Retourne : ['nullable', 'default', 'max_length', 'schemes', 'verify_ssl', ...]
+```
+
+### Bonnes Pratiques
+
+#### 1. Messages d'Erreur Clairs
+```php
+$errors[] = "Custom attribute 'timeout' must be between 1 and 300 seconds";
+```
+
+#### 2. Documentation Complète
+```php
+'description' => 'Timeout de connexion en secondes. Min: 1, Max: 300, Défaut: 30'
+```
+
+#### 3. Validation Early-Return
+La validation de type échoue en premier et arrête les autres validations pour éviter les erreurs en cascade.
+
+#### 4. Performance
+- Utilisez la validation built-in (type, enum, min/max) quand possible
+- Les validateurs custom doivent être optimisés
+- Mise en cache des validations coûteuses
+
+#### 5. Rétrocompatibilité
+- Ne changez jamais la signification d'un attribut
+- Ajoutez de nouveaux attributs avec des valeurs par défaut sensées
+- Utilisez le versioning sémantique
+
+### Tests des Attributs Custom
+
+```php
+public function test_custom_attributes_validation()
+{
+    $plugin = new UrlFieldTypePlugin();
+    
+    // Test avec configuration valide
+    $validConfig = [
+        'schemes' => ['https', 'http'],
+        'verify_ssl' => true,
+        'timeout' => 30
+    ];
+    
+    $errors = $plugin->validate($validConfig);
+    $this->assertEmpty($errors);
+    
+    // Test avec configuration invalide
+    $invalidConfig = [
+        'schemes' => 'not-an-array',  // Doit être array
+        'timeout' => -1               // Hors limites min
+    ];
+    
+    $errors = $plugin->validate($invalidConfig);
+    $this->assertNotEmpty($errors);
+    $this->assertStringContainsString("must be of type array", $errors[0]);
+    $this->assertStringContainsString("must be at least 1", $errors[1]);
+}
+
+public function test_default_values_applied()
+{
+    $plugin = new UrlFieldTypePlugin();
+    
+    $config = ['nullable' => true]; // Pas d'attributs custom
+    $processed = $plugin->processCustomAttributes($config);
+    
+    // Les valeurs par défaut doivent être appliquées
+    $this->assertEquals(['http', 'https'], $processed['schemes']);
+    $this->assertTrue($processed['verify_ssl']);
+    $this->assertEquals(30, $processed['timeout']);
+}
+```
+
+Le système d'attributs custom offre une flexibilité maximale pour créer des types de champs sophistiqués tout en maintenant la robustesse et la facilité d'utilisation.
