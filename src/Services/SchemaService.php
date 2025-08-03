@@ -539,6 +539,33 @@ class SchemaService
     }
 
     /**
+     * Get default stub content for app initialization
+     * Provides a basic schema stub that apps can use as starting point
+     */
+    public function getDefaultStub(array $replacements = []): string
+    {
+        return $this->getStubContent('basic.schema.stub');
+    }
+
+    /**
+     * Get processed default stub with replacements for immediate use
+     * Apps can use this to get a ready-to-use YAML schema
+     */
+    public function getProcessedDefaultStub(array $replacements = []): string
+    {
+        return $this->processStubForCore('basic.schema.stub', $replacements);
+    }
+
+    /**
+     * Get complete YAML from default stub for app integration
+     * Returns full YAML structure that apps can directly use
+     */
+    public function getDefaultCompleteYaml(array $replacements = [], array $extensionData = []): string
+    {
+        return $this->generateCompleteYamlFromStub('basic.schema.stub', $replacements, $extensionData);
+    }
+
+    /**
      * Extract description from stub file comments
      */
     protected function getStubDescription(string $stubPath): string

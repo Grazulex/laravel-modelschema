@@ -210,20 +210,69 @@ it('can get stub content', function () {
     expect($content)->toContain('{{TABLE_NAME}}');
 });
 
-it('can process stub for core with replacements', function () {
+it('can generate complete YAML from stub with extension data', function () {
     $replacements = [
         'MODEL_NAME' => 'Product',
         'TABLE_NAME' => 'products',
-        'NAMESPACE' => 'App\\Models\\Catalog',
     ];
 
-    $content = $this->schemaService->processStubForCore('basic.schema.stub', $replacements);
+    $extensionData = [
+        'laravel_arc' => [
+            'views' => ['index', 'show', 'create', 'edit'],
+            'routes' => ['resource'],
+        ],
+    ];
+
+    $yaml = $this->schemaService->generateCompleteYamlFromStub('basic.schema.stub', $replacements, $extensionData);
+
+    expect($yaml)->toBeString();
+    expect($yaml)->toContain('Product');
+    expect($yaml)->toContain('products');
+    expect($yaml)->toContain('laravel_arc');
+    expect($yaml)->toContain('views');
+});
+
+it('can get default stub for app initialization', function () {
+    $content = $this->schemaService->getDefaultStub();
 
     expect($content)->toBeString();
-    expect($content)->toContain('Product');
-    expect($content)->toContain('products');
+    expect($content)->toContain('{{MODEL_NAME}}');
+    expect($content)->toContain('{{TABLE_NAME}}');
+});
+
+it('can get processed default stub with replacements', function () {
+    $replacements = [
+        'MODEL_NAME' => 'TestModel',
+        'TABLE_NAME' => 'test_models',
+    ];
+
+    $content = $this->schemaService->getProcessedDefaultStub($replacements);
+
+    expect($content)->toBeString();
+    expect($content)->toContain('TestModel');
+    expect($content)->toContain('test_models');
     expect($content)->not->toContain('{{MODEL_NAME}}');
-    expect($content)->not->toContain('{{TABLE_NAME}}');
+});
+
+it('can get default complete YAML for app integration', function () {
+    $replacements = [
+        'MODEL_NAME' => 'Article',
+        'TABLE_NAME' => 'articles',
+    ];
+
+    $extensionData = [
+        'app_specific' => [
+            'custom_config' => 'value',
+        ],
+    ];
+
+    $yaml = $this->schemaService->getDefaultCompleteYaml($replacements, $extensionData);
+
+    expect($yaml)->toBeString();
+    expect($yaml)->toContain('Article');
+    expect($yaml)->toContain('articles');
+    expect($yaml)->toContain('app_specific');
+    expect($yaml)->toContain('core:');
 });
 
 it('can wrap core data in new structure', function () {

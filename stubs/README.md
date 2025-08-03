@@ -12,39 +12,59 @@ A basic model template with:
 - Active status
 - Timestamps
 
-### blog.schema.stub
-A blog/content model template with:
-- Title and slug fields
-- Content and excerpt
-- Published date and status
-- Author relationship
-- Categories and tags relationships
-- Comments relationship
+This is the default stub used by the SchemaService API methods:
+- `getDefaultStub()` - Returns raw stub content
+- `getProcessedDefaultStub()` - Returns processed stub with replacements
+- `getDefaultCompleteYaml()` - Returns complete YAML structure ready for apps
 
-### user.schema.stub
-A user authentication model template with:
-- Authentication fields (email, password)
-- Email verification
-- Profile fields (avatar, timezone, locale)
-- Relationships (profile, posts, roles)
-- Permission system
+## Generator Stubs
 
-### ecommerce.schema.stub
-A product/e-commerce model template with:
-- Product information (name, SKU, description)
-- Pricing (price, sale_price)
-- Inventory (stock_quantity)
-- Product details (weight, dimensions)
-- Relationships (category, brand, tags, reviews)
+The `generators/` directory contains stubs used by individual generators for creating PHP files:
+- Controller stubs
+- Model stubs  
+- Request stubs
+- Resource stubs
+- Migration stubs
+- Route stubs
 
-### pivot.schema.stub
-A pivot table model template with:
-- Foreign key fields (customizable)
-- Pivot-specific data (assigned_at, assigned_by)
-- Relationship examples
-- Useful for many-to-many relationships
+## Archived Stubs
+
+Previously available stubs have been moved to `archive/` directory:
+- `blog.schema.stub` - Blog/content model template
+- `user.schema.stub` - User authentication model template  
+- `ecommerce.schema.stub` - Product/e-commerce model template
+- `pivot.schema.stub` - Pivot table model template
+- `core-structure.schema.stub` - Core structure example
+
+These can be restored if needed but are not actively used by the core system.
 
 ## Usage in Other Packages
+
+### Getting Default Stub
+```php
+use LaravelModelschema\Services\SchemaService;
+
+$schemaService = app(SchemaService::class);
+
+// Get raw stub content
+$stubContent = $schemaService->getDefaultStub();
+
+// Get processed stub with your data
+$processedContent = $schemaService->getProcessedDefaultStub([
+    'MODEL_NAME' => 'Product',
+    'TABLE_NAME' => 'products',
+]);
+
+// Get complete YAML ready for your app
+$completeYaml = $schemaService->getDefaultCompleteYaml([
+    'MODEL_NAME' => 'Product',
+    'TABLE_NAME' => 'products',
+], [
+    'your_app' => [
+        'specific_config' => 'value'
+    ]
+]);
+```
 
 ### Publishing Stubs
 Other packages can publish these stubs to make them available:
