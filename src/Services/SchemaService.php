@@ -7,6 +7,7 @@ namespace Grazulex\LaravelModelschema\Services;
 use Exception;
 use Grazulex\LaravelModelschema\Exceptions\SchemaException;
 use Grazulex\LaravelModelschema\Schema\ModelSchema;
+use Grazulex\LaravelModelschema\Services\Validation\EnhancedValidationService;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 
@@ -20,13 +21,17 @@ class SchemaService
 
     protected LoggingService $logger;
 
+    protected EnhancedValidationService $enhancedValidator;
+
     public function __construct(
         protected Filesystem $filesystem = new Filesystem(),
         ?SchemaCacheService $cache = null,
-        ?LoggingService $logger = null
+        ?LoggingService $logger = null,
+        ?EnhancedValidationService $enhancedValidator = null
     ) {
         $this->cache = $cache ?? new SchemaCacheService();
         $this->logger = $logger ?? new LoggingService();
+        $this->enhancedValidator = $enhancedValidator ?? new EnhancedValidationService();
     }
 
     /**
@@ -696,6 +701,90 @@ class SchemaService
     }
 
     /**
+     * Validate custom field types in schemas
+     */
+    public function validateCustomFieldTypes(array $schemas): array
+    {
+        $this->logger->logOperationStart('validateCustomFieldTypes', [
+            'schema_count' => count($schemas),
+            'total_fields' => $this->countFieldsInSchemas($schemas),
+        ]);
+
+        $startTime = microtime(true);
+
+        $result = $this->enhancedValidator->validateCustomFieldTypes($schemas);
+
+        $validationTime = microtime(true) - $startTime;
+
+        // Log the validation results
+        $this->logger->logValidation('custom_field_types', $result['is_valid'], $result['errors'], $result['warnings'], [
+            'schema_count' => count($schemas),
+            'total_fields_validated' => $result['validation_summary']['total_fields_validated'],
+            'custom_fields_found' => $result['validation_summary']['custom_fields_found'],
+            'unique_custom_types' => $result['validation_summary']['unique_custom_types'],
+            'custom_types_used' => array_keys($result['custom_type_stats']),
+            'validation_time_ms' => round($validationTime * 1000, 2),
+        ]);
+
+        // Check performance threshold
+        $validationTimeMs = $validationTime * 1000;
+        $threshold = config('modelschema.logging.performance_thresholds.validation_ms', 2000);
+        if ($validationTimeMs > $threshold) {
+            $this->logger->logPerformance(
+                'custom_field_types_validation',
+                [
+                    'execution_time_ms' => $validationTimeMs,
+                    'schema_count' => count($schemas),
+                    'fields_validated' => $result['validation_summary']['total_fields_validated'],
+                    'threshold_ms' => $threshold,
+                    'recommendation' => 'Consider optimizing custom field type validation or reducing schema complexity',
+                ]
+            );
+        }
+
+        $this->logger->logOperationEnd('validateCustomFieldTypes', [
+            'success' => $result['is_valid'],
+            'error_count' => count($result['errors']),
+            'warning_count' => count($result['warnings']),
+            'custom_fields_found' => $result['validation_summary']['custom_fields_found'],
+            'validation_time_ms' => round($validationTime * 1000, 2),
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Validate custom field types for a single schema file
+     */
+    public function validateCustomFieldTypesFromFile(string $filePath): array
+    {
+        $schema = $this->parseYamlFile($filePath);
+
+        return $this->validateCustomFieldTypes([$schema]);
+    }
+
+    /**
+     * Validate custom field types for multiple schema files
+     */
+    public function validateCustomFieldTypesFromFiles(array $filePaths): array
+    {
+        $schemas = [];
+
+        foreach ($filePaths as $filePath) {
+            try {
+                $schemas[] = $this->parseYamlFile($filePath);
+            } catch (Exception $e) {
+                $this->logger->logError("Failed to parse schema file: {$filePath}", $e, [
+                    'file' => $filePath,
+                ]);
+                throw $e;
+            }
+        }
+
+        return $this->validateCustomFieldTypes($schemas);
+    }
+
+    /**
      * Extract description from stub file comments
      */
     protected function getStubDescription(string $stubPath): string
@@ -714,5 +803,20 @@ class SchemaService
         }
 
         return 'Template stub';
+    }
+
+    /**
+     * Count total fields across schemas
+     */
+    private function countFieldsInSchemas(array $schemas): int
+    {
+        $total = 0;
+        foreach ($schemas as $schema) {
+            if (is_object($schema) && property_exists($schema, 'fields')) {
+                $total += count($schema->fields);
+            }
+        }
+
+        return $total;
     }
 }

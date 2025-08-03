@@ -120,7 +120,7 @@ Le package Laravel ModelSchema est **architecturalement complet** et prêt pour 
 - [x] **Service de validation étendu** : EnhancedValidationService avec détection des dépendances circulaires, validation des types, analyse de performance
 - [x] **Améliorer validation des relations** ✅ - TERMINÉ : Validation de l'existence des modèles cibles, types de relations, cohérence Foreign Keys, et intégration complète
 - [x] **Ajouter validation des règles Laravel personnalisées** ✅ - TERMINÉ : Validation complète des règles exists, unique, in, regex, size constraints, conditional rules avec détection d'erreurs et warnings
-- [ ] Ajouter validation des types de champs personnalisés
+- [x] **Ajouter validation des types de champs personnalisés** ✅ - TERMINÉ : Validation complète des types de champs personnalisés (enum, set, point, geometry, polygon) avec validation de configuration, attributs, SRID, dimensions, valeurs par défaut, et intégration dans SchemaService
 - [x] **Configuration cache pour les schémas parsés** ✅ - Configuration présente dans `config/modelschema.php`
 - [x] **Implémentation cache** ✅ - SchemaCacheService avec mise en cache des schémas, validation et parsing YAML
 - [x] **Ajouter logs détaillés pour le debugging** ✅ - TERMINÉ : LoggingService complet avec logging des opérations, métriques de performance, validation, génération, cache, erreurs, warnings et intégration dans SchemaService et GenerationService

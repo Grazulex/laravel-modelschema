@@ -233,6 +233,48 @@ class EnhancedValidationService
         ];
     }
 
+    /**
+     * Validate custom field types and their configurations
+     */
+    public function validateCustomFieldTypes(array $schemas): array
+    {
+        $errors = [];
+        $warnings = [];
+        $customTypeStats = [];
+        $availableCustomTypes = $this->getAvailableCustomFieldTypes();
+
+        foreach ($schemas as $schema) {
+            foreach ($schema->fields as $field) {
+                $fieldValidation = $this->validateSingleFieldType($field, $schema->name, $availableCustomTypes);
+                $errors = array_merge($errors, $fieldValidation['errors']);
+                $warnings = array_merge($warnings, $fieldValidation['warnings']);
+
+                // Track custom type usage
+                if ($this->isCustomFieldType($field->type)) {
+                    if (! isset($customTypeStats[$field->type])) {
+                        $customTypeStats[$field->type] = 0;
+                    }
+                    $customTypeStats[$field->type]++;
+                }
+            }
+        }
+
+        return [
+            'is_valid' => $errors === [],
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'custom_type_stats' => $customTypeStats,
+            'available_custom_types' => $availableCustomTypes,
+            'validation_summary' => [
+                'total_fields_validated' => $this->countTotalFields($schemas),
+                'custom_fields_found' => array_sum($customTypeStats),
+                'unique_custom_types' => count($customTypeStats),
+                'errors_found' => count($errors),
+                'warnings_found' => count($warnings),
+            ],
+        ];
+    }
+
     private function detectCircularDependencies(array $schemas): array
     {
         $dependencies = [];
@@ -901,5 +943,451 @@ class EnhancedValidationService
         }
 
         return $errors;
+    }
+
+    /**
+     * Validate a single field type and its configuration
+     */
+    private function validateSingleFieldType(object $field, string $schemaName, array $availableCustomTypes): array
+    {
+        $errors = [];
+        $warnings = [];
+        $fieldType = $field->type;
+
+        // Check if field type exists
+        if ($this->isCustomFieldType($fieldType)) {
+            if (! in_array($fieldType, $availableCustomTypes)) {
+                $errors[] = "Unknown custom field type '{$fieldType}' in field '{$field->name}' of schema '{$schemaName}'. Available custom types: ".implode(', ', $availableCustomTypes);
+            } else {
+                // Validate custom field type configuration
+                $configValidation = $this->validateCustomFieldTypeConfiguration($field, $schemaName);
+                $errors = array_merge($errors, $configValidation['errors']);
+                $warnings = array_merge($warnings, $configValidation['warnings']);
+            }
+        } elseif (! $this->isBuiltInFieldType($fieldType)) {
+            $errors[] = "Unknown field type '{$fieldType}' in field '{$field->name}' of schema '{$schemaName}'. Type is neither built-in nor custom.";
+        }
+
+        // Validate field type specific attributes
+        $attributeValidation = $this->validateFieldTypeAttributes($field, $schemaName);
+        $errors = array_merge($errors, $attributeValidation['errors']);
+        $warnings = array_merge($warnings, $attributeValidation['warnings']);
+
+        return [
+            'errors' => $errors,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /**
+     * Validate configuration for custom field types
+     */
+    private function validateCustomFieldTypeConfiguration(object $field, string $schemaName): array
+    {
+        $errors = [];
+        $warnings = [];
+        $fieldType = $field->type;
+
+        // Specific validation for known custom types
+        switch ($fieldType) {
+            case 'enum':
+            case 'enumeration':
+                $enumValidation = $this->validateEnumFieldConfiguration($field, $schemaName);
+                $errors = array_merge($errors, $enumValidation['errors']);
+                $warnings = array_merge($warnings, $enumValidation['warnings']);
+                break;
+
+            case 'set':
+            case 'multi_select':
+            case 'multiple_choice':
+                $setValidation = $this->validateSetFieldConfiguration($field, $schemaName);
+                $errors = array_merge($errors, $setValidation['errors']);
+                $warnings = array_merge($warnings, $setValidation['warnings']);
+                break;
+
+            case 'point':
+            case 'geopoint':
+            case 'coordinates':
+            case 'latlng':
+                $pointValidation = $this->validatePointFieldConfiguration($field, $schemaName);
+                $errors = array_merge($errors, $pointValidation['errors']);
+                $warnings = array_merge($warnings, $pointValidation['warnings']);
+                break;
+
+            case 'geometry':
+            case 'geom':
+            case 'spatial':
+                $geometryValidation = $this->validateGeometryFieldConfiguration($field, $schemaName);
+                $errors = array_merge($errors, $geometryValidation['errors']);
+                $warnings = array_merge($warnings, $geometryValidation['warnings']);
+                break;
+
+            case 'polygon':
+            case 'area':
+            case 'boundary':
+            case 'region':
+                $polygonValidation = $this->validatePolygonFieldConfiguration($field, $schemaName);
+                $errors = array_merge($errors, $polygonValidation['errors']);
+                $warnings = array_merge($warnings, $polygonValidation['warnings']);
+                break;
+
+            default:
+                // Generic custom field type validation
+                $genericValidation = $this->validateGenericCustomFieldConfiguration($field, $schemaName);
+                $errors = array_merge($errors, $genericValidation['errors']);
+                $warnings = array_merge($warnings, $genericValidation['warnings']);
+                break;
+        }
+
+        return [
+            'errors' => $errors,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /**
+     * Validate enum field configuration
+     */
+    private function validateEnumFieldConfiguration(object $field, string $schemaName): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        // Check if values are provided
+        if (! isset($field->values) || empty($field->values)) {
+            $errors[] = "Enum field '{$field->name}' in schema '{$schemaName}' must have 'values' array defined";
+
+            return ['errors' => $errors, 'warnings' => $warnings];
+        }
+
+        // Validate values array
+        if (! is_array($field->values)) {
+            $errors[] = "Enum field '{$field->name}' in schema '{$schemaName}' must have 'values' as an array, got ".gettype($field->values);
+
+            return ['errors' => $errors, 'warnings' => $warnings];
+        }
+
+        // Check minimum values
+        if (count($field->values) < 2) {
+            $warnings[] = "Enum field '{$field->name}' in schema '{$schemaName}' has less than 2 values, consider using a boolean field instead";
+        }
+
+        // Check maximum values (performance consideration)
+        if (count($field->values) > 100) {
+            $warnings[] = "Enum field '{$field->name}' in schema '{$schemaName}' has more than 100 values, consider using a separate lookup table instead";
+        }
+
+        // Validate individual values
+        foreach ($field->values as $index => $value) {
+            if (! is_string($value) && ! is_numeric($value)) {
+                $errors[] = "Enum field '{$field->name}' in schema '{$schemaName}' has invalid value at index {$index}: must be string or numeric";
+            }
+
+            if (is_string($value) && mb_strlen($value) > 255) {
+                $warnings[] = "Enum field '{$field->name}' in schema '{$schemaName}' has value longer than 255 characters at index {$index}, may cause database issues";
+            }
+        }
+
+        // Check for duplicate values
+        $uniqueValues = array_unique($field->values);
+        if (count($uniqueValues) !== count($field->values)) {
+            $errors[] = "Enum field '{$field->name}' in schema '{$schemaName}' contains duplicate values";
+        }
+
+        // Check default value if specified (skip array defaults as they are handled by SET validation)
+        if (isset($field->default) && ! is_array($field->default) && ! in_array($field->default, $field->values)) {
+            $errors[] = "Enum field '{$field->name}' in schema '{$schemaName}' has default value '{$field->default}' which is not in the values array";
+        }
+
+        return [
+            'errors' => $errors,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /**
+     * Validate set field configuration
+     */
+    private function validateSetFieldConfiguration(object $field, string $schemaName): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        // Set fields share most validation with enum fields
+        $enumValidation = $this->validateEnumFieldConfiguration($field, $schemaName);
+        $errors = array_merge($errors, $enumValidation['errors']);
+        $warnings = array_merge($warnings, $enumValidation['warnings']);
+
+        // Additional validation specific to SET fields
+        if (isset($field->values) && is_array($field->values) && count($field->values) > 64) {
+            $errors[] = "Set field '{$field->name}' in schema '{$schemaName}' cannot have more than 64 values (MySQL SET limitation)";
+        }
+
+        // Validate default value for SET (can be array or comma-separated string)
+        if (isset($field->default)) {
+            if (is_array($field->default)) {
+                foreach ($field->default as $defaultValue) {
+                    if (! in_array($defaultValue, $field->values ?? [])) {
+                        $errors[] = "Set field '{$field->name}' in schema '{$schemaName}' has default value '{$defaultValue}' which is not in the values array";
+                    }
+                }
+            } elseif (is_string($field->default)) {
+                $defaultValues = array_map('trim', explode(',', $field->default));
+                foreach ($defaultValues as $defaultValue) {
+                    if (! in_array($defaultValue, $field->values ?? [])) {
+                        $errors[] = "Set field '{$field->name}' in schema '{$schemaName}' has default value '{$defaultValue}' which is not in the values array";
+                    }
+                }
+            }
+        }
+
+        return [
+            'errors' => $errors,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /**
+     * Validate point/geographic field configuration
+     */
+    private function validatePointFieldConfiguration(object $field, string $schemaName): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        // Check SRID if specified
+        if (isset($field->srid)) {
+            if (! is_numeric($field->srid) || $field->srid < 0) {
+                $errors[] = "Point field '{$field->name}' in schema '{$schemaName}' has invalid SRID: must be a positive number";
+            } elseif ($field->srid !== 4326 && $field->srid !== 3857) {
+                $warnings[] = "Point field '{$field->name}' in schema '{$schemaName}' uses SRID {$field->srid}, common values are 4326 (WGS84) or 3857 (Web Mercator)";
+            }
+        }
+
+        // Check dimension if specified
+        if (isset($field->dimension) && ! in_array($field->dimension, [2, 3, 4])) {
+            $errors[] = "Point field '{$field->name}' in schema '{$schemaName}' has invalid dimension: must be 2, 3, or 4";
+        }
+
+        // Check coordinate system
+        if (isset($field->coordinate_system) && ! in_array($field->coordinate_system, ['cartesian', 'geographic'])) {
+            $errors[] = "Point field '{$field->name}' in schema '{$schemaName}' has invalid coordinate_system: must be 'cartesian' or 'geographic'";
+        }
+
+        return [
+            'errors' => $errors,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /**
+     * Validate geometry field configuration
+     */
+    private function validateGeometryFieldConfiguration(object $field, string $schemaName): array
+    {
+        // Geometry fields share validation with point fields
+        return $this->validatePointFieldConfiguration($field, $schemaName);
+    }
+
+    /**
+     * Validate polygon field configuration
+     */
+    private function validatePolygonFieldConfiguration(object $field, string $schemaName): array
+    {
+        $validation = $this->validatePointFieldConfiguration($field, $schemaName);
+        $errors = $validation['errors'];
+        $warnings = $validation['warnings'];
+
+        // Additional polygon-specific validation
+        if (isset($field->min_points) && (! is_numeric($field->min_points) || $field->min_points < 3)) {
+            $errors[] = "Polygon field '{$field->name}' in schema '{$schemaName}' must have min_points >= 3";
+        }
+
+        if (isset($field->max_points) && isset($field->min_points) && $field->max_points < $field->min_points) {
+            $errors[] = "Polygon field '{$field->name}' in schema '{$schemaName}' has max_points less than min_points";
+        }
+
+        return [
+            'errors' => $errors,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /**
+     * Validate generic custom field configuration
+     */
+    private function validateGenericCustomFieldConfiguration(object $field, string $schemaName): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        // Check if custom field type class exists
+        $customTypeClass = $this->getCustomFieldTypeClass($field->type);
+        if ($customTypeClass && ! class_exists($customTypeClass)) {
+            $errors[] = "Custom field type class '{$customTypeClass}' for field '{$field->name}' in schema '{$schemaName}' does not exist";
+        }
+
+        // Warn about missing configuration validation
+        if (! $this->hasCustomFieldTypeValidator($field->type)) {
+            $warnings[] = "Custom field type '{$field->type}' for field '{$field->name}' in schema '{$schemaName}' has no specific validation rules defined";
+        }
+
+        return [
+            'errors' => $errors,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /**
+     * Validate field type specific attributes
+     */
+    private function validateFieldTypeAttributes(object $field, string $schemaName): array
+    {
+        $errors = [];
+        $warnings = [];
+
+        // Validate length attribute for string-based fields
+        if (isset($field->length)) {
+            if (in_array($field->type, ['string', 'varchar', 'char'])) {
+                if (! is_numeric($field->length) || $field->length <= 0) {
+                    $errors[] = "Field '{$field->name}' in schema '{$schemaName}' has invalid length: must be a positive number";
+                } elseif ($field->length > 65535) {
+                    $warnings[] = "Field '{$field->name}' in schema '{$schemaName}' has length > 65535, consider using TEXT type instead";
+                }
+            } else {
+                $warnings[] = "Field '{$field->name}' in schema '{$schemaName}' has length attribute but type '{$field->type}' does not support it";
+            }
+        }
+
+        // Validate precision and scale for decimal fields
+        if (isset($field->precision) || isset($field->scale)) {
+            if (in_array($field->type, ['decimal', 'numeric'])) {
+                if (isset($field->precision) && (! is_numeric($field->precision) || $field->precision <= 0 || $field->precision > 65)) {
+                    $errors[] = "Field '{$field->name}' in schema '{$schemaName}' has invalid precision: must be between 1 and 65";
+                }
+                if (isset($field->scale) && (! is_numeric($field->scale) || $field->scale < 0 || $field->scale > 30)) {
+                    $errors[] = "Field '{$field->name}' in schema '{$schemaName}' has invalid scale: must be between 0 and 30";
+                }
+                if (isset($field->precision) && isset($field->scale) && $field->scale > $field->precision) {
+                    $errors[] = "Field '{$field->name}' in schema '{$schemaName}' has scale greater than precision";
+                }
+            } else {
+                $warnings[] = "Field '{$field->name}' in schema '{$schemaName}' has precision/scale attributes but type '{$field->type}' does not support them";
+            }
+        }
+
+        // Validate unsigned attribute
+        if (isset($field->unsigned) && $field->unsigned && ! in_array($field->type, ['integer', 'bigInteger', 'smallInteger', 'tinyInteger', 'mediumInteger', 'float', 'double', 'decimal'])) {
+            $warnings[] = "Field '{$field->name}' in schema '{$schemaName}' has unsigned attribute but type '{$field->type}' does not support it";
+        }
+
+        return [
+            'errors' => $errors,
+            'warnings' => $warnings,
+        ];
+    }
+
+    /**
+     * Get list of available custom field types
+     */
+    private function getAvailableCustomFieldTypes(): array
+    {
+        $customTypes = [];
+
+        // Built-in custom types
+        $builtInCustomTypes = [
+            'enum', 'enumeration',
+            'set', 'multi_select', 'multiple_choice',
+            'point', 'geopoint', 'coordinates', 'latlng',
+            'geometry', 'geom', 'spatial', 'geo',
+            'polygon', 'area', 'boundary', 'region',
+        ];
+
+        $customTypes = array_merge($customTypes, $builtInCustomTypes);
+
+        // Load custom field types from configured path
+        $customFieldTypesPath = config('modelschema.custom_field_types_path', app_path('FieldTypes'));
+        if (is_dir($customFieldTypesPath)) {
+            $files = scandir($customFieldTypesPath);
+            foreach ($files as $file) {
+                if (str_ends_with($file, 'FieldType.php')) {
+                    $typeName = mb_strtolower(str_replace('FieldType.php', '', $file));
+                    $customTypes[] = $typeName;
+                }
+            }
+        }
+
+        return array_unique($customTypes);
+    }
+
+    /**
+     * Check if a field type is a custom type
+     */
+    private function isCustomFieldType(string $fieldType): bool
+    {
+        $builtInTypes = [
+            'string', 'text', 'longText', 'mediumText',
+            'integer', 'bigInteger', 'smallInteger', 'tinyInteger', 'mediumInteger',
+            'unsignedBigInteger', 'unsignedInteger', 'unsignedTinyInteger', 'unsignedSmallInteger', 'unsignedMediumInteger',
+            'decimal', 'float', 'double',
+            'boolean',
+            'date', 'datetime', 'timestamp', 'time', 'year',
+            'json', 'jsonb',
+            'uuid',
+            'email', 'url',
+            'binary',
+            'morphs',
+            'foreignId',
+        ];
+
+        return ! in_array($fieldType, $builtInTypes);
+    }
+
+    /**
+     * Check if a field type is a built-in type
+     */
+    private function isBuiltInFieldType(string $fieldType): bool
+    {
+        return ! $this->isCustomFieldType($fieldType);
+    }
+
+    /**
+     * Get custom field type class name
+     */
+    private function getCustomFieldTypeClass(string $fieldType): string
+    {
+        $namespace = config('modelschema.custom_field_types_namespace', 'App\\FieldTypes');
+        $className = ucfirst($fieldType).'FieldType';
+
+        return "{$namespace}\\{$className}";
+    }
+
+    /**
+     * Check if custom field type has specific validator
+     */
+    private function hasCustomFieldTypeValidator(string $fieldType): bool
+    {
+        $validatedTypes = [
+            'enum', 'enumeration',
+            'set', 'multi_select', 'multiple_choice',
+            'point', 'geopoint', 'coordinates', 'latlng',
+            'geometry', 'geom', 'spatial', 'geo',
+            'polygon', 'area', 'boundary', 'region',
+        ];
+
+        return in_array($fieldType, $validatedTypes);
+    }
+
+    /**
+     * Count total fields across all schemas
+     */
+    private function countTotalFields(array $schemas): int
+    {
+        $total = 0;
+        foreach ($schemas as $schema) {
+            $total += count($schema->fields);
+        }
+
+        return $total;
     }
 }
