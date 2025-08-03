@@ -28,19 +28,23 @@ class SchemaService
 
     protected SchemaDiffService $diffService;
 
+    protected SecurityValidationService $securityValidator;
+
     public function __construct(
         protected Filesystem $filesystem = new Filesystem(),
         ?SchemaCacheService $cache = null,
         ?LoggingService $logger = null,
         ?EnhancedValidationService $enhancedValidator = null,
         ?AutoValidationService $autoValidator = null,
-        ?SchemaDiffService $diffService = null
+        ?SchemaDiffService $diffService = null,
+        ?SecurityValidationService $securityValidator = null
     ) {
         $this->cache = $cache ?? new SchemaCacheService();
         $this->logger = $logger ?? new LoggingService();
         $this->enhancedValidator = $enhancedValidator ?? new EnhancedValidationService();
         $this->autoValidator = $autoValidator ?? new AutoValidationService(new FieldTypePluginManager());
         $this->diffService = $diffService ?? new SchemaDiffService($this->logger);
+        $this->securityValidator = $securityValidator ?? new SecurityValidationService();
     }
 
     /**
@@ -178,6 +182,52 @@ class SchemaService
         foreach ($schema->relationships as $relationship) {
             if (! $this->isValidRelationshipType($relationship->type)) {
                 $errors[] = "Unknown relationship type '{$relationship->type}' in relationship '{$relationship->name}'";
+            }
+        }
+
+        // Security validations
+        $fieldsArray = [];
+        foreach ($schema->fields as $field) {
+            $fieldsArray[$field->name] = [
+                'type' => $field->type,
+                'nullable' => $field->nullable ?? false,
+                'default' => $field->default ?? null,
+            ];
+        }
+
+        $relationshipsArray = [];
+        foreach ($schema->relationships as $relationship) {
+            $relationshipsArray[$relationship->name] = [
+                'type' => $relationship->type,
+                'model' => $relationship->model ?? null,
+            ];
+        }
+
+        $securityValidation = $this->securityValidator->validateSchemaContent([
+            'core' => [
+                'model' => $schema->name,
+                'namespace' => $schema->getModelNamespace(),
+                'table' => $schema->table,
+                'fields' => $fieldsArray,
+                'relationships' => $relationshipsArray,
+            ],
+        ]);
+
+        if (! $securityValidation['is_secure']) {
+            $errors = array_merge($errors, array_map(
+                fn ($error): string => "Security issue: {$error}",
+                $securityValidation['errors']
+            ));
+        }
+
+        // Log security warnings if any
+        if (! empty($securityValidation['warnings'])) {
+            foreach ($securityValidation['warnings'] as $warning) {
+                $this->logger->logWarning(
+                    'Security warning in schema validation',
+                    ['schema_name' => $schema->name, 'warning' => $warning],
+                    'Review schema content for potential security issues'
+                );
             }
         }
 
@@ -946,6 +996,123 @@ class SchemaService
         $diff = $this->compareSchemas($oldSchema, $newSchema);
 
         return $diff['validation_impact'] ?? [];
+    }
+
+    /**
+     * Validate a stub file path for security issues
+     */
+    public function validateStubPath(string $stubPath): array
+    {
+        $this->logger->logOperationStart('validateStubPath', ['stub_path' => $stubPath]);
+
+        $startTime = microtime(true);
+        $result = $this->securityValidator->validateStubPath($stubPath);
+
+        $validationTime = microtime(true) - $startTime;
+
+        $this->logger->logValidation('stub_path', empty($result['errors']), $result['errors'], $result['warnings'] ?? [], [
+            'stub_path' => $stubPath,
+            'validation_time_ms' => round($validationTime * 1000, 2),
+        ]);
+
+        $this->logger->logOperationEnd('validateStubPath', [
+            'success' => empty($result['errors']),
+            'error_count' => count($result['errors']),
+            'warning_count' => count($result['warnings'] ?? []),
+            'validation_time_ms' => round($validationTime * 1000, 2),
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Audit stub content for security issues
+     */
+    public function auditStubContent(string $stubContent): array
+    {
+        $this->logger->logOperationStart('auditStubContent', ['content_length' => mb_strlen($stubContent)]);
+
+        $startTime = microtime(true);
+        $result = $this->securityValidator->auditStubContent($stubContent);
+
+        $auditTime = microtime(true) - $startTime;
+
+        $this->logger->logValidation('stub_content', $result['is_secure'], $result['errors'], $result['warnings'], [
+            'content_length' => mb_strlen($stubContent),
+            'security_score' => $result['security_score'],
+            'audit_time_ms' => round($auditTime * 1000, 2),
+        ]);
+
+        // Log security score
+        if ($result['security_score'] < 80) {
+            $this->logger->logWarning(
+                'Low security score for stub content',
+                [
+                    'security_score' => $result['security_score'],
+                    'error_count' => count($result['errors']),
+                    'warning_count' => count($result['warnings']),
+                ],
+                'Review and improve stub content security'
+            );
+        }
+
+        $this->logger->logOperationEnd('auditStubContent', [
+            'is_secure' => $result['is_secure'],
+            'security_score' => $result['security_score'],
+            'error_count' => count($result['errors']),
+            'warning_count' => count($result['warnings']),
+            'audit_time_ms' => round($auditTime * 1000, 2),
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Validate class and namespace names for security
+     */
+    public function validateSecureNaming(string $className, string $namespace = ''): array
+    {
+        $this->logger->logOperationStart('validateSecureNaming', [
+            'class_name' => $className,
+            'namespace' => $namespace,
+        ]);
+
+        $startTime = microtime(true);
+        $errors = [];
+        $warnings = [];
+
+        // Validate class name
+        $classValidation = $this->securityValidator->validateClassName($className);
+        $errors = array_merge($errors, $classValidation['errors']);
+        $warnings = array_merge($warnings, $classValidation['warnings']);
+
+        // Validate namespace if provided
+        if ($namespace !== '' && $namespace !== '0') {
+            $namespaceValidation = $this->securityValidator->validateNamespace($namespace);
+            $errors = array_merge($errors, $namespaceValidation['errors']);
+            $warnings = array_merge($warnings, $namespaceValidation['warnings']);
+        }
+
+        $validationTime = microtime(true) - $startTime;
+
+        $this->logger->logValidation('secure_naming', $errors === [], $errors, $warnings, [
+            'class_name' => $className,
+            'namespace' => $namespace,
+            'validation_time_ms' => round($validationTime * 1000, 2),
+        ]);
+
+        $this->logger->logOperationEnd('validateSecureNaming', [
+            'success' => $errors === [],
+            'error_count' => count($errors),
+            'warning_count' => count($warnings),
+            'validation_time_ms' => round($validationTime * 1000, 2),
+        ]);
+
+        return [
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'is_valid' => $errors === [],
+        ];
     }
 
     /**

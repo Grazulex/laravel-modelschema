@@ -390,12 +390,14 @@ composer test-coverage
 - **📝 [Logging System](docs/LOGGING.md)** - Comprehensive logging and debugging
 - **⚡ [Enhanced Features](docs/enhanced-features.md)** - Advanced capabilities overview
 - **🔍 [Schema Optimization](docs/SCHEMA_OPTIMIZATION.md)** - Schema analysis and optimization tools
+- **🔒 [Security Features](docs/SECURITY.md)** - Comprehensive security validation and protection
 
 ### Integration Examples
 - **🔗 [Integration Example](examples/IntegrationExample.php)** - Complete integration workflow
 - **🛠️ [Schema Service API](examples/SchemaServiceApiExample.php)** - API usage examples
 - **📋 [API Extensions](examples/ApiExtensions.php)** - Extended API implementations
 - **⚡ [Schema Optimization Usage](examples/SchemaOptimizationUsage.php)** - Advanced schema analysis examples
+- **🔒 [Security Usage Examples](examples/SecurityUsageExamples.php)** - Security validation and protection examples
 
 ## 🤝 Contributing
 
