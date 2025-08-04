@@ -44,6 +44,187 @@ class GenerationService
     }
 
     /**
+     * Get detailed information about available generators and their capabilities
+     */
+    public function getGeneratorInfo(): array
+    {
+        $generators = $this->getGeneratorInstances();
+        $info = [];
+
+        foreach ($generators as $name => $generator) {
+            $info[$name] = [
+                'name' => $generator->getGeneratorName(),
+                'available_formats' => $generator->getAvailableFormats(),
+                'class' => get_class($generator),
+                'description' => $this->getGeneratorDescription($name),
+            ];
+        }
+
+        return $info;
+    }
+
+    /**
+     * Get actual generator instances for introspection
+     */
+    public function getGeneratorInstances(): array
+    {
+        return [
+            'model' => $this->modelGenerator,
+            'migration' => $this->migrationGenerator,
+            'requests' => $this->requestGenerator,
+            'resources' => $this->resourceGenerator,
+            'factory' => $this->factoryGenerator,
+            'seeder' => $this->seederGenerator,
+            'controllers' => $this->controllerGenerator,
+            'tests' => $this->testGenerator,
+            'policies' => $this->policyGenerator,
+        ];
+    }
+
+    /**
+     * Generate all files for a schema with debug/verbose mode
+     */
+    public function generateAllWithDebug(ModelSchema $schema, array $options = []): array
+    {
+        $debugMode = $options['debug'] ?? false;
+        $results = [];
+
+        if ($debugMode) {
+            echo "🔍 Debug Mode Enabled for {$schema->name}\n";
+            echo '📋 Requested options: '.json_encode($options)."\n";
+            echo '🔧 Available generators: '.implode(', ', array_keys($this->getGeneratorInstances()))."\n\n";
+        }
+
+        $this->logger->logOperationStart('generateAllWithDebug', [
+            'schema_name' => $schema->name,
+            'options' => array_keys(array_filter($options, fn ($value) => $value)),
+            'debug_mode' => $debugMode,
+        ]);
+
+        $startTime = microtime(true);
+        $generatedCount = 0;
+        $errors = [];
+
+        try {
+            $generatorOptions = [
+                'model' => ['enabled' => $options['model'] ?? true, 'generator' => 'modelGenerator'],
+                'migration' => ['enabled' => $options['migration'] ?? true, 'generator' => 'migrationGenerator'],
+                'requests' => ['enabled' => $options['requests'] ?? false, 'generator' => 'requestGenerator'],
+                'resources' => ['enabled' => $options['resources'] ?? false, 'generator' => 'resourceGenerator'],
+                'factory' => ['enabled' => $options['factory'] ?? false, 'generator' => 'factoryGenerator'],
+                'seeder' => ['enabled' => $options['seeder'] ?? false, 'generator' => 'seederGenerator'],
+                'controllers' => ['enabled' => $options['controllers'] ?? false, 'generator' => 'controllerGenerator'],
+                'tests' => ['enabled' => $options['tests'] ?? false, 'generator' => 'testGenerator'],
+                'policies' => ['enabled' => $options['policies'] ?? false, 'generator' => 'policyGenerator'],
+            ];
+
+            foreach ($generatorOptions as $type => $config) {
+                if ($config['enabled']) {
+                    if ($debugMode) {
+                        echo "🚀 Generating {$type}...\n";
+                    }
+
+                    $generatorMethodName = 'generate'.ucfirst($type === 'requests' ? 'Requests' :
+                                                              ($type === 'resources' ? 'Resources' :
+                                                              ($type === 'controllers' ? 'Controllers' :
+                                                              ($type === 'tests' ? 'Tests' :
+                                                              ($type === 'policies' ? 'Policies' :
+                                                              ucfirst($type))))));
+
+                    try {
+                        $result = $this->$generatorMethodName($schema, $options);
+                        $results[$type] = $result;
+
+                        if (isset($result['json']) && isset($result['yaml'])) {
+                            $generatedCount++;
+                            if ($debugMode) {
+                                echo "✅ {$type} generated successfully\n";
+                                echo '   - JSON size: '.mb_strlen($result['json'])." bytes\n";
+                                echo '   - YAML size: '.mb_strlen($result['yaml'])." bytes\n";
+                            }
+                        } else {
+                            $errors[] = "{$type} generation incomplete";
+                            if ($debugMode) {
+                                echo "⚠️  {$type} generation incomplete\n";
+                            }
+                        }
+                    } catch (Exception $e) {
+                        $errors[] = "{$type} generation failed: ".$e->getMessage();
+                        if ($debugMode) {
+                            echo "❌ {$type} generation failed: ".$e->getMessage()."\n";
+                        }
+                    }
+
+                    if ($debugMode) {
+                        echo "\n";
+                    }
+                }
+            }
+
+            $totalTime = microtime(true) - $startTime;
+
+            if ($debugMode) {
+                echo "📊 Generation Summary:\n";
+                echo '   - Total time: '.round($totalTime * 1000, 2)."ms\n";
+                echo "   - Generated: {$generatedCount} components\n";
+                echo '   - Errors: '.count($errors)."\n";
+                echo '   - Success rate: '.($generatedCount > 0 ? round(($generatedCount / count(array_filter($generatorOptions, fn ($c) => $c['enabled']))) * 100, 2) : 0)."%\n";
+
+                if ($errors !== []) {
+                    echo "❌ Errors encountered:\n";
+                    foreach ($errors as $error) {
+                        echo "   - {$error}\n";
+                    }
+                }
+            }
+
+            $this->logger->logOperationEnd('generateAllWithDebug', [
+                'success' => $errors === [],
+                'generated_count' => $generatedCount,
+                'error_count' => count($errors),
+                'total_time_ms' => round($totalTime * 1000, 2),
+                'debug_mode' => $debugMode,
+            ]);
+
+            return $results;
+
+        } catch (Exception $e) {
+            if ($debugMode) {
+                echo '💥 Fatal error during generation: '.$e->getMessage()."\n";
+            }
+
+            $this->logger->logError(
+                "Debug generation failed for schema: {$schema->name}",
+                $e,
+                ['schema_name' => $schema->name, 'options' => $options, 'debug_mode' => $debugMode]
+            );
+            throw $e;
+        }
+    }
+
+    /**
+     * Generate all files for a schema with enhanced result format for TurboMaker compatibility
+     */
+    public function generateAllWithStatus(ModelSchema $schema, array $options = []): array
+    {
+        $results = $this->generateAll($schema, $options);
+
+        // Transform results to include success status for TurboMaker compatibility
+        $enhancedResults = [];
+
+        foreach ($results as $generatorName => $result) {
+            $enhancedResults[$generatorName] = [
+                'success' => isset($result['json']) && isset($result['yaml']),
+                'json' => $result['json'] ?? null,
+                'yaml' => $result['yaml'] ?? null,
+                'metadata' => $result['metadata'] ?? null,
+            ];
+        }
+
+        return $enhancedResults;
+    }
+
+    /**
      * Generate all files for a schema
      */
     public function generateAll(ModelSchema $schema, array $options = []): array
@@ -478,5 +659,24 @@ class GenerationService
             'json' => json_encode($jsonFragments, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
             'yaml' => implode("\n---\n", $yamlFragments),
         ];
+    }
+
+    /**
+     * Get description for a specific generator
+     */
+    protected function getGeneratorDescription(string $generatorName): string
+    {
+        return match ($generatorName) {
+            'model' => 'Generates Laravel Eloquent model classes with relationships, casts, and configurations',
+            'migration' => 'Generates Laravel database migration files with fields, indexes, and foreign keys',
+            'requests' => 'Generates Laravel Form Request classes for validation (store/update)',
+            'resources' => 'Generates Laravel API Resource classes for data transformation',
+            'factory' => 'Generates Laravel Factory classes for model data generation and testing',
+            'seeder' => 'Generates Laravel Seeder classes for database population',
+            'controllers' => 'Generates Laravel Controller classes with CRUD operations and middleware',
+            'tests' => 'Generates PHPUnit test classes for model and feature testing',
+            'policies' => 'Generates Laravel Policy classes for authorization and access control',
+            default => "Generator for {$generatorName} components"
+        };
     }
 }

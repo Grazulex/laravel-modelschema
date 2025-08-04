@@ -12,10 +12,10 @@ declare(strict_types=1);
 namespace App\Examples;
 
 use Exception;
+use Grazulex\LaravelModelschema\Examples\FileUploadFieldTypePlugin;
+use Grazulex\LaravelModelschema\Examples\UrlFieldTypePlugin;
 use Grazulex\LaravelModelschema\Services\SchemaService;
 use Grazulex\LaravelModelschema\Support\FieldTypePluginManager;
-use Grazulex\LaravelModelschema\Examples\UrlFieldTypePlugin;
-use Grazulex\LaravelModelschema\Examples\FileUploadFieldTypePlugin;
 
 class SchemaServiceApiExample
 {
@@ -308,13 +308,13 @@ YAML;
 
     /**
      * Example: Trait-Based Field Configuration
-     * 
+     *
      * Demonstrates how to use trait-based field types in schemas
      */
     public function traitBasedFieldExample(): void
     {
         echo "=== Trait-Based Field Configuration Example ===\n";
-        
+
         $yamlWithTraits = <<<'YAML'
 core:
   model: Website
@@ -364,8 +364,8 @@ YAML;
             // Parse schema with trait-based fields
             $result = $this->schemaService->parseAndSeparateSchema($yamlWithTraits);
             echo "✅ Parse successful\n";
-            echo "Core fields found: " . count($result['core']['fields'] ?? []) . "\n";
-            
+            echo 'Core fields found: '.count($result['core']['fields'] ?? [])."\n";
+
             // Validate including trait configurations
             $errors = $this->schemaService->validateCoreSchema($yamlWithTraits);
             if (empty($errors)) {
@@ -376,37 +376,37 @@ YAML;
                     echo "  - $error\n";
                 }
             }
-            
+
             // Extract generation data with processed traits
             $generationData = $this->schemaService->getGenerationDataFromCompleteYaml($yamlWithTraits);
             echo "✅ Generation data extracted with trait processing\n";
-            
+
             // Show how traits are processed in the model fragment
             $modelFragment = json_decode($generationData['generation_data']['model']['json'], true);
             echo "Model fragment includes trait-processed fields:\n";
             foreach ($modelFragment['fields'] ?? [] as $fieldName => $fieldData) {
-                echo "  - $fieldName: " . ($fieldData['type'] ?? 'unknown') . "\n";
+                echo "  - $fieldName: ".($fieldData['type'] ?? 'unknown')."\n";
                 if (isset($fieldData['custom_attributes'])) {
-                    echo "    Traits: " . implode(', ', array_keys($fieldData['custom_attributes'])) . "\n";
+                    echo '    Traits: '.implode(', ', array_keys($fieldData['custom_attributes']))."\n";
                 }
             }
-            
+
         } catch (Exception $e) {
-            echo "❌ Error: " . $e->getMessage() . "\n";
+            echo '❌ Error: '.$e->getMessage()."\n";
         }
-        
+
         echo "\n";
     }
 
     /**
      * Example: Cross-Trait Validation
-     * 
+     *
      * Shows how traits can interact for complex validation scenarios
      */
     public function crossTraitValidationExample(): void
     {
         echo "=== Cross-Trait Validation Example ===\n";
-        
+
         // This schema has conflicting trait configurations
         $conflictingYaml = <<<'YAML'
 core:
@@ -436,8 +436,8 @@ YAML;
         try {
             // This should detect cross-trait validation errors
             $errors = $this->schemaService->validateCoreSchema($conflictingYaml);
-            
-            if (!empty($errors)) {
+
+            if (! empty($errors)) {
                 echo "✅ Cross-trait validation working - conflicts detected:\n";
                 foreach ($errors as $error) {
                     echo "  - $error\n";
@@ -445,55 +445,55 @@ YAML;
             } else {
                 echo "⚠️  Cross-trait validation may need improvement\n";
             }
-            
+
         } catch (Exception $e) {
-            echo "❌ Error during validation: " . $e->getMessage() . "\n";
+            echo '❌ Error during validation: '.$e->getMessage()."\n";
         }
-        
+
         echo "\n";
     }
 
     /**
      * Example: Plugin Manager Integration
-     * 
+     *
      * Shows how plugins register and process traits
      */
     public function pluginManagerIntegrationExample(): void
     {
         echo "=== Plugin Manager Integration Example ===\n";
-        
+
         try {
             $pluginManager = new FieldTypePluginManager();
-            
+
             // Register trait-based plugins
             $pluginManager->registerPlugin(new UrlFieldTypePlugin());
             $pluginManager->registerPlugin(new FileUploadFieldTypePlugin());
-            
+
             echo "✅ Trait-based plugins registered\n";
-            
+
             // Show plugin capabilities
             $urlPlugin = $pluginManager->getPlugin('url');
             if ($urlPlugin) {
-                echo "URL Plugin traits: " . implode(', ', $urlPlugin->getCustomAttributes()) . "\n";
-                
+                echo 'URL Plugin traits: '.implode(', ', $urlPlugin->getCustomAttributes())."\n";
+
                 // Test trait configuration processing
                 $config = [
                     'schemes' => ['https'],
                     'timeout' => 30,
                     // Missing other traits - should get defaults
                 ];
-                
+
                 $processed = $urlPlugin->processCustomAttributes($config);
                 echo "Processed config (with trait defaults):\n";
                 foreach ($processed as $key => $value) {
-                    echo "  - $key: " . (is_array($value) ? json_encode($value) : $value) . "\n";
+                    echo "  - $key: ".(is_array($value) ? json_encode($value) : $value)."\n";
                 }
             }
-            
+
         } catch (Exception $e) {
-            echo "❌ Plugin manager error: " . $e->getMessage() . "\n";
+            echo '❌ Plugin manager error: '.$e->getMessage()."\n";
         }
-        
+
         echo "\n";
     }
 
@@ -503,11 +503,11 @@ YAML;
     public function runTraitExamples(): void
     {
         echo "🚀 Running Trait-Based Schema Service Examples\n\n";
-        
+
         $this->traitBasedFieldExample();
         $this->crossTraitValidationExample();
         $this->pluginManagerIntegrationExample();
-        
+
         echo "✨ All trait examples completed!\n";
     }
 }
@@ -538,9 +538,9 @@ $examples->completeWorkflowExample();
 echo "\n7. Error Handling Example:\n";
 $examples->errorHandlingExample();
 
-echo "\n" . str_repeat("=", 50) . "\n";
+echo "\n".str_repeat('=', 50)."\n";
 echo "🎯 NEW: Trait-Based Examples\n";
-echo str_repeat("=", 50) . "\n\n";
+echo str_repeat('=', 50)."\n\n";
 
 echo "8. Trait-Based Field Configuration:\n";
 $examples->traitBasedFieldExample();

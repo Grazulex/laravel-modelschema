@@ -213,7 +213,15 @@ final class ModelSchema
      */
     public function hasSoftDeletes(): bool
     {
-        return $this->options['soft_deletes'] ?? false;
+        // Check explicit option first
+        if (isset($this->options['soft_deletes'])) {
+            return $this->options['soft_deletes'];
+        }
+
+        // Check if deleted_at field exists
+        return isset($this->fields['deleted_at']) &&
+               $this->fields['deleted_at']->type === 'timestamp' &&
+               $this->fields['deleted_at']->nullable === true;
     }
 
     /**

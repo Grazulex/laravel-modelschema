@@ -13,17 +13,19 @@ declare(strict_types=1);
 namespace App\Examples;
 
 use Exception;
+use Grazulex\LaravelModelschema\Examples\JsonSchemaFieldTypePlugin;
+use Grazulex\LaravelModelschema\Examples\UrlFieldTypePlugin;
 use Grazulex\LaravelModelschema\Services\GenerationService;
 use Grazulex\LaravelModelschema\Services\SchemaService;
 use Grazulex\LaravelModelschema\Support\FieldTypePluginManager;
-use Grazulex\LaravelModelschema\Examples\UrlFieldTypePlugin;
-use Grazulex\LaravelModelschema\Examples\JsonSchemaFieldTypePlugin;
 use InvalidArgumentException;
 
 class IntegrationExample
 {
     private SchemaService $schemaService;
+
     private GenerationService $generationService;
+
     private FieldTypePluginManager $pluginManager;
 
     public function __construct()
@@ -31,21 +33,9 @@ class IntegrationExample
         $this->schemaService = new SchemaService();
         $this->generationService = new GenerationService();
         $this->pluginManager = new FieldTypePluginManager();
-        
+
         // Register trait-based plugins
         $this->registerTraitBasedPlugins();
-    }
-
-    /**
-     * Register modern trait-based plugins
-     */
-    private function registerTraitBasedPlugins(): void
-    {
-        // Register URL plugin with trait-based configuration
-        $this->pluginManager->registerPlugin(new UrlFieldTypePlugin());
-        
-        // Register JSON Schema plugin with trait-based validation
-        $this->pluginManager->registerPlugin(new JsonSchemaFieldTypePlugin());
     }
 
     /**
@@ -72,13 +62,13 @@ class IntegrationExample
                         'url_fields' => [
                             'schemes' => ['https'],
                             'verify_ssl' => true,
-                            'timeout' => 30
+                            'timeout' => 30,
                         ],
                         'json_fields' => [
                             'strict_validation' => true,
-                            'schema_format' => 'draft-07'
-                        ]
-                    ]
+                            'schema_format' => 'draft-07',
+                        ],
+                    ],
                 ],
                 'arc' => [
                     'permissions' => ['view', 'create', 'edit', 'delete'],
@@ -233,21 +223,21 @@ core:
 
         // 1. Parse schema with trait-based field configurations
         $result = $this->schemaService->parseAndSeparateSchema($yamlContent);
-        
+
         // 2. Validate including trait-based configurations
         $errors = $this->schemaService->validateCoreSchema($yamlContent);
-        if (!empty($errors)) {
-            throw new InvalidArgumentException('Trait validation failed: ' . implode(', ', $errors));
+        if (! empty($errors)) {
+            throw new InvalidArgumentException('Trait validation failed: '.implode(', ', $errors));
         }
-        
+
         // 3. Extract generation data with processed traits
         $generationData = $this->schemaService->getGenerationDataFromCompleteYaml($yamlContent);
-        
+
         return [
             'core_schema' => $result['core'],
             'validation_passed' => empty($errors),
             'generation_fragments' => $generationData['generation_data'],
-            'trait_processing_summary' => $this->getTraitProcessingSummary($generationData)
+            'trait_processing_summary' => $this->getTraitProcessingSummary($generationData),
         ];
     }
 
@@ -259,9 +249,9 @@ core:
         // Auto-discover trait-based plugins
         $discoveredPlugins = $this->pluginManager->discoverPlugins([
             'App\\FieldTypes\\*Plugin',
-            'Custom\\Traits\\*FieldTypePlugin'
+            'Custom\\Traits\\*FieldTypePlugin',
         ]);
-        
+
         $pluginSummary = [];
         foreach ($discoveredPlugins as $plugin) {
             $pluginSummary[] = [
@@ -269,14 +259,26 @@ core:
                 'version' => $plugin->getVersion(),
                 'custom_traits' => $plugin->getCustomAttributes(),
                 'trait_configs' => array_keys($plugin->customAttributeConfig ?? []),
-                'metadata' => $plugin->getMetadata()
+                'metadata' => $plugin->getMetadata(),
             ];
         }
-        
+
         return [
             'discovered_count' => count($discoveredPlugins),
-            'plugins' => $pluginSummary
+            'plugins' => $pluginSummary,
         ];
+    }
+
+    /**
+     * Register modern trait-based plugins
+     */
+    private function registerTraitBasedPlugins(): void
+    {
+        // Register URL plugin with trait-based configuration
+        $this->pluginManager->registerPlugin(new UrlFieldTypePlugin());
+
+        // Register JSON Schema plugin with trait-based validation
+        $this->pluginManager->registerPlugin(new JsonSchemaFieldTypePlugin());
     }
 
     /**
@@ -288,12 +290,12 @@ core:
             'traits_applied' => 0,
             'default_values_used' => 0,
             'transformations_applied' => 0,
-            'validations_passed' => 0
+            'validations_passed' => 0,
         ];
-        
+
         // This would be enhanced with actual trait processing metrics
         // from the generation service in a real implementation
-        
+
         return $summary;
     }
 
