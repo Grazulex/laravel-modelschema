@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 use Grazulex\LaravelModelschema\Schema\ModelSchema;
 use Grazulex\LaravelModelschema\Services\Generation\GenerationService;
 
 it('demonstrates complete TurboMaker integration workflow', function () {
     $generationService = app(GenerationService::class);
-    
+
     // Create a complex model schema similar to what TurboMaker would use
     $modelSchema = ModelSchema::fromArray('BlogPost', [
         'table' => 'blog_posts',
@@ -28,7 +30,7 @@ it('demonstrates complete TurboMaker integration workflow', function () {
                 'foreign_key' => 'user_id',
             ],
             'category' => [
-                'type' => 'belongsTo', 
+                'type' => 'belongsTo',
                 'model' => 'Category',
                 'foreign_key' => 'category_id',
             ],
@@ -51,11 +53,11 @@ it('demonstrates complete TurboMaker integration workflow', function () {
     expect($generatorInfo)->toBeArray();
     expect($generatorInfo)->toHaveKey('seeder');
     expect($generatorInfo)->toHaveKey('policies');
-    
+
     // 2. Generate all components using TurboMaker-compatible format (Bug #1 fix)
     $options = [
         'model' => true,
-        'migration' => true, 
+        'migration' => true,
         'requests' => true,
         'resources' => true,
         'factory' => true,
@@ -64,9 +66,9 @@ it('demonstrates complete TurboMaker integration workflow', function () {
         'policies' => true,
         'tests' => true,
     ];
-    
+
     $results = $generationService->generateAllWithStatus($modelSchema, $options);
-    
+
     // 3. Verify TurboMaker compatibility format (Bug #1 resolution)
     foreach (['model', 'migration', 'seeder', 'policies'] as $component) {
         expect($results)->toHaveKey($component);
@@ -75,7 +77,7 @@ it('demonstrates complete TurboMaker integration workflow', function () {
         expect($results[$component])->toHaveKey('json');
         expect($results[$component])->toHaveKey('yaml');
     }
-    
+
     // 4. Verify seeder specifically (Bug #1 - seeder generation)
     $seederData = json_decode($results['seeder']['json'], true);
     expect($seederData)->toHaveKey('seeder');
@@ -83,39 +85,39 @@ it('demonstrates complete TurboMaker integration workflow', function () {
     expect($seederData['seeder']['model_class'])->toBe('App\\Models\\BlogPost');
     expect($seederData['seeder']['dependencies'])->toContain('UserSeeder');
     expect($seederData['seeder']['dependencies'])->toContain('CategorySeeder');
-    
+
     // 5. Verify policy has all authorization methods (Potential Issue #4)
     $policyData = json_decode($results['policies']['json'], true);
     $blogPostPolicy = $policyData['policies']['BlogPostPolicy'];
-    
+
     $expectedMethods = ['viewAny', 'view', 'create', 'update', 'delete', 'restore', 'forceDelete'];
     foreach ($expectedMethods as $method) {
         expect($blogPostPolicy['methods'])->toHaveKey($method);
     }
-    
+
     // 6. Test debug mode (Feature Request #1)
     ob_start();
     $debugResults = $generationService->generateAllWithDebug($modelSchema, [
         'seeder' => true,
         'model' => false,
         'migration' => false,
-        'debug' => true
+        'debug' => true,
     ]);
     $debugOutput = ob_get_clean();
-    
+
     expect($debugOutput)->toContain('🔍 Debug Mode Enabled for BlogPost');
     expect($debugOutput)->toContain('📊 Generation Summary:');
     expect($debugResults)->toHaveKey('seeder');
-    
+
     // 7. Verify performance is acceptable (Bug #2 - performance consistency)
     $startTime = microtime(true);
     $perfResults = $generationService->generateAll($modelSchema, ['seeder' => true]);
     $endTime = microtime(true);
-    
+
     $generationTime = ($endTime - $startTime) * 1000; // Convert to milliseconds
     expect($generationTime)->toBeLessThan(100); // Should complete within 100ms
     expect($perfResults)->toHaveKey('seeder');
-    
+
     // 8. Verify soft deletes detection enhancement
     expect($modelSchema->hasSoftDeletes())->toBeTrue(); // Should detect deleted_at field
 });

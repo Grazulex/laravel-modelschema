@@ -75,14 +75,15 @@ describe('Integration: Complete Fragment Generation', function () {
         // Verify all components are generated
         expect($jsonData)->toHaveKey('model');
         expect($jsonData)->toHaveKey('migration');
-        expect($jsonData)->toHaveKey('requests');
-        expect($jsonData)->toHaveKey('resources');
+        expect($jsonData)->toHaveKey('request'); // Changed from 'requests'
+        expect($jsonData)->toHaveKey('resource'); // Changed from 'resources'
         expect($jsonData)->toHaveKey('factory');
         expect($jsonData)->toHaveKey('seeder');
-        expect($jsonData)->toHaveKey('controllers');
+        expect($jsonData)->toHaveKey('controller'); // Changed from 'controllers'
 
         // Verify model configuration
-        $model = $jsonData['model'];
+        $model = $jsonData['model']['model']; // Fix double nesting
+
         expect($model['name'])->toBe('Article');
         expect($model['table'])->toBe('articles');
         expect($model['options']['soft_deletes'] ?? false)->toBe(true);
@@ -91,7 +92,8 @@ describe('Integration: Complete Fragment Generation', function () {
         expect($model['fillable'])->toContain('content');
 
         // Verify migration structure
-        $migration = $jsonData['migration'];
+        $migration = $jsonData['migration']['migration']; // Fix double nesting
+
         expect($migration['table'])->toBe('articles');
 
         // Vérifier les champs par nom dans le tableau
@@ -107,7 +109,8 @@ describe('Integration: Complete Fragment Generation', function () {
         expect($foreignKeys->has('category_id'))->toBe(true);
 
         // Verify request validation
-        $requests = $jsonData['requests'];
+        $requests = $jsonData['request']['requests']; // Fix double nesting
+
         expect($requests)->toHaveKey('store');
         expect($requests)->toHaveKey('update');
         expect($requests['store']['validation_rules']['title'])->toContain('required');
@@ -115,7 +118,7 @@ describe('Integration: Complete Fragment Generation', function () {
         expect($requests['update']['validation_rules']['slug'])->toContain('unique:articles');
 
         // Verify enhanced resources
-        $resources = $jsonData['resources'];
+        $resources = $jsonData['resource']['resources']; // Fix double nesting
         expect($resources)->toHaveKey('main_resource');
         expect($resources)->toHaveKey('collection_resource');
         expect($resources)->toHaveKey('partial_resources');
@@ -129,7 +132,7 @@ describe('Integration: Complete Fragment Generation', function () {
         expect($mainResource['relationships'])->toHaveKey('tags');
 
         // Verify enhanced controllers
-        $controllers = $jsonData['controllers'];
+        $controllers = $jsonData['controller']['controllers']; // Fix double nesting
         expect($controllers)->toHaveKey('api_controller');
         expect($controllers)->toHaveKey('web_controller');
         expect($controllers)->toHaveKey('middleware');
@@ -143,7 +146,7 @@ describe('Integration: Complete Fragment Generation', function () {
         expect($apiController['relationships'])->toHaveKey('comments');
 
         // Verify factory configuration
-        $factory = $jsonData['factory'];
+        $factory = $jsonData['factory']['factory']; // Fix double nesting
         expect($factory['name'])->toBe('ArticleFactory');
         expect($factory['fields'])->toHaveKey('title');
         expect($factory['fields'])->toHaveKey('slug');
@@ -151,7 +154,7 @@ describe('Integration: Complete Fragment Generation', function () {
         expect($factory['fields'])->toHaveKey('published');
 
         // Verify seeder configuration
-        $seeder = $jsonData['seeder'];
+        $seeder = $jsonData['seeder']['seeder']; // Fix double nesting
 
         expect($seeder['name'])->toBe('ArticleSeeder');
         expect($seeder['count'])->toBeGreaterThan(0);
@@ -188,9 +191,9 @@ describe('Integration: Complete Fragment Generation', function () {
         $result = $this->generationService->generateMultiple($this->complexSchema, $generators);
         $jsonData = json_decode($result['json'], true);
 
-        $requests = $jsonData['requests'];
-        $resources = $jsonData['resources'];
-        $controllers = $jsonData['controllers'];
+        $requests = $jsonData['request']['requests']; // Fix double nesting
+        $resources = $jsonData['resource']['resources']; // Fix double nesting
+        $controllers = $jsonData['controller']['controllers']; // Fix double nesting
 
         // Controller should reference correct request classes (via validation field)
         $apiController = $controllers['api_controller'];
@@ -221,41 +224,41 @@ describe('Integration: Complete Fragment Generation', function () {
         $relationships = $this->complexSchema->getRelationships();
 
         // Model relationships
-        $modelRelationships = collect($jsonData['model']['relationships'])->keyBy('name');
+        $modelRelationships = collect($jsonData['model']['model']['relationships'])->keyBy('name');
 
         foreach ($relationships as $name => $config) {
             expect($modelRelationships->has($name))->toBe(true);
             expect($modelRelationships[$name]['type'])->toBe($config->type);
             expect($modelRelationships[$name]['model'])->toBe($config->model);
         }        // Migration foreign keys for belongsTo relationships
-        $migrationForeignKeys = collect($jsonData['migration']['foreign_keys'])->keyBy('column');
+        $migrationForeignKeys = collect($jsonData['migration']['migration']['foreign_keys'])->keyBy('column');
         expect($migrationForeignKeys->has('author_id'))->toBe(true);
         expect($migrationForeignKeys->has('category_id'))->toBe(true);
 
         // Resource relationships
-        $resourceRelationships = $jsonData['resources']['main_resource']['relationships'];
+        $resourceRelationships = $jsonData['resource']['resources']['main_resource']['relationships'];
         foreach ($relationships as $name => $config) {
             expect($resourceRelationships)->toHaveKey($name);
             expect($resourceRelationships[$name]['type'])->toBe($config->type);
         }
 
         // Controller relationships
-        $controllerRelationships = $jsonData['controllers']['api_controller']['relationships'];
+        $controllerRelationships = $jsonData['controller']['controllers']['api_controller']['relationships'];
         foreach ($relationships as $name => $config) {
             expect($controllerRelationships)->toHaveKey($name);
             expect($controllerRelationships[$name]['type'])->toBe($config->type);
         }
 
         // Factory relationships (for belongsTo) - only if they exist
-        if (isset($jsonData['factory']['relationships'])) {
-            $factoryRelationships = $jsonData['factory']['relationships'];
+        if (isset($jsonData['factory']['factory']['relationships'])) {
+            $factoryRelationships = $jsonData['factory']['factory']['relationships'];
             expect($factoryRelationships)->toHaveKey('author');
             expect($factoryRelationships)->toHaveKey('category');
         }
 
         // Seeder relationships - only if they exist
-        if (isset($jsonData['seeder']['relationships'])) {
-            $seederRelationships = $jsonData['seeder']['relationships'];
+        if (isset($jsonData['seeder']['seeder']['relationships'])) {
+            $seederRelationships = $jsonData['seeder']['seeder']['relationships'];
             expect($seederRelationships)->toHaveKey('author');
             expect($seederRelationships)->toHaveKey('category');
         }
@@ -267,27 +270,27 @@ describe('Integration: Complete Fragment Generation', function () {
         $jsonData = json_decode($result['json'], true);
 
         // Model should have soft deletes
-        expect($jsonData['model']['options']['soft_deletes'])->toBe(true);
+        expect($jsonData['model']['model']['options']['soft_deletes'])->toBe(true);
         // Note: imports are not included in the current model generator structure
 
         // Migration should have deleted_at column
-        $migrationFields = collect($jsonData['migration']['fields'])->keyBy('name');
+        $migrationFields = collect($jsonData['migration']['migration']['fields'])->keyBy('name');
         expect($migrationFields->has('deleted_at'))->toBe(true);
         expect($migrationFields['deleted_at']['type'])->toBe('timestamp');
         expect($migrationFields['deleted_at']['nullable'])->toBe(true);
 
         // Controller should have restore and forceDestroy methods
-        $apiController = $jsonData['controllers']['api_controller'];
+        $apiController = $jsonData['controller']['controllers']['api_controller'];
         expect($apiController['methods'])->toHaveKey('restore');
         expect($apiController['methods'])->toHaveKey('forceDestroy');
 
         // Routes should include additional routes for soft deletes
-        $routes = $jsonData['controllers']['resource_routes'];
+        $routes = $jsonData['controller']['controllers']['resource_routes'];
         expect($routes['additional_routes'])->toHaveKey('restore');
         expect($routes['additional_routes'])->toHaveKey('trashed');
 
         // Resource should handle soft deleted models
-        $mainResource = $jsonData['resources']['main_resource'];
+        $mainResource = $jsonData['resource']['resources']['main_resource'];
         expect($mainResource)->toHaveKey('conditional_fields');
         // Note: deleted_at conditional field structure may vary
     });
@@ -342,21 +345,21 @@ describe('Integration: Complete Fragment Generation', function () {
         $jsonData = json_decode($result['json'], true);
 
         // Check model options (namespace comes from schema, not generator options)
-        expect($jsonData['model']['namespace'])->toBe('App\Models'); // Default namespace
-        expect($jsonData['model']['options']['timestamps'])->toBe(true);
+        expect($jsonData['model']['model']['namespace'])->toBe('App\Models'); // Default namespace
+        expect($jsonData['model']['model']['options']['timestamps'])->toBe(true);
 
         // Check resource options
-        expect($jsonData['resources']['main_resource']['namespace'])->toBe('App\Http\Resources\Api\V2');
-        expect($jsonData['resources']['collection_resource']['filtering']['enabled'])->toBe(false);
-        expect($jsonData['resources']['collection_resource']['pagination']['per_page'])->toBe(50);
+        expect($jsonData['resource']['resources']['main_resource']['namespace'])->toBe('App\Http\Resources\Api\V2');
+        expect($jsonData['resource']['resources']['collection_resource']['filtering']['enabled'])->toBe(false);
+        expect($jsonData['resource']['resources']['collection_resource']['pagination']['per_page'])->toBe(50);
 
         // Check controller options
-        expect($jsonData['controllers']['api_controller']['namespace'])->toBe('App\Http\Controllers\Api\V2');
-        expect($jsonData['controllers']['web_controller']['namespace'])->toBe('App\Http\Controllers\Web');
-        expect($jsonData['controllers']['policies'])->toBeEmpty();
+        expect($jsonData['controller']['controllers']['api_controller']['namespace'])->toBe('App\Http\Controllers\Api\V2');
+        expect($jsonData['controller']['controllers']['web_controller']['namespace'])->toBe('App\Http\Controllers\Web');
+        expect($jsonData['controller']['controllers']['policies'])->toBeEmpty();
 
         // Check factory options (namespace comes from schema defaults)
-        expect($jsonData['factory']['namespace'])->toBe('Database\Factories');
+        expect($jsonData['factory']['factory']['namespace'])->toBe('Database\Factories');
     });
 
     it('performs comprehensive validation of generated components', function () {

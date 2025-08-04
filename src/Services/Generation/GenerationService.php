@@ -7,14 +7,18 @@ namespace Grazulex\LaravelModelschema\Services\Generation;
 use Exception;
 use Grazulex\LaravelModelschema\Contracts\GeneratorInterface;
 use Grazulex\LaravelModelschema\Schema\ModelSchema;
+use Grazulex\LaravelModelschema\Services\Generation\Generators\ActionGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ControllerGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\FactoryGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\MigrationGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ModelGenerator;
+use Grazulex\LaravelModelschema\Services\Generation\Generators\ObserverGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\PolicyGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\RequestGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ResourceGenerator;
+use Grazulex\LaravelModelschema\Services\Generation\Generators\RuleGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\SeederGenerator;
+use Grazulex\LaravelModelschema\Services\Generation\Generators\ServiceGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\TestGenerator;
 use Grazulex\LaravelModelschema\Services\LoggingService;
 use Grazulex\LaravelModelschema\Services\Validation\EnhancedValidationService;
@@ -38,6 +42,10 @@ class GenerationService
         protected ControllerGenerator $controllerGenerator = new ControllerGenerator(),
         protected TestGenerator $testGenerator = new TestGenerator(),
         protected PolicyGenerator $policyGenerator = new PolicyGenerator(),
+        protected ObserverGenerator $observerGenerator = new ObserverGenerator(),
+        protected ServiceGenerator $serviceGenerator = new ServiceGenerator(),
+        protected ActionGenerator $actionGenerator = new ActionGenerator(),
+        protected RuleGenerator $ruleGenerator = new RuleGenerator(),
         ?LoggingService $logger = null
     ) {
         $this->logger = $logger ?? new LoggingService();
@@ -54,7 +62,7 @@ class GenerationService
         foreach ($generators as $name => $generator) {
             $info[$name] = [
                 'name' => $generator->getGeneratorName(),
-                'available_formats' => $generator->getAvailableFormats(),
+                'formats' => $generator->getAvailableFormats(),
                 'class' => get_class($generator),
                 'description' => $this->getGeneratorDescription($name),
             ];
@@ -78,6 +86,10 @@ class GenerationService
             'controllers' => $this->controllerGenerator,
             'tests' => $this->testGenerator,
             'policies' => $this->policyGenerator,
+            'observers' => $this->observerGenerator,
+            'services' => $this->serviceGenerator,
+            'actions' => $this->actionGenerator,
+            'rules' => $this->ruleGenerator,
         ];
     }
 
@@ -116,6 +128,10 @@ class GenerationService
                 'controllers' => ['enabled' => $options['controllers'] ?? false, 'generator' => 'controllerGenerator'],
                 'tests' => ['enabled' => $options['tests'] ?? false, 'generator' => 'testGenerator'],
                 'policies' => ['enabled' => $options['policies'] ?? false, 'generator' => 'policyGenerator'],
+                'observers' => ['enabled' => $options['observers'] ?? false, 'generator' => 'observerGenerator'],
+                'services' => ['enabled' => $options['services'] ?? false, 'generator' => 'serviceGenerator'],
+                'actions' => ['enabled' => $options['actions'] ?? false, 'generator' => 'actionGenerator'],
+                'rules' => ['enabled' => $options['rules'] ?? false, 'generator' => 'ruleGenerator'],
             ];
 
             foreach ($generatorOptions as $type => $config) {
@@ -129,7 +145,11 @@ class GenerationService
                                                               ($type === 'controllers' ? 'Controllers' :
                                                               ($type === 'tests' ? 'Tests' :
                                                               ($type === 'policies' ? 'Policies' :
-                                                              ucfirst($type))))));
+                                                              ($type === 'observers' ? 'Observers' :
+                                                              ($type === 'services' ? 'Services' :
+                                                              ($type === 'actions' ? 'Actions' :
+                                                              ($type === 'rules' ? 'Rules' :
+                                                              ucfirst($type))))))))));
 
                     try {
                         $result = $this->$generatorMethodName($schema, $options);
@@ -330,6 +350,46 @@ class GenerationService
                 }
             }
 
+            if ($options['observers'] ?? false) {
+                $result = $this->generateObservers($schema, $options);
+                $results['observers'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Observers generation failed';
+                }
+            }
+
+            if ($options['services'] ?? false) {
+                $result = $this->generateServices($schema, $options);
+                $results['services'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Services generation failed';
+                }
+            }
+
+            if ($options['actions'] ?? false) {
+                $result = $this->generateActions($schema, $options);
+                $results['actions'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Actions generation failed';
+                }
+            }
+
+            if ($options['rules'] ?? false) {
+                $result = $this->generateRules($schema, $options);
+                $results['rules'] = $result;
+                if ($result['success'] ?? false) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'Rules generation failed';
+                }
+            }
+
             $totalTime = microtime(true) - $startTime;
 
             // Log generation performance
@@ -494,6 +554,26 @@ class GenerationService
         return $this->policyGenerator->generate($schema, $options);
     }
 
+    public function generateObservers(ModelSchema $schema, array $options = []): array
+    {
+        return $this->observerGenerator->generate($schema, $options);
+    }
+
+    public function generateServices(ModelSchema $schema, array $options = []): array
+    {
+        return $this->serviceGenerator->generate($schema, $options);
+    }
+
+    public function generateActions(ModelSchema $schema, array $options = []): array
+    {
+        return $this->actionGenerator->generate($schema, $options);
+    }
+
+    public function generateRules(ModelSchema $schema, array $options = []): array
+    {
+        return $this->ruleGenerator->generate($schema, $options);
+    }
+
     /**
      * Get all available generation types
      */
@@ -545,6 +625,26 @@ class GenerationService
                 'description' => 'Generate structured data for Policy classes with authorization logic and gate definitions (insertable in parent JSON/YAML)',
                 'outputs' => ['json', 'yaml'],
             ],
+            'observers' => [
+                'name' => 'Observers Data',
+                'description' => 'Generate structured data for Eloquent Observer classes with model event handlers (insertable in parent JSON/YAML)',
+                'outputs' => ['json', 'yaml'],
+            ],
+            'services' => [
+                'name' => 'Services Data',
+                'description' => 'Generate structured data for Service classes with business logic and CRUD operations (insertable in parent JSON/YAML)',
+                'outputs' => ['json', 'yaml'],
+            ],
+            'actions' => [
+                'name' => 'Actions Data',
+                'description' => 'Generate structured data for Action classes with single responsibility operations (insertable in parent JSON/YAML)',
+                'outputs' => ['json', 'yaml'],
+            ],
+            'rules' => [
+                'name' => 'Validation Rules Data',
+                'description' => 'Generate structured data for custom Validation Rule classes with business validation logic (insertable in parent JSON/YAML)',
+                'outputs' => ['json', 'yaml'],
+            ],
         ];
     }
 
@@ -562,6 +662,11 @@ class GenerationService
                 'resources' => 'resource',
                 'controllers' => 'controller',
                 'tests' => 'test',
+                'policies' => 'policy',
+                'observers' => 'observer',
+                'services' => 'service',
+                'actions' => 'action',
+                'rules' => 'rule',
                 default => $key
             };
         }, $generators);
@@ -582,6 +687,10 @@ class GenerationService
             'controllers', 'controller' => $this->generateControllers($schema, $options),
             'tests', 'test' => $this->generateTests($schema, $options),
             'policies', 'policy' => $this->generatePolicies($schema, $options),
+            'observers', 'observer' => $this->generateObservers($schema, $options),
+            'services', 'service' => $this->generateServices($schema, $options),
+            'actions', 'action' => $this->generateActions($schema, $options),
+            'rules', 'rule' => $this->generateRules($schema, $options),
             default => throw new InvalidArgumentException("Unknown generator type: {$type}")
         };
     }
@@ -601,6 +710,10 @@ class GenerationService
             'controllers' => $this->controllerGenerator,
             'tests' => $this->testGenerator,
             'policies' => $this->policyGenerator,
+            'observers' => $this->observerGenerator,
+            'services' => $this->serviceGenerator,
+            'actions' => $this->actionGenerator,
+            'rules' => $this->ruleGenerator,
             default => throw new InvalidArgumentException("Unknown generator type: {$type}")
         };
     }
@@ -610,8 +723,7 @@ class GenerationService
      */
     public function generateMultiple(ModelSchema $schema, array $generators, array $options = []): array
     {
-        $jsonFragments = [];
-        $yamlFragments = [];
+        $results = [];
         $validationResults = [];
 
         // Validate schema if requested
@@ -632,15 +744,7 @@ class GenerationService
 
             try {
                 $result = $this->generate($schema, $generatorType, $generatorOptions);
-
-                // Parse JSON and add to fragments
-                $jsonData = json_decode($result['json'], true);
-                if ($jsonData !== null) {
-                    $jsonFragments = array_merge_recursive($jsonFragments, $jsonData);
-                }
-
-                // Add YAML fragment
-                $yamlFragments[] = $result['yaml'];
+                $results[$generatorType] = $result;
 
             } catch (Exception $e) {
                 if ($options['enable_validation'] ?? false) {
@@ -652,12 +756,25 @@ class GenerationService
 
         // Add validation results if enabled
         if ($options['enable_validation'] ?? false) {
-            $jsonFragments['validation_results'] = $validationResults;
+            $results['validation_results'] = [
+                'json' => json_encode($validationResults, JSON_PRETTY_PRINT),
+                'yaml' => \Symfony\Component\Yaml\Yaml::dump($validationResults, 4, 2),
+            ];
+        }
+
+        // Aggregate all results into combined JSON and YAML formats
+        $combinedData = [];
+        foreach ($results as $generatorType => $result) {
+            if (isset($result['json'])) {
+                $jsonData = json_decode($result['json'], true);
+                $combinedData[$generatorType] = $jsonData;
+            }
         }
 
         return [
-            'json' => json_encode($jsonFragments, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
-            'yaml' => implode("\n---\n", $yamlFragments),
+            'json' => json_encode($combinedData, JSON_PRETTY_PRINT),
+            'yaml' => \Symfony\Component\Yaml\Yaml::dump($combinedData, 4, 2),
+            'individual_results' => $results,
         ];
     }
 
@@ -676,6 +793,10 @@ class GenerationService
             'controllers' => 'Generates Laravel Controller classes with CRUD operations and middleware',
             'tests' => 'Generates PHPUnit test classes for model and feature testing',
             'policies' => 'Generates Laravel Policy classes for authorization and access control',
+            'observers' => 'Generates Laravel Observer classes with model event handlers for business logic',
+            'services' => 'Generates Laravel Service classes with business logic layer and CRUD operations',
+            'actions' => 'Generates Laravel Action classes with single responsibility operations and workflows',
+            'rules' => 'Generates Laravel custom Validation Rule classes with business validation logic',
             default => "Generator for {$generatorName} components"
         };
     }

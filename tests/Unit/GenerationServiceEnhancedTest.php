@@ -52,9 +52,13 @@ describe('GenerationService with Enhanced Generators', function () {
         expect($generators)->toContain('seeder');
         expect($generators)->toContain('controller');
         expect($generators)->toContain('test');
-        expect($generators)->toContain('policies');
+        expect($generators)->toContain('policy'); // Singulier
+        expect($generators)->toContain('observer'); // Singulier
+        expect($generators)->toContain('service'); // Singulier
+        expect($generators)->toContain('action'); // Singulier
+        expect($generators)->toContain('rule'); // Singulier
 
-        expect(count($generators))->toBe(9); // Maintenant 9 avec TestGenerator et PolicyGenerator
+        expect(count($generators))->toBe(13); // Maintenant 13 avec tous les nouveaux générateurs
     });
 
     it('can generate controllers through the service', function () {
@@ -106,20 +110,20 @@ describe('GenerationService with Enhanced Generators', function () {
         // Should contain all generated components
         expect($jsonData)->toHaveKey('model');
         expect($jsonData)->toHaveKey('migration');
-        expect($jsonData)->toHaveKey('requests');
-        expect($jsonData)->toHaveKey('resources');
+        expect($jsonData)->toHaveKey('request');
+        expect($jsonData)->toHaveKey('resource');
         expect($jsonData)->toHaveKey('factory');
         expect($jsonData)->toHaveKey('seeder');
-        expect($jsonData)->toHaveKey('controllers');
+        expect($jsonData)->toHaveKey('controller');
 
         // Enhanced resources should have all new features
-        $resources = $jsonData['resources'];
+        $resources = $jsonData['resource']['resources'];
         expect($resources)->toHaveKey('main_resource');
         expect($resources)->toHaveKey('partial_resources');
         expect($resources)->toHaveKey('relationship_resources');
 
         // Controllers should have full configuration
-        $controllers = $jsonData['controllers'];
+        $controllers = $jsonData['controller']['controllers'];
         expect($controllers)->toHaveKey('api_controller');
         expect($controllers)->toHaveKey('web_controller');
         expect($controllers)->toHaveKey('middleware');
@@ -133,11 +137,11 @@ describe('GenerationService with Enhanced Generators', function () {
         $jsonData = json_decode($result['json'], true);
 
         // Check that controller references the correct resource
-        $apiController = $jsonData['controllers']['api_controller'];
-        $mainResource = $jsonData['resources']['main_resource'];
+        $apiController = $jsonData['controller']['controllers']['api_controller'];
+        $mainResource = $jsonData['resource']['resources']['main_resource'];
 
         expect($apiController['response_resource'])->toBe($mainResource['name']);
-        expect($apiController['collection_resource'])->toBe($jsonData['resources']['collection_resource']['name']);
+        expect($apiController['collection_resource'])->toBe($jsonData['resource']['resources']['collection_resource']['name']);
 
         // Check that both use the same model
         expect($apiController['model'])->toBe('App\Models\Product');
@@ -172,17 +176,17 @@ describe('GenerationService with Enhanced Generators', function () {
         $jsonData = json_decode($result['json'], true);
 
         // Check resource options
-        $mainResource = $jsonData['resources']['main_resource'];
+        $mainResource = $jsonData['resource']['resources']['main_resource']; // Fix double nesting
         expect($mainResource['namespace'])->toBe('App\Http\Resources\V2');
 
-        $collectionResource = $jsonData['resources']['collection_resource'];
+        $collectionResource = $jsonData['resource']['resources']['collection_resource']; // Fix double nesting
         expect($collectionResource['filtering']['enabled'])->toBe(false);
 
         // Check controller options
-        $apiController = $jsonData['controllers']['api_controller'];
+        $apiController = $jsonData['controller']['controllers']['api_controller'];
         expect($apiController['namespace'])->toBe('App\Http\Controllers\Api\V2');
 
-        $policies = $jsonData['controllers']['policies'];
+        $policies = $jsonData['controller']['controllers']['policies'];
         expect($policies)->toBeEmpty();
     });
 
@@ -230,14 +234,14 @@ describe('GenerationService with Enhanced Generators', function () {
         $modelName = 'Product';
 
         // Check consistent naming
-        expect($jsonData['model']['name'])->toBe($modelName);
-        expect($jsonData['migration']['table'])->toBe('products');
-        expect($jsonData['requests']['store']['name'])->toBe('Store'.$modelName.'Request');
-        expect($jsonData['requests']['update']['name'])->toBe('Update'.$modelName.'Request');
-        expect($jsonData['resources']['main_resource']['name'])->toBe($modelName.'Resource');
-        expect($jsonData['resources']['collection_resource']['name'])->toBe($modelName.'Collection');
-        expect($jsonData['controllers']['api_controller']['name'])->toBe($modelName.'ApiController');
-        expect($jsonData['controllers']['web_controller']['name'])->toBe($modelName.'Controller');
+        expect($jsonData['model']['model']['name'])->toBe($modelName);
+        expect($jsonData['migration']['migration']['table'])->toBe('products');
+        expect($jsonData['request']['requests']['store']['name'])->toBe('Store'.$modelName.'Request');
+        expect($jsonData['request']['requests']['update']['name'])->toBe('Update'.$modelName.'Request');
+        expect($jsonData['resource']['resources']['main_resource']['name'])->toBe($modelName.'Resource');
+        expect($jsonData['resource']['resources']['collection_resource']['name'])->toBe($modelName.'Collection');
+        expect($jsonData['controller']['controllers']['api_controller']['name'])->toBe($modelName.'ApiController');
+        expect($jsonData['controller']['controllers']['web_controller']['name'])->toBe($modelName.'Controller');
     });
 
     it('can generate single components with enhanced features', function () {
@@ -264,8 +268,8 @@ describe('GenerationService with Enhanced Generators', function () {
         $jsonData = json_decode($result['json'], true);
 
         // Check that relationships are handled consistently
-        $resourceRelationships = $jsonData['resources']['main_resource']['relationships'];
-        $controllerRelationships = $jsonData['controllers']['api_controller']['relationships'];
+        $resourceRelationships = $jsonData['resource']['resources']['main_resource']['relationships'];
+        $controllerRelationships = $jsonData['controller']['controllers']['api_controller']['relationships'];
 
         expect($resourceRelationships)->toHaveKey('category');
         expect($resourceRelationships)->toHaveKey('reviews');

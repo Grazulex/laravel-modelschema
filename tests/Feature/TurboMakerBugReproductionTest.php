@@ -113,13 +113,13 @@ it('can get generator information for registry introspection', function () {
 
     // Check seeder info specifically
     expect($info['seeder'])->toHaveKey('name');
-    expect($info['seeder'])->toHaveKey('available_formats');
+    expect($info['seeder'])->toHaveKey('formats');
     expect($info['seeder'])->toHaveKey('class');
     expect($info['seeder'])->toHaveKey('description');
 
     expect($info['seeder']['name'])->toBe('seeder');
-    expect($info['seeder']['available_formats'])->toContain('json');
-    expect($info['seeder']['available_formats'])->toContain('yaml');
+    expect($info['seeder']['formats'])->toContain('json');
+    expect($info['seeder']['formats'])->toContain('yaml');
     expect($info['seeder']['description'])->toContain('Seeder');
 });
 

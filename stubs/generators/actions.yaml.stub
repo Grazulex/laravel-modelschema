@@ -1,0 +1,66 @@
+actions:
+  Create{{MODEL_NAME}}Action:
+    class_name: "Create{{MODEL_NAME}}Action"
+    namespace: "App\\Actions"
+    model_class: "{{NAMESPACE}}\\{{MODEL_NAME}}"
+    type: "create"
+    description: "Action for creating a new {{MODEL_NAME}}"
+    implements:
+      - "ShouldQueue"
+    imports:
+      - "{{NAMESPACE}}\\{{MODEL_NAME}}"
+      - "Illuminate\\Contracts\\Queue\\ShouldQueue"
+      - "Illuminate\\Foundation\\Queue\\Queueable"{{CREATE_ACTION_IMPORTS_YAML}}
+    properties:
+      queue:
+        type: "string"
+        visibility: "public"
+        value: "'default'"
+        description: "The queue this action should be dispatched to."
+      timeout:
+        type: "int"
+        visibility: "public"
+        value: "300"
+        description: "The number of seconds the action can run before timing out."
+    methods:
+      execute:
+        description: "Execute the create {{MODEL_NAME}} action."
+        parameters:
+          - "array $data"
+        return_type: "{{MODEL_NAME}}"
+        logic: "{{CREATE_ACTION_LOGIC}}"{{CREATE_ACTION_METHODS_YAML}}
+    dependencies:
+{{CREATE_ACTION_DEPENDENCIES_YAML}}
+  Update{{MODEL_NAME}}Action:
+    class_name: "Update{{MODEL_NAME}}Action"
+    namespace: "App\\Actions"
+    model_class: "{{NAMESPACE}}\\{{MODEL_NAME}}"
+    type: "update"
+    description: "Action for updating an existing {{MODEL_NAME}}"
+    implements:
+      - "ShouldQueue"
+    imports:
+      - "{{NAMESPACE}}\\{{MODEL_NAME}}"
+      - "Illuminate\\Contracts\\Queue\\ShouldQueue"
+      - "Illuminate\\Foundation\\Queue\\Queueable"{{UPDATE_ACTION_IMPORTS_YAML}}
+    properties:
+      queue:
+        type: "string"
+        visibility: "public"
+        value: "'default'"
+        description: "The queue this action should be dispatched to."
+      timeout:
+        type: "int"
+        visibility: "public"
+        value: "300"
+        description: "The number of seconds the action can run before timing out."
+    methods:
+      execute:
+        description: "Execute the update {{MODEL_NAME}} action."
+        parameters:
+          - "{{MODEL_NAME}} ${{MODEL_VARIABLE}}"
+          - "array $data"
+        return_type: "{{MODEL_NAME}}"
+        logic: "{{UPDATE_ACTION_LOGIC}}"{{UPDATE_ACTION_METHODS_YAML}}
+    dependencies:
+{{UPDATE_ACTION_DEPENDENCIES_YAML}}{{ADDITIONAL_ACTIONS_YAML}}

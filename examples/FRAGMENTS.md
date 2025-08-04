@@ -20,6 +20,20 @@ The fragment is designed to be insertable into parent application templates or m
 
 ## Available Fragments
 
+### Core Laravel Components
+- **Model Fragment** - Eloquent model configuration
+- **Migration Fragment** - Database migration structure
+- **Request Fragment** - Form validation classes
+- **Resource Fragment** - API resource transformation
+- **Factory Fragment** - Model factory definitions
+- **Seeder Fragment** - Database seeding configuration
+
+### Business Logic Components *(New in v2.0)*
+- **Observer Fragment** - Eloquent observer event handlers
+- **Service Fragment** - Business logic service classes
+- **Action Fragment** - Single-responsibility action classes
+- **Rule Fragment** - Custom validation rule classes
+
 ### Model Fragment
 ```json
 {
@@ -165,6 +179,122 @@ The fragment is designed to be insertable into parent application templates or m
       {
         "name": "Admin User",
         "email": "admin@example.com"
+      }
+    ]
+  }
+}
+```
+
+### Observer Fragment *(New in v2.0)*
+```json
+{
+  "observers": {
+    "class_name": "UserObserver",
+    "model": "App\\Models\\User",
+    "namespace": "App\\Observers",
+    "events": {
+      "creating": {
+        "enabled": true,
+        "code": "// Set default values before creating"
+      },
+      "created": {
+        "enabled": true,
+        "code": "// Log user creation"
+      },
+      "updating": {
+        "enabled": true,
+        "code": "// Validate update permissions"
+      },
+      "deleted": {
+        "enabled": true,
+        "code": "// Clean up related data"
+      }
+    }
+  }
+}
+```
+
+### Service Fragment *(New in v2.0)*
+```json
+{
+  "services": {
+    "class_name": "UserService",
+    "model": "App\\Models\\User",
+    "namespace": "App\\Services",
+    "methods": {
+      "create": {
+        "parameters": ["array $data"],
+        "return_type": "User",
+        "validation": true
+      },
+      "update": {
+        "parameters": ["User $user", "array $data"],
+        "return_type": "User",
+        "validation": true
+      },
+      "delete": {
+        "parameters": ["User $user"],
+        "return_type": "bool",
+        "soft_delete": true
+      }
+    },
+    "dependencies": ["UserRepository", "ValidationService"]
+  }
+}
+```
+
+### Action Fragment *(New in v2.0)*
+```json
+{
+  "actions": {
+    "crud_actions": [
+      {
+        "class_name": "CreateUserAction",
+        "namespace": "App\\Actions\\User",
+        "method": "execute",
+        "parameters": ["array $data"],
+        "return_type": "User"
+      },
+      {
+        "class_name": "UpdateUserAction",
+        "namespace": "App\\Actions\\User",
+        "method": "execute",
+        "parameters": ["User $user", "array $data"],
+        "return_type": "User"
+      }
+    ],
+    "business_actions": [
+      {
+        "class_name": "SendWelcomeEmailAction",
+        "namespace": "App\\Actions\\User",
+        "method": "execute",
+        "parameters": ["User $user"],
+        "return_type": "void"
+      }
+    ]
+  }
+}
+```
+
+### Rule Fragment *(New in v2.0)*
+```json
+{
+  "rules": {
+    "business_rules": [
+      {
+        "class_name": "UniqueEmailRule",
+        "namespace": "App\\Rules",
+        "field": "email",
+        "logic": "Check email uniqueness across multiple tables"
+      }
+    ],
+    "foreign_key_rules": [
+      {
+        "class_name": "ExistingCategoryRule",
+        "namespace": "App\\Rules",
+        "field": "category_id",
+        "table": "categories",
+        "column": "id"
       }
     ]
   }

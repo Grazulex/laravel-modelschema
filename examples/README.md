@@ -18,6 +18,7 @@ Laravel ModelSchema has evolved to a modern architecture based on **configuratio
 - **[IntegrationExample.php](IntegrationExample.php)** - Complete integration workflow with traits
 - **[SchemaServiceApiExample.php](SchemaServiceApiExample.php)** - SchemaService API with trait support
 - **[TraitBasedPluginExample.php](TraitBasedPluginExample.php)** - Advanced trait-based plugin examples
+- **[NewGeneratorsExample.php](NewGeneratorsExample.php)** - ✨ **New Generators Demo (v2.0)** - Observer, Service, Action, Rule generators
 
 ### Plugin System Examples (Plugin System)
 - **[UrlFieldType.php](UrlFieldType.php)** - Legacy URL plugin (historical reference)

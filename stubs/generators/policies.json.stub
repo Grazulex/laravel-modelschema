@@ -1,0 +1,54 @@
+"policies": {
+  "{{MODEL_NAME}}Policy": {
+    "class_name": "{{MODEL_NAME}}Policy",
+    "namespace": "App\\Policies",
+    "model_class": "{{NAMESPACE}}\\{{MODEL_NAME}}",
+    "user_class": "{{USER_CLASS}}",
+    "imports": [
+      "{{NAMESPACE}}\\{{MODEL_NAME}}",
+      "{{USER_CLASS}}",
+      "Illuminate\\Auth\\Access\\HandlesAuthorization"{{POLICY_IMPORTS}}
+    ],
+    "traits": [
+      "HandlesAuthorization"
+    ],
+    "methods": {
+      "viewAny": {
+        "description": "Determine whether the user can view any models.",
+        "parameters": ["{{USER_TYPE}} $user"],
+        "return_type": "bool",
+        "logic": "{{VIEW_ANY_LOGIC}}"
+      },
+      "view": {
+        "description": "Determine whether the user can view the model.",
+        "parameters": ["{{USER_TYPE}} $user", "{{MODEL_NAME}} ${{MODEL_VARIABLE}}"],
+        "return_type": "bool",
+        "logic": "{{VIEW_LOGIC}}"
+      },
+      "create": {
+        "description": "Determine whether the user can create models.",
+        "parameters": ["{{USER_TYPE}} $user"],
+        "return_type": "bool",
+        "logic": "{{CREATE_LOGIC}}"
+      },
+      "update": {
+        "description": "Determine whether the user can update the model.",
+        "parameters": ["{{USER_TYPE}} $user", "{{MODEL_NAME}} ${{MODEL_VARIABLE}}"],
+        "return_type": "bool",
+        "logic": "{{UPDATE_LOGIC}}"
+      },
+      "delete": {
+        "description": "Determine whether the user can delete the model.",
+        "parameters": ["{{USER_TYPE}} $user", "{{MODEL_NAME}} ${{MODEL_VARIABLE}}"],
+        "return_type": "bool",
+        "logic": "{{DELETE_LOGIC}}"
+      }{{ADDITIONAL_POLICY_METHODS}}
+    },
+    "role_permissions": {
+      {{ROLE_PERMISSIONS_JSON}}
+    },
+    "gate_definitions": [
+      {{GATE_DEFINITIONS_JSON}}
+    ]
+  }
+}

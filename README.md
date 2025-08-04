@@ -2,10 +2,14 @@
 
 <img src="new_logo.png" alt="Laravel ModelSchema" width="200">
 
-A foundational Laravel package for schema-driven development. Parse YAML schemas, generate insertable fragments for models, migrations, requests, resources, factories, and seeders. Built to power Laravel TurboMaker, Arc, and other schema-based packages.
+A foundational Laravel package for schema-driven development. Parse YAML schemas, generate insertable fragments for models, migrations, requests, resources, factories, seeders, controllers, tests, policies, observers, services, actions, and validation rules. Built to power Laravel TurboMaker, Arc, and other schema-based packages.
 
 [![Latest Version](https://img.shi### Field Types & Extensions  
-- **📋 [Field Types Guide](docs/FIELD_TYPES.md)** - Complete field types reference
+- **📋 [Field Types Guid### Core Documentation
+- **🏗️ [Architecture Guide](docs/ARCHITECTURE.md)** - Understanding the package structure and design
+- **✨ [New Generators Guide](docs/NEW_GENERATORS.md)** - Observer, Service, Action, Rule generators (v2.0)
+- **📈 [Migration Guide](docs/MIGRATION.md)** - Upgrading from previous versions
+- **📊 [Fragment Examples](examples/FRAGMENTS.md)** - Understanding generated fragmentsocs/FIELD_TYPES.md)** - Complete field types reference
 - **🔌 [Field Type Plugins](docs/FIELD_TYPE_PLUGINS.md)** - Creating custom field type plugins
 - **✨ [Custom Attributes Examples](examples/CUSTOM_ATTRIBUTES.md)** - Practical examples of custom attributes usage
 - **✅ [Custom Field Validation](docs/CUSTOM_FIELD_TYPES_VALIDATION.md)** - Validating custom field types.io/packagist/v/grazulex/laravel-modelschema.svg?style=flat-square)](https://packagist.org/packages/grazulex/laravel-modelschema)
@@ -27,9 +31,9 @@ Laravel ModelSchema provides **schema parsing, validation, and fragment generati
 - **🔍 Schema Parsing & Validation** - Parse YAML schemas with core/extension separation
 - **🧩 Fragment Generation** - Generate insertable JSON/YAML fragments for Laravel artifacts  
 - **🏗️ Clean Architecture** - Separate core schema responsibilities from app-specific generation
-- **🔄 Multi-Generator Support** - Models, Migrations, Requests, Resources, Factories, Seeders, Controllers, Tests, Policies
-- **� Schema Analysis** - Advanced schema comparison, optimization, and performance analysis
-- **�🔌 Plugin System** - Extensible field type plugins for custom functionality
+- **🔄 Multi-Generator Support** - Models, Migrations, Requests, Resources, Factories, Seeders, Controllers, Tests, Policies, Observers, Services, Actions, Rules
+- **📈 Schema Analysis** - Advanced schema comparison, optimization, and performance analysis
+- **🔌 Plugin System** - Extensible field type plugins for custom functionality
 - **📊 Integration API** - Complete workflow for external packages (TurboMaker, Arc, etc.)
 - **✨ Extensible Design** - Custom field types, generators, and validation rules
 
@@ -48,7 +52,7 @@ composer require grazulex/laravel-modelschema
 - **`YamlOptimizationService`** - Advanced YAML parsing with lazy loading, streaming, and intelligent caching
 - **`SchemaDiffService`** - Advanced schema comparison and difference analysis
 - **`SchemaOptimizationService`** - Performance analysis and optimization recommendations
-- **8 Specialized Generators** - Model, Migration, Request, Resource, Factory, Seeder, Controller, Test, Policy
+- **13 Specialized Generators** - Model, Migration, Request, Resource, Factory, Seeder, Controller, Test, Policy, Observer, Service, Action, Rule
 - **`FieldTypePluginManager`** - Manages extensible field type plugins for custom functionality
 
 ### Schema Structure
@@ -141,8 +145,76 @@ $fragments = $generationService->generateAll($schema);
 //   'requests' => ['json' => '{"requests": {...}}', 'yaml' => 'requests: {...}'],
 //   'resources' => ['json' => '{"resources": {...}}', 'yaml' => 'resources: {...}'],
 //   'factory' => ['json' => '{"factory": {...}}', 'yaml' => 'factory: {...}'],
-//   'seeder' => ['json' => '{"seeder": {...}}', 'yaml' => 'seeder: {...}']
+//   'seeder' => ['json' => '{"seeder": {...}}', 'yaml' => 'seeder: {...}'],
+//   'controllers' => ['json' => '{"controllers": {...}}', 'yaml' => 'controllers: {...}'],
+//   'tests' => ['json' => '{"tests": {...}}', 'yaml' => 'tests: {...}'],
+//   'policies' => ['json' => '{"policies": {...}}', 'yaml' => 'policies: {...}'],
+//   'observers' => ['json' => '{"observers": {...}}', 'yaml' => 'observers: {...}'],
+//   'services' => ['json' => '{"services": {...}}', 'yaml' => 'services: {...}'],
+//   'actions' => ['json' => '{"actions": {...}}', 'yaml' => 'actions: {...}'],
+//   'rules' => ['json' => '{"rules": {...}}', 'yaml' => 'rules: {...}']
 // ]
+```
+
+## 🏗️ Available Generators
+
+Laravel ModelSchema provides 13 specialized generators, each producing insertable JSON/YAML fragments:
+
+### Core Laravel Components
+| Generator | Description | Output Fragment |
+|-----------|-------------|-----------------|
+| **Model** | Eloquent model with relationships, casts, and configurations | `model: {class_name, table, fields, relations, casts, ...}` |
+| **Migration** | Database migration with fields, indexes, and foreign keys | `migration: {table, fields, indexes, foreign_keys, ...}` |
+| **Request** | Form Request classes for validation (Store/Update) | `requests: {store: {...}, update: {...}}` |
+| **Resource** | API Resource classes for data transformation | `resources: {main_resource: {...}, collection_resource: {...}}` |
+| **Factory** | Model Factory for testing and seeding | `factory: {class_name, definition, states, ...}` |
+| **Seeder** | Database Seeder for data population | `seeder: {class_name, model, count, relationships, ...}` |
+
+### Advanced Components
+| Generator | Description | Output Fragment |
+|-----------|-------------|-----------------|
+| **Controller** | API and Web Controllers with CRUD operations | `controllers: {api_controller: {...}, web_controller: {...}}` |
+| **Test** | PHPUnit test classes (Feature and Unit) | `tests: {feature_tests: [...], unit_tests: [...]}` |
+| **Policy** | Authorization Policy classes | `policies: {class_name, methods, gates, ...}` |
+
+### Business Logic Components (New in v2.0)
+| Generator | Description | Output Fragment |
+|-----------|-------------|-----------------|
+| **Observer** | Eloquent Observer with model event handlers | `observers: {class_name, events, methods, ...}` |
+| **Service** | Business logic Service classes with CRUD operations | `services: {class_name, methods, dependencies, ...}` |
+| **Action** | Single-responsibility Action classes | `actions: {crud_actions: [...], business_actions: [...]}` |
+| **Rule** | Custom Validation Rule classes | `rules: {business_rules: [...], foreign_key_rules: [...]}` |
+
+### Usage Examples
+
+```php
+// Generate specific components
+$observerFragment = $generationService->generateObservers($schema);
+$serviceFragment = $generationService->generateServices($schema);
+$actionFragment = $generationService->generateActions($schema);
+$ruleFragment = $generationService->generateRules($schema);
+
+// Generate multiple new components
+$fragments = $generationService->generateMultiple($schema, [
+    'observers', 'services', 'actions', 'rules'
+]);
+
+// Generate everything including new components
+$allFragments = $generationService->generateAll($schema, [
+    'model' => true,
+    'migration' => true,
+    'requests' => true,
+    'resources' => true,
+    'factory' => true,
+    'seeder' => true,
+    'controllers' => true,
+    'tests' => true,
+    'policies' => true,
+    'observers' => true,    // New
+    'services' => true,     // New
+    'actions' => true,      // New
+    'rules' => true,        // New
+]);
 ```
 
 ## 🔧 API Reference
@@ -458,6 +530,7 @@ composer test-coverage
 
 ### Integration Examples
 - **🔗 [Integration Example](examples/IntegrationExample.php)** - Complete integration workflow
+- **✨ [New Generators Example](examples/NewGeneratorsExample.php)** - Observer, Service, Action, Rule generators demo
 - **🛠️ [Schema Service API](examples/SchemaServiceApiExample.php)** - API usage examples
 - **📋 [API Extensions](examples/ApiExtensions.php)** - Extended API implementations
 - **🚀 [YAML Optimization Examples](examples/YamlOptimizationExamples.php)** - Performance optimization usage and examples

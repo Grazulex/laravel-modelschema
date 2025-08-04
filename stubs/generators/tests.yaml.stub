@@ -1,0 +1,46 @@
+tests:
+  {{MODEL_NAME}}Test:
+    class_name: "{{MODEL_NAME}}Test"
+    namespace: "Tests\\Feature"
+    model_class: "{{NAMESPACE}}\\{{MODEL_NAME}}"
+    type: "feature"
+    description: "Feature tests for {{MODEL_NAME}} model"
+    imports:
+      - "{{NAMESPACE}}\\{{MODEL_NAME}}"
+      - "Illuminate\\Foundation\\Testing\\RefreshDatabase"
+      - "Tests\\TestCase"{{TEST_IMPORTS_YAML}}
+    traits:
+      - "RefreshDatabase"
+    methods:
+      test_{{MODEL_VARIABLE}}_can_be_created:
+        description: "Test that a {{MODEL_NAME}} can be created."
+        parameters: []
+        return_type: "void"
+        logic: "{{CREATE_TEST_LOGIC}}"
+      test_{{MODEL_VARIABLE}}_can_be_updated:
+        description: "Test that a {{MODEL_NAME}} can be updated."
+        parameters: []
+        return_type: "void"
+        logic: "{{UPDATE_TEST_LOGIC}}"
+      test_{{MODEL_VARIABLE}}_can_be_deleted:
+        description: "Test that a {{MODEL_NAME}} can be deleted."
+        parameters: []
+        return_type: "void"
+        logic: "{{DELETE_TEST_LOGIC}}"{{ADDITIONAL_TESTS_YAML}}
+    factory_methods:
+{{FACTORY_METHODS_YAML}}
+  {{MODEL_NAME}}UnitTest:
+    class_name: "{{MODEL_NAME}}UnitTest"
+    namespace: "Tests\\Unit"
+    model_class: "{{NAMESPACE}}\\{{MODEL_NAME}}"
+    type: "unit"
+    description: "Unit tests for {{MODEL_NAME}} model"
+    imports:
+      - "{{NAMESPACE}}\\{{MODEL_NAME}}"
+      - "Tests\\TestCase"{{UNIT_TEST_IMPORTS_YAML}}
+    methods:
+      test_{{MODEL_VARIABLE}}_attributes:
+        description: "Test {{MODEL_NAME}} model attributes."
+        parameters: []
+        return_type: "void"
+        logic: "{{ATTRIBUTES_TEST_LOGIC}}"{{UNIT_TEST_METHODS_YAML}}

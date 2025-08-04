@@ -56,7 +56,7 @@ The package uses a "core" structure in YAML with trait-based field configuration
 │ ├─ generateSingle() - trait-aware generation              │
 │ └─ getAvailableGenerators() - trait-enhanced generators   │
 │                                                             │
-│ 8 Specialized Generators                                   │
+│ 13 Specialized Generators                                  │
 │ ├─ ModelGenerator                                          │
 │ ├─ MigrationGenerator                                      │
 │ ├─ RequestGenerator                                        │
@@ -65,7 +65,11 @@ The package uses a "core" structure in YAML with trait-based field configuration
 │ ├─ SeederGenerator                                         │
 │ ├─ ControllerGenerator                                     │
 │ ├─ TestGenerator                                           │
-│ └─ PolicyGenerator                                         │
+│ ├─ PolicyGenerator                                         │
+│ ├─ ObserverGenerator (New in v2.0)                        │
+│ ├─ ServiceGenerator (New in v2.0)                         │
+│ ├─ ActionGenerator (New in v2.0)                          │
+│ └─ RuleGenerator (New in v2.0)                            │
 │                                                             │
 │ Performance & Optimization Services                       │
 │ ├─ YamlOptimizationService (High-Performance YAML Parsing)│
@@ -164,6 +168,10 @@ Base class providing common functionality:
 7. **ControllerGenerator** - API and web controller fragments
 8. **TestGenerator** - Feature and unit test fragments  
 9. **PolicyGenerator** - Authorization policy fragments
+10. **ObserverGenerator** - Eloquent observer event handler fragments *(New in v2.0)*
+11. **ServiceGenerator** - Business logic service class fragments *(New in v2.0)*
+12. **ActionGenerator** - Single-responsibility action class fragments *(New in v2.0)*
+13. **RuleGenerator** - Custom validation rule class fragments *(New in v2.0)*
 
 ## Analysis Services
 

@@ -1,0 +1,25 @@
+"observers": {
+  "{{MODEL_NAME}}Observer": {
+    "class_name": "{{MODEL_NAME}}Observer",
+    "namespace": "App\\Observers",
+    "model_class": "{{NAMESPACE}}\\{{MODEL_NAME}}",
+    "events": {
+      "retrieved": true,
+      "creating": true,
+      "created": true,
+      "updating": true,
+      "updated": true,
+      "saving": true,
+      "saved": true,
+      "deleting": true,
+      "deleted": true{{SOFT_DELETES_EVENTS}}
+    },
+    "imports": [
+      "{{NAMESPACE}}\\{{MODEL_NAME}}",
+      "Illuminate\\Database\\Eloquent\\Model"
+    ],
+    "methods": {
+      {{OBSERVER_METHODS_JSON}}
+    }
+  }
+}

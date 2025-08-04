@@ -1,0 +1,53 @@
+services:
+  {{MODEL_NAME}}Service:
+    class_name: "{{MODEL_NAME}}Service"
+    namespace: "App\\Services"
+    model_class: "{{NAMESPACE}}\\{{MODEL_NAME}}"
+    implements: []
+    imports:
+      - "{{NAMESPACE}}\\{{MODEL_NAME}}"
+      - "Illuminate\\Database\\Eloquent\\Collection"
+      - "Illuminate\\Pagination\\LengthAwarePaginator"{{SERVICE_IMPORTS_YAML}}
+    properties:
+{{SERVICE_PROPERTIES_YAML}}
+    methods:
+      create:
+        description: "Create a new {{MODEL_NAME}}."
+        parameters:
+          - "array $data"
+        return_type: "{{MODEL_NAME}}"
+        logic: "{{CREATE_LOGIC}}"
+      update:
+        description: "Update an existing {{MODEL_NAME}}."
+        parameters:
+          - "{{MODEL_NAME}} ${{MODEL_VARIABLE}}"
+          - "array $data"
+        return_type: "{{MODEL_NAME}}"
+        logic: "{{UPDATE_LOGIC}}"
+      delete:
+        description: "Delete a {{MODEL_NAME}}."
+        parameters:
+          - "{{MODEL_NAME}} ${{MODEL_VARIABLE}}"
+        return_type: "bool"
+        logic: "{{DELETE_LOGIC}}"
+      findById:
+        description: "Find a {{MODEL_NAME}} by ID."
+        parameters:
+          - "int $id"
+        return_type: "{{MODEL_NAME}}|null"
+        logic: "{{FIND_BY_ID_LOGIC}}"
+      getAll:
+        description: "Get all {{MODEL_NAME}} records."
+        parameters:
+          - "array $filters = []"
+        return_type: "Collection"
+        logic: "{{GET_ALL_LOGIC}}"
+      paginate:
+        description: "Get paginated {{MODEL_NAME}} records."
+        parameters:
+          - "int $perPage = 15"
+          - "array $filters = []"
+        return_type: "LengthAwarePaginator"
+        logic: "{{PAGINATE_LOGIC}}"{{BUSINESS_METHODS_YAML}}
+    dependencies:
+{{SERVICE_DEPENDENCIES_YAML}}

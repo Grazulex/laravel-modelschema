@@ -1,0 +1,43 @@
+"rules": {
+  "Unique{{MODEL_NAME}}{{UNIQUE_FIELD_NAME}}Rule": {
+    "class_name": "Unique{{MODEL_NAME}}{{UNIQUE_FIELD_NAME}}Rule",
+    "namespace": "App\\Rules",
+    "model_class": "{{NAMESPACE}}\\{{MODEL_NAME}}",
+    "type": "unique",
+    "description": "Validation rule for unique {{UNIQUE_FIELD_LOWER}} in {{MODEL_NAME}}",
+    "implements": ["Rule"],
+    "imports": [
+      "Illuminate\\Contracts\\Validation\\Rule",
+      "{{NAMESPACE}}\\{{MODEL_NAME}}"
+    ],
+    "properties": {
+      "ignoreId": {
+        "type": "?int",
+        "visibility": "protected",
+        "value": "null",
+        "description": "ID to ignore during unique validation."
+      }
+    },
+    "methods": {
+      "passes": {
+        "description": "Determine if the validation rule passes.",
+        "parameters": ["string $attribute", "$value"],
+        "return_type": "bool",
+        "logic": "{{UNIQUE_PASSES_LOGIC}}"
+      },
+      "message": {
+        "description": "Get the validation error message.",
+        "parameters": [],
+        "return_type": "string",
+        "logic": "return 'The {{UNIQUE_FIELD_LOWER}} has already been taken.';"
+      },
+      "ignore": {
+        "description": "Set the ID to ignore during unique validation.",
+        "parameters": ["int $id"],
+        "return_type": "self",
+        "logic": "$this->ignoreId = $id;\\n        return $this;"
+      }
+    },
+    "dependencies": []
+  }{{FOREIGN_KEY_RULES}}{{BUSINESS_RULES}}{{COMPLEX_RULES}}
+}
