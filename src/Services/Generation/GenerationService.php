@@ -188,7 +188,7 @@ class GenerationService
                 echo '   - Total time: '.round($totalTime * 1000, 2)."ms\n";
                 echo "   - Generated: {$generatedCount} components\n";
                 echo '   - Errors: '.count($errors)."\n";
-                echo '   - Success rate: '.($generatedCount > 0 ? round(($generatedCount / count(array_filter($generatorOptions, fn ($c) => $c['enabled']))) * 100, 2) : 0)."%\n";
+                echo '   - Success rate: '.($generatedCount > 0 ? round(($generatedCount / count(array_filter($generatorOptions, fn (array $c) => $c['enabled']))) * 100, 2) : 0)."%\n";
 
                 if ($errors !== []) {
                     echo "❌ Errors encountered:\n";
@@ -656,7 +656,7 @@ class GenerationService
         $generators = array_keys($this->getAvailableGenerators());
 
         // Map plural keys to singular for enhanced test compatibility
-        return array_map(function ($key): int|string {
+        return array_map(function (int|string $key): int|string {
             return match ($key) {
                 'requests' => 'request',
                 'resources' => 'resource',

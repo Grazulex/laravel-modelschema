@@ -592,7 +592,7 @@ class SchemaDiffService
             return 'fully_compatible';
         }
 
-        $highImpactChanges = array_filter($breakingChanges, fn ($change): bool => $change['impact'] === 'high');
+        $highImpactChanges = array_filter($breakingChanges, fn (array $change): bool => $change['impact'] === 'high');
         if ($highImpactChanges !== []) {
             return 'incompatible';
         }

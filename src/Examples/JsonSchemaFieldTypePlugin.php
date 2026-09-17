@@ -45,7 +45,7 @@ class JsonSchemaFieldTypePlugin extends FieldTypePlugin
                 'type' => 'array',
                 'required' => true,
                 'description' => 'JSON Schema definition for validation',
-                'validator' => function ($value): array {
+                'validator' => function (array $value): array {
                     return $this->validateJsonSchema($value);
                 },
             ],

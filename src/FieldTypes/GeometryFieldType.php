@@ -18,7 +18,7 @@ final class GeometryFieldType extends AbstractFieldType
         'dimensions', // 2D, 3D
     ];
 
-    private array $config = [];
+    private array $config;
 
     public function __construct(array $config = [])
     {
@@ -339,7 +339,7 @@ final class GeometryFieldType extends AbstractFieldType
 
         // Handle coordinate pairs array [[lng1, lat1], [lng2, lat2], ...]
         if (is_array($data[0]) && count($data[0]) === 2) {
-            $coordinates = array_map(fn ($coord): string => "{$coord[0]} {$coord[1]}", $data);
+            $coordinates = array_map(fn (array $coord): string => "{$coord[0]} {$coord[1]}", $data);
 
             if (count($data) === 1) {
                 return "POINT({$coordinates[0]})";

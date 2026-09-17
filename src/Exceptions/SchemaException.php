@@ -13,7 +13,7 @@ final class SchemaException extends Exception
 {
     public static function invalidYaml(string $message, ?string $filePath = null): self
     {
-        $fullMessage = $filePath !== null && $filePath !== '' && $filePath !== '0'
+        $fullMessage = ! in_array($filePath, [null, '', '0'], true)
             ? "Invalid YAML in file '{$filePath}': {$message}"
             : "Invalid YAML: {$message}";
 

@@ -443,7 +443,7 @@ class SchemaService
                 'sections' => ['core', 'model', 'fields', 'relationships'], // Sections principales
             ]);
         } catch (Exception $e) {
-            throw new SchemaException('Invalid YAML content: '.$e->getMessage());
+            throw new SchemaException('Invalid YAML content: '.$e->getMessage(), $e->getCode(), $e);
         }
 
         // Extract core data and create core schema

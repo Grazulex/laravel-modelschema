@@ -271,7 +271,7 @@ class ActionGenerator extends AbstractGenerator
         // Constructor if dependencies exist
         $dependencies = $this->getDependencies($schema, $actionInfo, $options);
         if ($dependencies !== []) {
-            $constructorParams = array_map(fn ($dep): string => "{$dep['type']} \${$dep['variable']}", $dependencies);
+            $constructorParams = array_map(fn (array $dep): string => "{$dep['type']} \${$dep['variable']}", $dependencies);
             $methods['__construct'] = [
                 'description' => 'Create a new action instance.',
                 'parameters' => $constructorParams,
@@ -306,7 +306,7 @@ class ActionGenerator extends AbstractGenerator
 
     protected function getConstructorLogic(array $dependencies): string
     {
-        $assignments = array_map(fn ($dep): string => "\$this->{$dep['variable']} = \${$dep['variable']};", $dependencies);
+        $assignments = array_map(fn (array $dep): string => "\$this->{$dep['variable']} = \${$dep['variable']};", $dependencies);
 
         return implode("\n        ", $assignments);
     }

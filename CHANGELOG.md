@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Source code refreshed with the current Rector rule set (closure parameter types, `in_array` for repeated strict comparisons, previous exception chaining on `SchemaException`, removal of redundant property defaults and `@var` tags); no behavioural change
+- GitHub Actions updated to `actions/checkout@v5` and `softprops/action-gh-release@v2`
+
+### Fixed
+- CHANGELOG history corrected: the entry previously labelled `2.0.0` describes the first published release and is now `1.0.0`; a `1.1.0` entry was added and the stale roadmap section removed
+
 ## [1.2.0] - 2026-09-17
 
 ### Added
@@ -25,11 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Laravel 11 support (end of life)
 
-## [2.0.0] - 2025-08-02
+## [1.1.0] - 2025-08-04
 
-### 🚀 Major Release - Fragment-Based Architecture
+### Changed
+- Package requirements widened to `illuminate/support` and `illuminate/contracts` `^11.0|^12.0` (Laravel 11 and 12), Orchestra Testbench `^9.0|^10.0`
 
-This is a complete architectural rewrite focused on fragment-based generation for parent application integration.
+## [1.0.0] - 2025-08-04
+
+### 🚀 Initial Release - Fragment-Based Architecture
+
+First published release. Compared to the unpublished prototype (`Grazulex\ModelSchema`), this is a complete architectural rewrite focused on fragment-based generation for parent application integration.
 
 ### Added
 - **Fragment-Based Generation System**
@@ -114,49 +128,15 @@ This is a complete architectural rewrite focused on fragment-based generation fo
 - Automatic core wrapping for backward compatibility during transition
 - Examples provided for all common migration scenarios
 
-## [1.x.x] - Legacy Versions (Deprecated)
+## Unpublished prototype (superseded)
 
-Previous versions are now deprecated. Please migrate to v2.0.0 for continued support.
+The pre-release prototype was never tagged or published. Its structure is superseded by 1.0.0.
 
 ### Legacy Features
 - Flat YAML structure without core/extension separation
 - Direct PHP file generation
 - `ModelSchema::fromYamlFile()` usage pattern
 - PHP YAML extension dependency
-
----
-
-## Planned for Future Releases
-
-### [2.1.0] - Additional Generators
-- Controller generator (API and Web)
-- Test generator (Feature and Unit)
-- Policy generator
-- Enhanced resource generator with nested relations
-
-### [2.2.0] - Advanced Validation
-- Relationship model existence validation
-- Custom Laravel validation rules support
-- Custom field type validation
-- Schema caching system
-
-### [2.3.0] - Extended Field Types
-- Enum and set field types
-- Geometry field types
-- Plugin system for custom field types
-- Advanced field attributes
-
-### [2.4.0] - Performance & Tools
-- Schema parsing optimization
-- Stub caching system
-- CLI tools for schema validation
-- Schema visualization tools
-
-### [2.5.0] - Integration Enhancements
-- TurboMaker adapter
-- Arc adapter
-- Schema versioning support
-- Migration automation tools
 
 ---
 

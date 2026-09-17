@@ -267,7 +267,7 @@ final class PolygonFieldType extends AbstractFieldType
             $rings = [];
 
             foreach ($data as $ring) {
-                $coordinates = array_map(fn ($coord): string => "{$coord[0]} {$coord[1]}", $ring);
+                $coordinates = array_map(fn (array $coord): string => "{$coord[0]} {$coord[1]}", $ring);
                 $rings[] = '('.implode(', ', $coordinates).')';
             }
 
@@ -276,7 +276,7 @@ final class PolygonFieldType extends AbstractFieldType
 
         // Handle simple ring [[[lng1, lat1], [lng2, lat2], ...]]
         if (is_array($data[0]) && count($data[0]) === 2 && is_numeric($data[0][0])) {
-            $coordinates = array_map(fn ($coord): string => "{$coord[0]} {$coord[1]}", $data);
+            $coordinates = array_map(fn (array $coord): string => "{$coord[0]} {$coord[1]}", $data);
 
             return 'POLYGON(('.implode(', ', $coordinates).'))';
         }
