@@ -18,7 +18,7 @@ class LoggingService
 {
     private const LOG_CHANNEL = 'modelschema';
 
-    private bool $enabled = true;
+    private bool $enabled;
 
     private string $sessionId;
 
@@ -110,7 +110,7 @@ class LoggingService
             'memory_usage' => $this->formatBytes(memory_get_usage()),
         ];
 
-        if ($recommendation !== null && $recommendation !== '' && $recommendation !== '0') {
+        if (! in_array($recommendation, [null, '', '0'], true)) {
             $logData['recommendation'] = $recommendation;
         }
 

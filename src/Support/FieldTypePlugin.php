@@ -66,7 +66,6 @@ abstract class FieldTypePlugin implements FieldTypeInterface
     public static function fromArray(array $data): static
     {
         $className = static::class;
-        /** @var static $plugin */
         $plugin = new $className();
 
         if (isset($data['config'])) {

@@ -102,7 +102,7 @@ class MigrationGenerator extends AbstractGenerator
         $definition = "            \$table->{$fieldType}('{$field->name}'";
 
         // Add length for string fields
-        if ($field->type === 'string' && isset($field->length)) {
+        if ($field->type === 'string' && $field->length !== null) {
             $definition .= ", {$field->length}";
         }
 
@@ -126,7 +126,7 @@ class MigrationGenerator extends AbstractGenerator
             $definition .= "->default({$defaultValue})";
         }
 
-        if (isset($field->comment)) {
+        if ($field->comment !== null) {
             $definition .= "->comment('{$field->comment}')";
         }
 

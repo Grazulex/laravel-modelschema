@@ -161,7 +161,7 @@ class ResourceGenerator extends AbstractGenerator
                 'transform' => $fieldTransformations[$field->name] ?? null,
             ];
 
-            if ($format !== null && $format !== '' && $format !== '0') {
+            if (! in_array($format, [null, '', '0'], true)) {
                 $fieldData['format'] = $format;
             }
 
@@ -348,7 +348,7 @@ class ResourceGenerator extends AbstractGenerator
                 ];
 
                 $format = $this->getApiFieldFormat($field->type);
-                if ($format !== null && $format !== '' && $format !== '0') {
+                if (! in_array($format, [null, '', '0'], true)) {
                     $conditional[$field->name]['format'] = $format;
                 }
             }
@@ -367,7 +367,7 @@ class ResourceGenerator extends AbstractGenerator
 
         if ($options['include_counts'] ?? true) {
             $meta['relationship_counts'] = array_map(
-                fn ($rel): string => $rel->name.'_count',
+                fn (\Grazulex\LaravelModelschema\Schema\Relationship $rel): string => $rel->name.'_count',
                 $schema->relationships
             );
         }

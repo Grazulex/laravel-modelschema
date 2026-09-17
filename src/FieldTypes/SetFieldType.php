@@ -186,7 +186,7 @@ final class SetFieldType extends AbstractFieldType
         }
 
         // Check max_selections limit
-        return ! (isset($config['max_selections']) && count($values) > $config['max_selections']);
+        return ! isset($config['max_selections']) || count($values) <= $config['max_selections'];
     }
 
     /**

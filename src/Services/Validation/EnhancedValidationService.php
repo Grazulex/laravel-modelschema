@@ -92,8 +92,8 @@ class EnhancedValidationService
             'validated_rules' => $validatedRules,
             'statistics' => [
                 'total_rules' => count($validatedRules),
-                'valid_rules' => count(array_filter($validatedRules, fn ($r) => $r['is_valid'])),
-                'invalid_rules' => count(array_filter($validatedRules, fn ($r): bool => ! $r['is_valid'])),
+                'valid_rules' => count(array_filter($validatedRules, fn (array $r) => $r['is_valid'])),
+                'invalid_rules' => count(array_filter($validatedRules, fn (array $r): bool => ! $r['is_valid'])),
                 'custom_rules' => count($validatedRules), // All rules are custom since we only check custom ones
             ],
         ];

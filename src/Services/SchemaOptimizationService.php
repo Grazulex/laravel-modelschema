@@ -105,7 +105,7 @@ class SchemaOptimizationService
                 'model' => $schema->name,
                 'duration' => microtime(true) - $startTime,
             ]);
-            throw new SchemaException('Schema optimization analysis failed: '.$e->getMessage());
+            throw new SchemaException('Schema optimization analysis failed: '.$e->getMessage(), $e->getCode(), $e);
         }
     }
 

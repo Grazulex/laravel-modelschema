@@ -81,11 +81,11 @@ final class Relationship
         $modelClass = $this->formatModelClass($this->model);
         $params = [$modelClass.'::class'];
 
-        if ($this->foreignKey !== null && $this->foreignKey !== '' && $this->foreignKey !== '0') {
+        if (! in_array($this->foreignKey, [null, '', '0'], true)) {
             $params[] = "'{$this->foreignKey}'";
         }
 
-        if ($this->localKey !== null && $this->localKey !== '' && $this->localKey !== '0') {
+        if (! in_array($this->localKey, [null, '', '0'], true)) {
             $params[] = "'{$this->localKey}'";
         }
 
@@ -97,11 +97,11 @@ final class Relationship
         $modelClass = $this->formatModelClass($this->model);
         $params = [$modelClass.'::class'];
 
-        if ($this->foreignKey !== null && $this->foreignKey !== '' && $this->foreignKey !== '0') {
+        if (! in_array($this->foreignKey, [null, '', '0'], true)) {
             $params[] = "'{$this->foreignKey}'";
         }
 
-        if ($this->localKey !== null && $this->localKey !== '' && $this->localKey !== '0') {
+        if (! in_array($this->localKey, [null, '', '0'], true)) {
             $params[] = "'{$this->localKey}'";
         }
 
@@ -113,11 +113,11 @@ final class Relationship
         $modelClass = $this->formatModelClass($this->model);
         $params = [$modelClass.'::class'];
 
-        if ($this->foreignKey !== null && $this->foreignKey !== '' && $this->foreignKey !== '0') {
+        if (! in_array($this->foreignKey, [null, '', '0'], true)) {
             $params[] = "'{$this->foreignKey}'";
         }
 
-        if ($this->localKey !== null && $this->localKey !== '' && $this->localKey !== '0') {
+        if (! in_array($this->localKey, [null, '', '0'], true)) {
             $params[] = "'{$this->localKey}'";
         }
 
@@ -129,7 +129,7 @@ final class Relationship
         $modelClass = $this->formatModelClass($this->model);
         $params = [$modelClass.'::class'];
 
-        if ($this->pivotTable !== null && $this->pivotTable !== '' && $this->pivotTable !== '0') {
+        if (! in_array($this->pivotTable, [null, '', '0'], true)) {
             $params[] = "'{$this->pivotTable}'";
         }
 
@@ -157,7 +157,7 @@ final class Relationship
         $modelClass = $this->formatModelClass($this->model);
         $params = [$modelClass.'::class'];
 
-        if ($this->foreignKey !== null && $this->foreignKey !== '' && $this->foreignKey !== '0') {
+        if (! in_array($this->foreignKey, [null, '', '0'], true)) {
             $params[] = "'{$this->foreignKey}'";
         }
 
@@ -169,7 +169,7 @@ final class Relationship
         $modelClass = $this->formatModelClass($this->model);
         $params = [$modelClass.'::class'];
 
-        if ($this->foreignKey !== null && $this->foreignKey !== '' && $this->foreignKey !== '0') {
+        if (! in_array($this->foreignKey, [null, '', '0'], true)) {
             $params[] = "'{$this->foreignKey}'";
         }
 
