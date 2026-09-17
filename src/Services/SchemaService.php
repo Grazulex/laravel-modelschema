@@ -194,7 +194,7 @@ class SchemaService
         foreach ($schema->fields as $field) {
             $fieldsArray[$field->name] = [
                 'type' => $field->type,
-                'nullable' => $field->nullable ?? false,
+                'nullable' => $field->nullable,
                 'default' => $field->default ?? null,
             ];
         }
@@ -203,7 +203,7 @@ class SchemaService
         foreach ($schema->relationships as $relationship) {
             $relationshipsArray[$relationship->name] = [
                 'type' => $relationship->type,
-                'model' => $relationship->model ?? null,
+                'model' => $relationship->model,
             ];
         }
 

@@ -7,11 +7,10 @@ namespace Tests\Unit\Services\Generation\Generators;
 use Grazulex\LaravelModelschema\Schema\Field;
 use Grazulex\LaravelModelschema\Schema\ModelSchema;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\RuleGenerator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
-/**
- * @covers \Grazulex\LaravelModelschema\Services\Generation\Generators\RuleGenerator
- */
+#[CoversClass(RuleGenerator::class)]
 class RuleGeneratorTest extends TestCase
 {
     private RuleGenerator $generator;

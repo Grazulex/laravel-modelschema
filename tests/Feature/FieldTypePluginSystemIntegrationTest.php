@@ -8,6 +8,7 @@ use Grazulex\LaravelModelschema\Examples\JsonSchemaFieldTypePlugin;
 use Grazulex\LaravelModelschema\Examples\UrlFieldTypePlugin;
 use Grazulex\LaravelModelschema\Support\FieldTypePluginManager;
 use Grazulex\LaravelModelschema\Support\FieldTypeRegistry;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class FieldTypePluginSystemIntegrationTest extends TestCase
@@ -33,7 +34,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         FieldTypeRegistry::clear();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_register_and_use_custom_plugins_in_complete_workflow(): void
     {
         // Register custom plugins
@@ -65,7 +66,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         $this->assertEquals('json_schema', $jsonSchemaFieldType->getType());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_validate_plugin_configurations(): void
     {
         $urlPlugin = new UrlFieldTypePlugin();
@@ -95,7 +96,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         $this->assertContains('default value must be a valid URL', $errors);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_generate_validation_rules_for_plugins(): void
     {
         $urlPlugin = new UrlFieldTypePlugin();
@@ -115,7 +116,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         $this->assertContains('nullable', $rules);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_generate_migration_parameters_for_plugins(): void
     {
         $urlPlugin = new UrlFieldTypePlugin();
@@ -136,7 +137,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         $this->assertEquals('https://example.com', $params['default']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_generate_migration_calls_for_plugins(): void
     {
         $urlPlugin = new UrlFieldTypePlugin();
@@ -156,7 +157,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         $this->assertEquals($expected, $call);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_handle_complex_json_schema_plugin(): void
     {
         $jsonSchemaPlugin = new JsonSchemaFieldTypePlugin();
@@ -209,7 +210,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         $this->assertTrue($hasCustomValidation);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_manage_plugin_metadata_comprehensively(): void
     {
         $urlPlugin = new UrlFieldTypePlugin();
@@ -237,7 +238,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         $this->assertCount(2, $allMetadata);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_load_plugins_from_configuration(): void
     {
         $config = [
@@ -281,7 +282,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_can_enable_and_disable_plugins(): void
     {
         $urlPlugin = new UrlFieldTypePlugin();
@@ -312,7 +313,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         $this->assertArrayHasKey('url', $enabledPlugins);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_plugin_dependencies(): void
     {
         // JsonSchemaFieldTypePlugin depends on 'json' which is built-in
@@ -339,7 +340,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         $this->manager->registerPlugin($dependentPlugin);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_transform_plugin_configurations(): void
     {
         $urlPlugin = new UrlFieldTypePlugin();
@@ -357,7 +358,7 @@ class FieldTypePluginSystemIntegrationTest extends TestCase
         $this->assertEquals(['https'], $transformed['schemes']); // Converted to array
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_comprehensive_plugin_system_functionality(): void
     {
         // This test demonstrates the complete plugin system workflow

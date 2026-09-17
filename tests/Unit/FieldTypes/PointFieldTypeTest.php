@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\FieldTypes;
 
 use Grazulex\LaravelModelschema\FieldTypes\PointFieldType;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class PointFieldTypeTest extends TestCase
@@ -17,7 +18,7 @@ class PointFieldTypeTest extends TestCase
         $this->fieldType = new PointFieldType();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_transform_array_coordinates()
     {
         $input = [12.5, 34.7];
@@ -26,7 +27,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('POINT(12.5 34.7)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_transform_associative_array_coordinates()
     {
         $input = ['lat' => 48.8566, 'lng' => 2.3522];
@@ -35,7 +36,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('POINT(2.3522 48.8566)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_transform_latitude_longitude_array()
     {
         $input = ['latitude' => 40.7128, 'longitude' => -74.0060];
@@ -44,7 +45,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('POINT(-74.006 40.7128)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_transform_x_y_coordinates()
     {
         $input = ['x' => 100.5, 'y' => 200.8];
@@ -53,7 +54,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('POINT(100.5 200.8)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_wkt_format()
     {
         $input = 'POINT(12.5 34.7)';
@@ -62,7 +63,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('POINT(12.5 34.7)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_handle_3d_coordinates()
     {
         $input = [12.5, 34.7, 100.0];
@@ -71,7 +72,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('POINT(12.5 34.7 100)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_point_format_correctly()
     {
         $this->assertTrue($this->fieldType->isValidPointFormat([12.5, 34.7]));
@@ -84,7 +85,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertFalse($this->fieldType->isValidPointFormat(123));
     }
 
-    /** @test */
+    #[Test]
     public function it_extracts_coordinates_from_wkt()
     {
         $wkt = 'POINT(12.5 34.7)';
@@ -93,7 +94,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals([12.5, 34.7], $coordinates);
     }
 
-    /** @test */
+    #[Test]
     public function it_extracts_3d_coordinates_from_wkt()
     {
         $wkt = 'POINT(12.5 34.7 100.0)';
@@ -102,7 +103,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals([12.5, 34.7, 100.0], $coordinates);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_numeric_coordinates()
     {
         $this->assertTrue($this->fieldType->validateValue([12.5, 34.7]));
@@ -113,7 +114,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertFalse($this->fieldType->validateValue([12.5, 'invalid']));
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_latitude_longitude_ranges()
     {
         // Valid latitude/longitude ranges
@@ -129,7 +130,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertFalse($this->fieldType->validateValue(['latitude' => 48.8566, 'longitude' => -185.0]));
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_srid_configuration()
     {
         $fieldType = new PointFieldType(['srid' => 4326]);
@@ -140,7 +141,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('SRID=4326;POINT(12.5 34.7)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_dimension_configuration()
     {
         $fieldType = new PointFieldType(['dimensions' => 3]);
@@ -152,7 +153,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('POINT(12.5 34.7 0)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_default_value_when_configured()
     {
         $fieldType = new PointFieldType(['default' => 'POINT(0 0)']);
@@ -160,7 +161,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('POINT(0 0)', $fieldType->getDefaultValue());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_mysql_column_definition()
     {
         $definition = $this->fieldType->getMySQLColumnDefinition();
@@ -168,7 +169,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('POINT', $definition);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_postgresql_column_definition()
     {
         $definition = $this->fieldType->getPostgreSQLColumnDefinition();
@@ -176,7 +177,7 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('POINT', $definition);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_sqlite_column_definition()
     {
         $definition = $this->fieldType->getSQLiteColumnDefinition();
@@ -184,14 +185,14 @@ class PointFieldTypeTest extends TestCase
         $this->assertEquals('TEXT', $definition);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_null_values()
     {
         $this->assertNull($this->fieldType->transformValue(null));
         $this->assertTrue($this->fieldType->validateValue(null));
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_empty_string()
     {
         $this->assertNull($this->fieldType->transformValue(''));
