@@ -8,6 +8,7 @@ use Grazulex\LaravelModelschema\Services\LoggingService;
 use Grazulex\LaravelModelschema\Services\SchemaCacheService;
 use Grazulex\LaravelModelschema\Services\SchemaService;
 use Grazulex\LaravelModelschema\Services\YamlOptimizationService;
+use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Yaml\Yaml;
 use Tests\TestCase;
 
@@ -72,7 +73,7 @@ class YamlOptimizationPerformanceTest extends TestCase
             'Cache Performance: '.number_format($improvement, 1).'% faster (Target: 95% ✅)');
     }
 
-    /** @test */
+    #[Test]
     public function it_demonstrates_selective_parsing_performance()
     {
         // Clear cache for fair comparison

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 /**
  * New Generators Example - Observer, Service, Action, Rule
- * 
+ *
  * This example demonstrates the 4 new generators introduced in Laravel ModelSchema v2.0:
  * - ObserverGenerator: Eloquent observer event handlers
- * - ServiceGenerator: Business logic service classes  
+ * - ServiceGenerator: Business logic service classes
  * - ActionGenerator: Single-responsibility action classes
  * - RuleGenerator: Custom validation rule classes
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
 use Grazulex\LaravelModelschema\Schema\Field;
 use Grazulex\LaravelModelschema\Schema\ModelSchema;
@@ -48,8 +48,8 @@ $schema = new ModelSchema(
 $generationService = new GenerationService();
 
 echo "📋 Schema: {$schema->name} (table: {$schema->table})\n";
-echo "📊 Fields: " . count($schema->fields) . "\n";
-echo "🔗 Relationships: " . count($schema->relationships) . "\n\n";
+echo '📊 Fields: '.count($schema->fields)."\n";
+echo '🔗 Relationships: '.count($schema->relationships)."\n\n";
 
 // 1. Observer Generator
 echo "🔍 1. OBSERVER GENERATOR\n";
@@ -64,9 +64,9 @@ echo "✅ Observer fragment generated\n";
 $observerData = json_decode($observerResult['json'], true);
 echo "📦 Class: {$observerData['observers']['class_name']}\n";
 echo "📂 Namespace: {$observerData['observers']['namespace']}\n";
-echo "🎯 Events: " . implode(', ', array_keys($observerData['observers']['events'])) . "\n\n";
+echo '🎯 Events: '.implode(', ', array_keys($observerData['observers']['events']))."\n\n";
 
-// 2. Service Generator  
+// 2. Service Generator
 echo "⚙️ 2. SERVICE GENERATOR\n";
 echo "=======================\n";
 
@@ -81,8 +81,8 @@ echo "✅ Service fragment generated\n";
 $serviceData = json_decode($serviceResult['json'], true);
 echo "📦 Class: {$serviceData['services']['class_name']}\n";
 echo "📂 Namespace: {$serviceData['services']['namespace']}\n";
-echo "🔧 Methods: " . implode(', ', array_keys($serviceData['services']['methods'])) . "\n";
-echo "📚 Dependencies: " . implode(', ', $serviceData['services']['dependencies']) . "\n\n";
+echo '🔧 Methods: '.implode(', ', array_keys($serviceData['services']['methods']))."\n";
+echo '📚 Dependencies: '.implode(', ', $serviceData['services']['dependencies'])."\n\n";
 
 // 3. Action Generator
 echo "⚡ 3. ACTION GENERATOR\n";
@@ -101,11 +101,11 @@ $actionResult = $generationService->generateActions($schema, [
 
 echo "✅ Action fragments generated\n";
 $actionData = json_decode($actionResult['json'], true);
-echo "📦 CRUD Actions: " . count($actionData['actions']['crud_actions']) . "\n";
+echo '📦 CRUD Actions: '.count($actionData['actions']['crud_actions'])."\n";
 foreach ($actionData['actions']['crud_actions'] as $action) {
     echo "   - {$action['class_name']}\n";
 }
-echo "🚀 Business Actions: " . count($actionData['actions']['business_actions']) . "\n";
+echo '🚀 Business Actions: '.count($actionData['actions']['business_actions'])."\n";
 foreach ($actionData['actions']['business_actions'] as $action) {
     echo "   - {$action['class_name']}\n";
 }
@@ -125,11 +125,11 @@ $ruleResult = $generationService->generateRules($schema, [
 
 echo "✅ Rule fragments generated\n";
 $ruleData = json_decode($ruleResult['json'], true);
-echo "🏢 Business Rules: " . count($ruleData['rules']['business_rules']) . "\n";
+echo '🏢 Business Rules: '.count($ruleData['rules']['business_rules'])."\n";
 foreach ($ruleData['rules']['business_rules'] as $rule) {
     echo "   - {$rule['class_name']} (for {$rule['field']})\n";
 }
-echo "🔑 Foreign Key Rules: " . count($ruleData['rules']['foreign_key_rules']) . "\n";
+echo '🔑 Foreign Key Rules: '.count($ruleData['rules']['foreign_key_rules'])."\n";
 foreach ($ruleData['rules']['foreign_key_rules'] as $rule) {
     echo "   - {$rule['class_name']} (for {$rule['field']})\n";
 }
@@ -140,7 +140,7 @@ echo "🔄 5. GENERATE MULTIPLE NEW COMPONENTS\n";
 echo "=====================================\n";
 
 $multipleResult = $generationService->generateMultiple($schema, [
-    'observers', 'services', 'actions', 'rules'
+    'observers', 'services', 'actions', 'rules',
 ], [
     'enhanced' => true,
     'namespace_prefix' => 'App',
@@ -210,8 +210,8 @@ $serviceExample = [
         'class_name' => $serviceData['services']['class_name'],
         'namespace' => $serviceData['services']['namespace'],
         'methods' => array_slice($serviceData['services']['methods'], 0, 2, true),
-        '...' => 'and more methods'
-    ]
+        '...' => 'and more methods',
+    ],
 ];
 echo json_encode($serviceExample, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 echo "\n```\n\n";

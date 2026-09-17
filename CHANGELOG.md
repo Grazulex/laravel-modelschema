@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-09-17
+
+### Added
+- Laravel 13 support (`illuminate/support` and `illuminate/contracts` `^12.0|^13.0`)
+- CI test matrix now covers PHP 8.3 / 8.4 and Laravel 12 / 13 (Testbench 10 / 11), with `prefer-lowest` and `prefer-stable`
+- Pint check added to the Code Quality workflow
+
+### Changed
+- PHP 8.3 remains the minimum supported version; PHP 8.3 and 8.4 are now both tested in CI
+- Dev dependencies updated: Pest `^3.8|^4.0`, Pest Laravel plugin `^3.2|^4.0`, Orchestra Testbench `^10.0|^11.0`
+- Test classes converted from `@test` / `@covers` doc-comment annotations to PHPUnit attributes (`#[Test]`, `#[CoversClass]`); doc-comment metadata is no longer supported by PHPUnit 12 / Pest 4 and those tests were silently skipped
+- Rector configuration updated for Rector 2.x (`strictBooleans` prepared set removed)
+- Examples reformatted with the current Pint ruleset
+
+### Fixed
+- Removed redundant null-coalescing on non-nullable schema properties and a redundant empty-array check flagged by PHPStan 2 / Larastan 3
+
+### Removed
+- Laravel 11 support (end of life)
+
 ## [2.0.0] - 2025-08-02
 
 ### 🚀 Major Release - Fragment-Based Architecture

@@ -339,7 +339,7 @@ class YamlOptimizationService
         }
 
         // Traiter la dernière section
-        if ($currentSection !== null && $currentSectionContent !== []) {
+        if ($currentSection !== null) {
             $sectionYaml = implode("\n", $currentSectionContent);
             try {
                 $result[$currentSection] = $parser->parse($sectionYaml, Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE);

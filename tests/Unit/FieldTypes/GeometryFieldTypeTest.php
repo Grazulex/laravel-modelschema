@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\FieldTypes;
 
 use Grazulex\LaravelModelschema\FieldTypes\GeometryFieldType;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
@@ -18,13 +19,13 @@ class GeometryFieldTypeTest extends TestCase
         $this->fieldType = new GeometryFieldType();
     }
 
-    /** @test */
+    #[Test]
     public function it_has_correct_type()
     {
         $this->assertEquals('geometry', $this->fieldType->getType());
     }
 
-    /** @test */
+    #[Test]
     public function it_has_correct_aliases()
     {
         $aliases = $this->fieldType->getAliases();
@@ -33,7 +34,7 @@ class GeometryFieldTypeTest extends TestCase
         $this->assertContains('geo', $aliases);
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_geometry_specific_attributes()
     {
         $reflection = new ReflectionClass($this->fieldType);
@@ -46,7 +47,7 @@ class GeometryFieldTypeTest extends TestCase
         $this->assertContains('dimensions', $attributes);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_transform_point_geometry()
     {
         $input = ['type' => 'POINT', 'coordinates' => [12.5, 34.7]];
@@ -55,7 +56,7 @@ class GeometryFieldTypeTest extends TestCase
         $this->assertEquals('POINT(12.5 34.7)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_transform_linestring_geometry()
     {
         $input = [
@@ -67,7 +68,7 @@ class GeometryFieldTypeTest extends TestCase
         $this->assertEquals('LINESTRING(12.5 34.7, 56.8 90.1)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_transform_polygon_geometry()
     {
         $input = [
@@ -81,7 +82,7 @@ class GeometryFieldTypeTest extends TestCase
         $this->assertEquals('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_wkt_strings()
     {
         $wkt = 'POINT(12.5 34.7)';
@@ -90,7 +91,7 @@ class GeometryFieldTypeTest extends TestCase
         $this->assertEquals($wkt, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_srid_configuration()
     {
         $fieldType = new GeometryFieldType(['srid' => 4326]);
@@ -101,7 +102,7 @@ class GeometryFieldTypeTest extends TestCase
         $this->assertEquals('SRID=4326;POINT(12.5 34.7)', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_geometry_types()
     {
         $supportedTypes = array_keys(GeometryFieldType::getSupportedGeometryTypes());
@@ -116,7 +117,7 @@ class GeometryFieldTypeTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_configuration()
     {
         $validConfig = [
@@ -129,7 +130,7 @@ class GeometryFieldTypeTest extends TestCase
         $this->assertEmpty($errors);
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_invalid_geometry_type()
     {
         $invalidConfig = ['geometry_type' => 'INVALID_TYPE'];
@@ -139,35 +140,35 @@ class GeometryFieldTypeTest extends TestCase
         $this->assertStringContainsString('Invalid geometry type', $errors[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_mysql_column_definition()
     {
         $definition = $this->fieldType->getMySQLColumnDefinition();
         $this->assertEquals('GEOMETRY', $definition);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_postgresql_column_definition()
     {
         $definition = $this->fieldType->getPostgreSQLColumnDefinition();
         $this->assertEquals('GEOMETRY', $definition);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_sqlite_column_definition()
     {
         $definition = $this->fieldType->getSQLiteColumnDefinition();
         $this->assertEquals('TEXT', $definition);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_null_values()
     {
         $this->assertNull($this->fieldType->transformValue(null));
         $this->assertNull($this->fieldType->transformValue(''));
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_multipoint_geometry()
     {
         $input = [
@@ -179,7 +180,7 @@ class GeometryFieldTypeTest extends TestCase
         $this->assertEquals('MULTIPOINT((10 40), (40 30), (20 20), (30 10))', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_geometry_collection()
     {
         $input = [

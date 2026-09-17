@@ -8,6 +8,7 @@ use Grazulex\LaravelModelschema\FieldTypes\GeometryFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\PointFieldType;
 use Grazulex\LaravelModelschema\FieldTypes\PolygonFieldType;
 use Grazulex\LaravelModelschema\Support\FieldTypeRegistry;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class GeometricFieldTypeRegistryTest extends TestCase
@@ -18,28 +19,28 @@ class GeometricFieldTypeRegistryTest extends TestCase
         FieldTypeRegistry::initialize();
     }
 
-    /** @test */
+    #[Test]
     public function it_registers_point_field_type()
     {
         $this->assertTrue(FieldTypeRegistry::has('point'));
         $this->assertInstanceOf(PointFieldType::class, FieldTypeRegistry::get('point'));
     }
 
-    /** @test */
+    #[Test]
     public function it_registers_geometry_field_type()
     {
         $this->assertTrue(FieldTypeRegistry::has('geometry'));
         $this->assertInstanceOf(GeometryFieldType::class, FieldTypeRegistry::get('geometry'));
     }
 
-    /** @test */
+    #[Test]
     public function it_registers_polygon_field_type()
     {
         $this->assertTrue(FieldTypeRegistry::has('polygon'));
         $this->assertInstanceOf(PolygonFieldType::class, FieldTypeRegistry::get('polygon'));
     }
 
-    /** @test */
+    #[Test]
     public function it_registers_geometric_aliases()
     {
         // Point aliases
@@ -58,7 +59,7 @@ class GeometricFieldTypeRegistryTest extends TestCase
         $this->assertTrue(FieldTypeRegistry::has('region'));
     }
 
-    /** @test */
+    #[Test]
     public function aliases_return_correct_field_types()
     {
         $this->assertInstanceOf(PointFieldType::class, FieldTypeRegistry::get('geopoint'));

@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 /**
  * New Generators Overview - Laravel ModelSchema v2.0
- * 
+ *
  * This file demonstrates the 4 new generators introduced in v2.0:
  * - ObserverGenerator: Eloquent observer event handlers
- * - ServiceGenerator: Business logic service classes  
+ * - ServiceGenerator: Business logic service classes
  * - ActionGenerator: Single-responsibility action classes
  * - RuleGenerator: Custom validation rule classes
- * 
+ *
  * Note: This is a documentation example showing the structure and usage patterns.
  * For a working example, see the test files in tests/Unit/Services/Generation/
  */
-
 echo "🚀 Laravel ModelSchema v2.0 - New Generators Overview\n";
 echo "===================================================\n\n";
 
@@ -38,14 +37,14 @@ echo json_encode([
         'events' => [
             'creating' => [
                 'enabled' => true,
-                'code' => '// Set default values before creating'
+                'code' => '// Set default values before creating',
             ],
             'created' => [
                 'enabled' => true,
-                'code' => '// Log user creation'
-            ]
-        ]
-    ]
+                'code' => '// Log user creation',
+            ],
+        ],
+    ],
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 echo "\n```\n\n";
 
@@ -69,16 +68,16 @@ echo json_encode([
             'create' => [
                 'parameters' => ['array $data'],
                 'return_type' => 'User',
-                'validation' => true
+                'validation' => true,
             ],
             'update' => [
                 'parameters' => ['User $user', 'array $data'],
                 'return_type' => 'User',
-                'validation' => true
-            ]
+                'validation' => true,
+            ],
         ],
-        'dependencies' => ['UserRepository', 'ValidationService']
-    ]
+        'dependencies' => ['UserRepository', 'ValidationService'],
+    ],
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 echo "\n```\n\n";
 
@@ -101,8 +100,8 @@ echo json_encode([
                 'namespace' => 'App\\Actions\\User',
                 'method' => 'execute',
                 'parameters' => ['array $data'],
-                'return_type' => 'User'
-            ]
+                'return_type' => 'User',
+            ],
         ],
         'business_actions' => [
             [
@@ -110,10 +109,10 @@ echo json_encode([
                 'namespace' => 'App\\Actions\\User',
                 'method' => 'execute',
                 'parameters' => ['User $user'],
-                'return_type' => 'void'
-            ]
-        ]
-    ]
+                'return_type' => 'void',
+            ],
+        ],
+    ],
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 echo "\n```\n\n";
 
@@ -135,8 +134,8 @@ echo json_encode([
                 'class_name' => 'UniqueEmailRule',
                 'namespace' => 'App\\Rules',
                 'field' => 'email',
-                'logic' => 'Check email uniqueness across multiple tables'
-            ]
+                'logic' => 'Check email uniqueness across multiple tables',
+            ],
         ],
         'foreign_key_rules' => [
             [
@@ -144,10 +143,10 @@ echo json_encode([
                 'namespace' => 'App\\Rules',
                 'field' => 'category_id',
                 'table' => 'categories',
-                'column' => 'id'
-            ]
-        ]
-    ]
+                'column' => 'id',
+            ],
+        ],
+    ],
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 echo "\n```\n\n";
 

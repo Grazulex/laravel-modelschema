@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Examples;
 
 use Grazulex\LaravelModelschema\Examples\JsonSchemaFieldTypePlugin;
+use PHPUnit\Framework\Attributes\Test;
 use ReflectionClass;
 use Tests\TestCase;
 
@@ -19,7 +20,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->plugin = new JsonSchemaFieldTypePlugin();
     }
 
-    /** @test */
+    #[Test]
     public function it_has_correct_basic_properties(): void
     {
         $this->assertEquals('json_schema', $this->plugin->getType());
@@ -28,7 +29,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertEquals(['json'], $this->plugin->getDependencies());
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_schema_requirement(): void
     {
         // Missing schema
@@ -54,7 +55,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertEmpty($errors);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_schema_structure(): void
     {
         // Schema without type
@@ -78,7 +79,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertStringContainsString('schema type must be one of:', $errors[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_object_schema_properties(): void
     {
         // Invalid properties type
@@ -104,7 +105,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertContains('schema required must be an array', $errors);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_array_schema_items(): void
     {
         $config = [
@@ -118,7 +119,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertContains('schema items must be an array for array type', $errors);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_default_value_against_schema(): void
     {
         $config = [
@@ -148,7 +149,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertStringContainsString('default value does not match schema', $errors[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_transforms_configuration_correctly(): void
     {
         $config = [
@@ -171,7 +172,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertEquals('string', $transformed['schema']['type']);
     }
 
-    /** @test */
+    #[Test]
     public function it_generates_validation_rules_correctly(): void
     {
         $config = [
@@ -200,7 +201,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertTrue($hasCustomValidation);
     }
 
-    /** @test */
+    #[Test]
     public function it_generates_migration_parameters_correctly(): void
     {
         $config = [
@@ -221,7 +222,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertStringContainsString('JSON Schema:', $params['comment']);
     }
 
-    /** @test */
+    #[Test]
     public function it_generates_migration_call_correctly(): void
     {
         $config = [
@@ -240,7 +241,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertStringContainsString('->comment(', $call);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_values_against_string_schema(): void
     {
         $schema = ['type' => 'string'];
@@ -260,7 +261,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertContains('Value must be a string', $errors);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_values_against_object_schema(): void
     {
         $schema = [
@@ -289,7 +290,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertStringContainsString("Property 'name': Value must be a string", $errors[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_values_against_array_schema(): void
     {
         $schema = [
@@ -310,7 +311,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertStringContainsString('Item [1]: Value must be a string', $errors[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_correct_databases(): void
     {
         $databases = $this->plugin->getSupportedDatabases();
@@ -320,7 +321,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertNotContains('sqlite', $databases); // JSON Schema might not be fully supported in SQLite
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_correct_attributes(): void
     {
         $this->assertTrue($this->plugin->supportsAttribute('nullable'));
@@ -329,7 +330,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertTrue($this->plugin->supportsAttribute('strict_validation'));
     }
 
-    /** @test */
+    #[Test]
     public function it_has_example_schemas(): void
     {
         $examples = $this->plugin->getExampleSchemas();
@@ -347,7 +348,7 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         $this->assertContains('email', $userProfile['required']);
     }
 
-    /** @test */
+    #[Test]
     public function it_has_valid_config_schema(): void
     {
         $schema = $this->plugin->getConfigSchema();

@@ -466,7 +466,7 @@ class EnhancedValidationService
     {
         $types = [];
         foreach ($schema->relationships as $relationship) {
-            $type = $relationship->type ?? 'unknown';
+            $type = $relationship->type;
             $types[$type] = ($types[$type] ?? 0) + 1;
         }
 

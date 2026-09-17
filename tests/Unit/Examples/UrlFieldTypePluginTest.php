@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Examples;
 
 use Grazulex\LaravelModelschema\Examples\UrlFieldTypePlugin;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class UrlFieldTypePluginTest extends TestCase
@@ -18,7 +19,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->plugin = new UrlFieldTypePlugin();
     }
 
-    /** @test */
+    #[Test]
     public function it_has_correct_basic_properties(): void
     {
         $this->assertEquals('url', $this->plugin->getType());
@@ -26,7 +27,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertEquals('string', $this->plugin->getCastType([]));
     }
 
-    /** @test */
+    #[Test]
     public function it_has_correct_metadata(): void
     {
         $metadata = $this->plugin->getMetadata();
@@ -41,7 +42,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertContains('schemes', $metadata['attributes']);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_configuration_correctly(): void
     {
         // Valid configuration
@@ -86,7 +87,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertStringContainsString("Custom attribute 'schemes' contains invalid value 'invalid-scheme'", $errors[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_transforms_configuration_correctly(): void
     {
         $config = [];
@@ -105,7 +106,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertEquals(['https'], $transformed['schemes']);
     }
 
-    /** @test */
+    #[Test]
     public function it_generates_correct_validation_rules(): void
     {
         $config = [
@@ -128,7 +129,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertNotContains('nullable', $rules);
     }
 
-    /** @test */
+    #[Test]
     public function it_generates_migration_parameters_correctly(): void
     {
         $config = [
@@ -151,7 +152,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertArrayNotHasKey('nullable', $params);
     }
 
-    /** @test */
+    #[Test]
     public function it_generates_migration_call_correctly(): void
     {
         $config = [
@@ -173,7 +174,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertEquals($expected, $call);
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_correct_attributes(): void
     {
         $this->assertTrue($this->plugin->supportsAttribute('nullable'));
@@ -183,7 +184,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertFalse($this->plugin->supportsAttribute('unsupported'));
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_correct_databases(): void
     {
         $databases = $this->plugin->getSupportedDatabases();
@@ -193,7 +194,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertContains('sqlite', $databases);
     }
 
-    /** @test */
+    #[Test]
     public function it_transforms_url_values_correctly(): void
     {
         $this->assertNull($this->plugin->transformValue(null));
@@ -203,7 +204,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertEquals('https://example.com', $this->plugin->transformValue('example.com'));
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_url_schemes_correctly(): void
     {
         $config = ['schemes' => ['https']];
@@ -213,7 +214,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertFalse($this->plugin->validateUrl('invalid-url', $config));
     }
 
-    /** @test */
+    #[Test]
     public function it_extracts_domain_correctly(): void
     {
         $this->assertEquals('example.com', $this->plugin->extractDomain('https://example.com/path'));
@@ -221,7 +222,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertNull($this->plugin->extractDomain('invalid-url'));
     }
 
-    /** @test */
+    #[Test]
     public function it_has_valid_config_schema(): void
     {
         $schema = $this->plugin->getConfigSchema();
@@ -233,7 +234,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertArrayHasKey('schemes', $schema['properties']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_be_enabled_and_disabled(): void
     {
         $this->assertTrue($this->plugin->isEnabled());
@@ -245,7 +246,7 @@ class UrlFieldTypePluginTest extends TestCase
         $this->assertTrue($this->plugin->isEnabled());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_serialize_to_array(): void
     {
         $this->plugin->setConfig(['test' => 'value']);

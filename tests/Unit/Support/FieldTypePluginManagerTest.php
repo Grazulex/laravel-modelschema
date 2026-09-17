@@ -8,6 +8,7 @@ use Grazulex\LaravelModelschema\Examples\JsonSchemaFieldTypePlugin;
 use Grazulex\LaravelModelschema\Examples\UrlFieldTypePlugin;
 use Grazulex\LaravelModelschema\Support\FieldTypePluginManager;
 use Grazulex\LaravelModelschema\Support\FieldTypeRegistry;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class FieldTypePluginManagerTest extends TestCase
@@ -33,7 +34,7 @@ class FieldTypePluginManagerTest extends TestCase
         FieldTypeRegistry::clear();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_register_and_retrieve_plugins(): void
     {
         $plugin = new UrlFieldTypePlugin();
@@ -45,7 +46,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->assertContains('url', array_keys($this->manager->getPlugins()));
     }
 
-    /** @test */
+    #[Test]
     public function it_registers_plugin_with_field_type_registry(): void
     {
         $plugin = new UrlFieldTypePlugin();
@@ -61,7 +62,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->assertTrue(FieldTypeRegistry::has('uri'));
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_plugin_before_registration(): void
     {
         // Create a mock plugin with missing required methods
@@ -79,7 +80,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->manager->registerPlugin($invalidPlugin);
     }
 
-    /** @test */
+    #[Test]
     public function it_prevents_duplicate_plugin_registration(): void
     {
         $plugin1 = new UrlFieldTypePlugin();
@@ -93,7 +94,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->manager->registerPlugin($plugin2);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_unregister_plugins(): void
     {
         $plugin = new UrlFieldTypePlugin();
@@ -106,7 +107,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->assertNull($this->manager->getPlugin('url'));
     }
 
-    /** @test */
+    #[Test]
     public function it_tracks_enabled_disabled_plugins(): void
     {
         $plugin = new UrlFieldTypePlugin();
@@ -129,7 +130,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->assertTrue($plugin->isEnabled());
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_plugin_dependencies(): void
     {
         // JsonSchemaFieldTypePlugin depends on 'json' type
@@ -156,7 +157,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->manager->registerPlugin($dependentPlugin);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_get_plugin_metadata(): void
     {
         $plugin = new UrlFieldTypePlugin();
@@ -174,7 +175,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->assertContains('nullable', $metadata['attributes']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_get_all_plugin_metadata(): void
     {
         $urlPlugin = new UrlFieldTypePlugin();
@@ -193,7 +194,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->assertEquals('1.1.0', $allMetadata['json_schema']['version']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_load_from_configuration(): void
     {
         $config = [
@@ -219,7 +220,7 @@ class FieldTypePluginManagerTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_invalid_plugin_configuration(): void
     {
         $config = [
@@ -237,7 +238,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->manager->loadFromConfig($config);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_non_existent_plugin_class(): void
     {
         $config = [
@@ -254,7 +255,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->manager->loadFromConfig($config);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_manage_plugin_cache(): void
     {
         $this->manager->setCacheEnabled(true);
@@ -264,7 +265,7 @@ class FieldTypePluginManagerTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_set_discovery_patterns(): void
     {
         $patterns = ['*Plugin.php', '*FieldType.php'];
