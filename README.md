@@ -43,7 +43,7 @@ Laravel ModelSchema provides **schema parsing, validation, and fragment generati
 - **📊 Integration API** - Complete workflow for external packages (TurboMaker, Arc, etc.)
 - **✨ Extensible Design** - Custom field types, generators, and validation rules
 
-## � Installation
+## 📦 Installation
 
 ```bash
 composer require grazulex/laravel-modelschema
@@ -449,7 +449,7 @@ core:
     soft_deletes: true
 ```
 
-## � Integration with Parent Applications
+## 🔌 Integration with Parent Applications
 
 This package is designed to be consumed by larger Laravel packages like **TurboMaker** and **Arc**. Here's the typical integration pattern:
 
@@ -519,19 +519,19 @@ composer test-coverage
 
 ### Core Documentation
 - **🏗️ [Architecture Guide](docs/ARCHITECTURE.md)** - Understanding the package structure and design
-- **� [Migration Guide](docs/MIGRATION.md)** - Upgrading from previous versions
+- **🔄 [Migration Guide](docs/MIGRATION.md)** - Upgrading from previous versions
 - **📊 [Fragment Examples](examples/FRAGMENTS.md)** - Understanding generated fragments
 
 ### Field Types & Extensions  
-- **� [Field Types Guide](docs/FIELD_TYPES.md)** - Complete field types reference
+- **📋 [Field Types Guide](docs/FIELD_TYPES.md)** - Complete field types reference
 - **🔌 [Field Type Plugins](docs/FIELD_TYPE_PLUGINS.md)** - Creating custom field type plugins
 - **✅ [Custom Field Validation](docs/CUSTOM_FIELD_TYPES_VALIDATION.md)** - Validating custom field types
 
 ### Advanced Features
 - **📝 [Logging System](docs/LOGGING.md)** - Comprehensive logging and debugging
 - **⚡ [Enhanced Features](docs/enhanced-features.md)** - Advanced capabilities overview
-- **� [YAML Optimization](docs/YAML-OPTIMIZATION.md)** - High-performance YAML parsing with intelligent caching and streaming
-- **�🔍 [Schema Optimization](docs/SCHEMA_OPTIMIZATION.md)** - Schema analysis and optimization tools
+- **⚡ [YAML Optimization](docs/YAML-OPTIMIZATION.md)** - High-performance YAML parsing with intelligent caching and streaming
+- **🔍 [Schema Optimization](docs/SCHEMA_OPTIMIZATION.md)** - Schema analysis and optimization tools
 - **🔒 [Security Features](docs/SECURITY.md)** - Comprehensive security validation and protection
 
 ### Integration Examples
