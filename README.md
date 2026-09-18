@@ -2,6 +2,12 @@
 
 <img src="new_logo.png" alt="Laravel ModelSchema" width="200">
 
+> [!TIP]
+> **What Laravel ModelSchema does for you** — Describe a model once in YAML — fields, relations, validation — and generate consistent fragments for migrations, requests, resources, factories, tests and more. It is the schema engine behind TurboMaker and Arc.
+>
+> **This package is free and maintained on my own time.** If it saves you hours, a small contribution helps me keep it going:
+> [💖 GitHub Sponsors](https://github.com/sponsors/Grazulex) · [☕ Buy Me a Coffee](https://buymeacoffee.com/grazulex) · [PayPal](https://paypal.me/strauven)
+
 A foundational Laravel package for schema-driven development. Parse YAML schemas, generate insertable fragments for models, migrations, requests, resources, factories, seeders, controllers, tests, policies, observers, services, actions, and validation rules. Built to power Laravel TurboMaker, Arc, and other schema-based packages.
 
 [![Latest Version](https://img.shi### Field Types & Extensions  
@@ -544,6 +550,14 @@ We welcome contributions! Please see our Contributing Guide for details.
 ## 🔒 Security
 
 Please review our Security Policy for reporting vulnerabilities.
+
+## 💖 Support This Package
+
+Laravel ModelSchema is free, open source and maintained on my own time. If it saves you hours, here is how you can give back:
+
+- ⭐ **Star the repository** — it helps other developers find it
+- 🐦 **Share it** with your team and network
+- 💖 **[Sponsor on GitHub](https://github.com/sponsors/Grazulex)**, **[buy me a coffee](https://buymeacoffee.com/grazulex)** or **[donate via PayPal](https://paypal.me/strauven)** — every contribution funds maintenance, new features and Laravel upgrades
 
 ## 📄 License
 
