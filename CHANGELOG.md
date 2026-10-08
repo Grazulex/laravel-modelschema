@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-08
+
 ### Changed
+- **Minimum PHP version is now 8.4**: PHP 8.3 is no longer supported (#12)
+- CI test matrix now runs PHP 8.4 and 8.5 (#12)
+- Removed no-op `setAccessible()` calls from the tests (deprecated since PHP 8.5) (#12)
 - Source code refreshed with the current Rector rule set (closure parameter types, `in_array` for repeated strict comparisons, previous exception chaining on `SchemaException`, removal of redundant property defaults and `@var` tags); no behavioural change
 - GitHub Actions updated to `actions/checkout@v5` and `softprops/action-gh-release@v2`
 
