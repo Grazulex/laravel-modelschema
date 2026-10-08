@@ -511,7 +511,7 @@ composer test-coverage
 
 ## 🔧 Requirements
 
-- **PHP**: 8.3 or 8.4
+- **PHP**: 8.4 or 8.5
 - **Laravel**: 12.x or 13.x (optional, used in service provider)
 - **Symfony YAML**: ^7.3 (for YAML parsing)
 

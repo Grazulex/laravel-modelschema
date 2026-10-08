@@ -39,7 +39,6 @@ class GeometryFieldTypeTest extends TestCase
     {
         $reflection = new ReflectionClass($this->fieldType);
         $property = $reflection->getProperty('specificAttributes');
-        $property->setAccessible(true);
         $attributes = $property->getValue($this->fieldType);
 
         $this->assertContains('geometry_type', $attributes);
