@@ -252,7 +252,6 @@ class JsonSchemaFieldTypePluginTest extends TestCase
         // Use reflection to test protected method
         $reflection = new ReflectionClass($this->plugin);
         $method = $reflection->getMethod('validateValueAgainstSchema');
-        $method->setAccessible(true);
 
         $errors = $method->invoke($this->plugin, 'valid string', $schema);
         $this->assertEmpty($errors);
@@ -275,7 +274,6 @@ class JsonSchemaFieldTypePluginTest extends TestCase
 
         $reflection = new ReflectionClass($this->plugin);
         $method = $reflection->getMethod('validateValueAgainstSchema');
-        $method->setAccessible(true);
 
         // Valid object
         $errors = $method->invoke($this->plugin, ['name' => 'John', 'age' => 25], $schema);
@@ -300,7 +298,6 @@ class JsonSchemaFieldTypePluginTest extends TestCase
 
         $reflection = new ReflectionClass($this->plugin);
         $method = $reflection->getMethod('validateValueAgainstSchema');
-        $method->setAccessible(true);
 
         // Valid array
         $errors = $method->invoke($this->plugin, ['a', 'b', 'c'], $schema);
