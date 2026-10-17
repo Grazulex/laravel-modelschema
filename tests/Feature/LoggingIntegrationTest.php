@@ -205,6 +205,22 @@ YAML;
             expect($results)->toHaveKeys(['model', 'migration']);
         });
 
+        it('counts generated components as successful', function () {
+            Log::shouldReceive('info')
+                ->with(Mockery::pattern('/✅ Completed generateAll$/'), Mockery::on(
+                    fn (array $data): bool => $data['metrics']['success'] === true
+                        && $data['metrics']['generated_count'] === 2
+                        && $data['metrics']['error_count'] === 0
+                ))
+                ->once();
+
+            $schemaService = new SchemaService();
+            $schema = $schemaService->parseYamlFile($this->tempFile);
+
+            $generationService = new GenerationService();
+            $generationService->generateAll($schema, ['model' => true, 'migration' => true]);
+        });
+
         it('logs performance metrics for generation', function () {
             Log::shouldReceive('info')
                 ->with(

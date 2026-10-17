@@ -155,7 +155,7 @@ class GenerationService
                         $result = $this->$generatorMethodName($schema, $options);
                         $results[$type] = $result;
 
-                        if (isset($result['json']) && isset($result['yaml'])) {
+                        if ($this->hasFragments($result)) {
                             $generatedCount++;
                             if ($debugMode) {
                                 echo "✅ {$type} generated successfully\n";
@@ -234,7 +234,7 @@ class GenerationService
 
         foreach ($results as $generatorName => $result) {
             $enhancedResults[$generatorName] = [
-                'success' => isset($result['json']) && isset($result['yaml']),
+                'success' => $this->hasFragments($result),
                 'json' => $result['json'] ?? null,
                 'yaml' => $result['yaml'] ?? null,
                 'metadata' => $result['metadata'] ?? null,
@@ -263,7 +263,7 @@ class GenerationService
             if ($options['model'] ?? true) {
                 $result = $this->generateModel($schema, $options);
                 $results['model'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Model generation failed';
@@ -273,7 +273,7 @@ class GenerationService
             if ($options['migration'] ?? true) {
                 $result = $this->generateMigration($schema, $options);
                 $results['migration'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Migration generation failed';
@@ -283,7 +283,7 @@ class GenerationService
             if ($options['requests'] ?? false) {
                 $result = $this->generateRequests($schema, $options);
                 $results['requests'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Requests generation failed';
@@ -293,7 +293,7 @@ class GenerationService
             if ($options['resources'] ?? false) {
                 $result = $this->generateResources($schema, $options);
                 $results['resources'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Resources generation failed';
@@ -303,7 +303,7 @@ class GenerationService
             if ($options['factory'] ?? false) {
                 $result = $this->generateFactory($schema, $options);
                 $results['factory'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Factory generation failed';
@@ -313,7 +313,7 @@ class GenerationService
             if ($options['seeder'] ?? false) {
                 $result = $this->generateSeeder($schema, $options);
                 $results['seeder'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Seeder generation failed';
@@ -323,7 +323,7 @@ class GenerationService
             if ($options['controllers'] ?? false) {
                 $result = $this->generateControllers($schema, $options);
                 $results['controllers'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Controllers generation failed';
@@ -333,7 +333,7 @@ class GenerationService
             if ($options['tests'] ?? false) {
                 $result = $this->generateTests($schema, $options);
                 $results['tests'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Tests generation failed';
@@ -343,7 +343,7 @@ class GenerationService
             if ($options['policies'] ?? false) {
                 $result = $this->generatePolicies($schema, $options);
                 $results['policies'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Policies generation failed';
@@ -353,7 +353,7 @@ class GenerationService
             if ($options['observers'] ?? false) {
                 $result = $this->generateObservers($schema, $options);
                 $results['observers'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Observers generation failed';
@@ -363,7 +363,7 @@ class GenerationService
             if ($options['services'] ?? false) {
                 $result = $this->generateServices($schema, $options);
                 $results['services'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Services generation failed';
@@ -373,7 +373,7 @@ class GenerationService
             if ($options['actions'] ?? false) {
                 $result = $this->generateActions($schema, $options);
                 $results['actions'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Actions generation failed';
@@ -383,7 +383,7 @@ class GenerationService
             if ($options['rules'] ?? false) {
                 $result = $this->generateRules($schema, $options);
                 $results['rules'] = $result;
-                if ($result['success'] ?? false) {
+                if ($this->hasFragments($result)) {
                     $generatedCount++;
                 } else {
                     $errors[] = 'Rules generation failed';
@@ -451,7 +451,7 @@ class GenerationService
             $result = $this->modelGenerator->generate($schema, $options);
             $generationTime = microtime(true) - $startTime;
 
-            $success = $result['success'] ?? false;
+            $success = $this->hasFragments($result);
 
             $this->logger->logGeneration(
                 'model',
@@ -799,5 +799,13 @@ class GenerationService
             'rules' => 'Generates Laravel custom Validation Rule classes with business validation logic',
             default => "Generator for {$generatorName} components"
         };
+    }
+
+    /**
+     * Check whether a generator result contains its JSON and YAML fragments
+     */
+    private function hasFragments(array $result): bool
+    {
+        return isset($result['json'], $result['yaml']);
     }
 }
