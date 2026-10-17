@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-17
+
+### Fixed
+- `GenerationService::generateAll()` and `generateModel()` no longer report every generated component as failed in logs and metrics: success is now detected from the returned `json`/`yaml` fragments instead of a `success` key the generators never set (#14)
+
 ## [1.3.0] - 2026-10-08
 
 ### Changed
