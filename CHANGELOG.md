@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-11-01
+
+### Changed
+- `symfony/yaml` now accepts `^8.0` in addition to `^7.4`, so the package can be installed alongside Symfony 8 components; no code change, the YAML API used by the package is unchanged in 8.x (#24)
+
 ## [1.3.1] - 2026-10-17
 
 ### Fixed
