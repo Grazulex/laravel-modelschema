@@ -23,13 +23,13 @@
         "illuminate/support": "^12.0|^13.0",
         "illuminate/contracts": "^12.0|^13.0",
         "nesbot/carbon": "^3.15",
-        "symfony/yaml": "^7.4|^8.0"
+        "symfony/yaml": "^7.4|^8.1"
     },
     "require-dev": {
         "laravel/pint": "^1.32",
-        "pestphp/pest": "^3.8|^4.7|^5.0",
+        "pestphp/pest": "^3.8|^4.7|^5.3",
         "pestphp/pest-plugin-laravel": "^3.2|^4.1|^5.0",
-        "larastan/larastan": "^3.13",
+        "larastan/larastan": "^3.14",
         "rector/rector": "^2.8",
         "doctrine/dbal": "^4.5",
         "orchestra/testbench": "^10.0|^11.0"
