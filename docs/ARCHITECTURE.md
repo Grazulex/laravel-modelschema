@@ -192,6 +192,10 @@ Analyzes differences between schema versions to understand impact and migration 
 - `analyzeImpact()` - Assess migration impact and breaking changes
 - `generateReport()` - Create detailed diff report with recommendations
 
+The diff feeds the `AlterMigrationGenerator`, which turns two schema versions into an incremental
+`Schema::table` migration (`GenerationService::generateAlterMigration()`). See
+[Incremental (Alter) Migrations](ALTER_MIGRATIONS.md).
+
 ### SchemaOptimizationService
 Provides multi-dimensional analysis and optimization recommendations for schemas.
 

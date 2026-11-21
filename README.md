@@ -39,6 +39,7 @@ Laravel ModelSchema provides **schema parsing, validation, and fragment generati
 - **🏗️ Clean Architecture** - Separate core schema responsibilities from app-specific generation
 - **🔄 Multi-Generator Support** - Models, Migrations, Requests, Resources, Factories, Seeders, Controllers, Tests, Policies, Observers, Services, Actions, Rules
 - **📈 Schema Analysis** - Advanced schema comparison, optimization, and performance analysis
+- **🔁 Incremental Migrations** - Generate `Schema::table` alter migrations (add, drop, `change()`, `renameColumn`, indexes, foreign keys) from the diff between two schema versions
 - **🔌 Plugin System** - Extensible field type plugins for custom functionality
 - **📊 Integration API** - Complete workflow for external packages (TurboMaker, Arc, etc.)
 - **✨ Extensible Design** - Custom field types, generators, and validation rules
@@ -59,6 +60,7 @@ composer require grazulex/laravel-modelschema
 - **`SchemaDiffService`** - Advanced schema comparison and difference analysis
 - **`SchemaOptimizationService`** - Performance analysis and optimization recommendations
 - **13 Specialized Generators** - Model, Migration, Request, Resource, Factory, Seeder, Controller, Test, Policy, Observer, Service, Action, Rule
+- **`AlterMigrationGenerator`** - Incremental migrations from the diff between two versions of a schema
 - **`FieldTypePluginManager`** - Manages extensible field type plugins for custom functionality
 
 ### Schema Structure
@@ -223,6 +225,22 @@ $allFragments = $generationService->generateAll($schema, [
 ]);
 ```
 
+### Incremental (Alter) Migrations
+
+When a schema evolves, generate the `Schema::table` migration that moves an existing table from the old version to the new one, with a reversible `down()`:
+
+```php
+$result = $generationService->generateAlterMigration($oldSchema, $newSchema, [
+    'renames' => ['full_name' => 'name'], // optional: old column => new column
+]);
+
+$result['php'];   // complete Laravel migration file
+$result['json'];  // {"alter_migration": {operations, up, down, data_loss_risk, warnings, ...}}
+$result['yaml'];  // same fragment in YAML
+```
+
+Supported changes: added, dropped, modified (`->change()`) and renamed columns, unique/index changes, `belongsTo` foreign keys, timestamps, soft deletes and table renames. See the [Incremental Migrations guide](docs/ALTER_MIGRATIONS.md).
+
 ## 🔧 API Reference
 
 ### SchemaService
@@ -241,6 +259,7 @@ $allFragments = $generationService->generateAll($schema, [
 |--------|-------------|---------|
 | `generateAll()` | Generate all fragments for schema | `array` |
 | `generateSingle()` | Generate single generator fragment | `array` |
+| `generateAlterMigration()` | Generate an incremental migration from two schema versions | `array` (`metadata`, `json`, `yaml`, `php`) |
 | `getAvailableGenerators()` | List available generators | `array` |
 
 ## 🔌 Trait-Based Field Type Plugin System
@@ -532,6 +551,8 @@ composer test-coverage
 - **⚡ [Enhanced Features](docs/enhanced-features.md)** - Advanced capabilities overview
 - **⚡ [YAML Optimization](docs/YAML-OPTIMIZATION.md)** - High-performance YAML parsing with intelligent caching and streaming
 - **🔍 [Schema Optimization](docs/SCHEMA_OPTIMIZATION.md)** - Schema analysis and optimization tools
+- **🔀 [Schema Diff](docs/SCHEMA_DIFF.md)** - Comparing schema versions and analyzing impact
+- **🔁 [Incremental Migrations](docs/ALTER_MIGRATIONS.md)** - Alter migrations generated from the schema diff
 - **🔒 [Security Features](docs/SECURITY.md)** - Comprehensive security validation and protection
 
 ### Integration Examples
