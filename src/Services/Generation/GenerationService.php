@@ -8,6 +8,7 @@ use Exception;
 use Grazulex\LaravelModelschema\Contracts\GeneratorInterface;
 use Grazulex\LaravelModelschema\Schema\ModelSchema;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ActionGenerator;
+use Grazulex\LaravelModelschema\Services\Generation\Generators\AlterMigrationGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ControllerGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\FactoryGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\MigrationGenerator;
@@ -21,6 +22,7 @@ use Grazulex\LaravelModelschema\Services\Generation\Generators\SeederGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ServiceGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\TestGenerator;
 use Grazulex\LaravelModelschema\Services\LoggingService;
+use Grazulex\LaravelModelschema\Services\SchemaDiffService;
 use Grazulex\LaravelModelschema\Services\Validation\EnhancedValidationService;
 use InvalidArgumentException;
 
@@ -31,6 +33,8 @@ use InvalidArgumentException;
 class GenerationService
 {
     protected LoggingService $logger;
+
+    protected AlterMigrationGenerator $alterMigrationGenerator;
 
     public function __construct(
         protected ModelGenerator $modelGenerator = new ModelGenerator(),
@@ -46,9 +50,11 @@ class GenerationService
         protected ServiceGenerator $serviceGenerator = new ServiceGenerator(),
         protected ActionGenerator $actionGenerator = new ActionGenerator(),
         protected RuleGenerator $ruleGenerator = new RuleGenerator(),
-        ?LoggingService $logger = null
+        ?LoggingService $logger = null,
+        ?AlterMigrationGenerator $alterMigrationGenerator = null
     ) {
         $this->logger = $logger ?? new LoggingService();
+        $this->alterMigrationGenerator = $alterMigrationGenerator ?? new AlterMigrationGenerator(new SchemaDiffService($this->logger));
     }
 
     /**
@@ -486,6 +492,20 @@ class GenerationService
     public function generateMigration(ModelSchema $schema, array $options = []): array
     {
         return $this->migrationGenerator->generate($schema, $options);
+    }
+
+    /**
+     * Generate an incremental (alter) migration from the diff between two versions of a schema
+     *
+     * Options:
+     *  - renames:    array<string, string> map of old column name => new column name
+     *  - class_name: override the generated class name
+     *
+     * @return array{metadata: array, json: string, yaml: string, php: string}
+     */
+    public function generateAlterMigration(ModelSchema $oldSchema, ModelSchema $newSchema, array $options = []): array
+    {
+        return $this->alterMigrationGenerator->generate($oldSchema, $newSchema, $options);
     }
 
     /**

@@ -298,6 +298,24 @@ file_put_contents('schema_diff_report.md', $report);
 
 ## Intégration avec les migrations
 
+### Generating incremental migrations
+
+The diff can be turned into a ready-to-run `Schema::table` migration (add, drop, `change()`,
+`renameColumn`, indexes, foreign keys, timestamps, soft deletes, table rename) with a reversible
+`down()`:
+
+```php
+use Grazulex\LaravelModelschema\Services\Generation\GenerationService;
+
+$result = (new GenerationService())->generateAlterMigration($oldSchema, $newSchema, [
+    'renames' => ['full_name' => 'name'],
+]);
+
+file_put_contents(database_path('migrations/2026_01_01_000000_alter_users_table.php'), $result['php']);
+```
+
+See [Incremental (Alter) Migrations](ALTER_MIGRATIONS.md) for the full reference.
+
 ### Génération automatique de migrations
 
 ```php
