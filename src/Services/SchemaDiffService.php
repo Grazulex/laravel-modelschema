@@ -149,7 +149,7 @@ class SchemaDiffService
     }
 
     /**
-     * Compare schema metadata (name, table, options)
+     * Compare schema metadata (name, table, version, options)
      */
     private function compareSchemaMetadata(ModelSchema $oldSchema, ModelSchema $newSchema): array
     {
@@ -168,6 +168,19 @@ class SchemaDiffService
                 'old' => $oldSchema->table,
                 'new' => $newSchema->table,
                 'type' => 'renamed',
+            ];
+        }
+
+        if ($oldSchema->version !== $newSchema->version) {
+            $changes['version'] = [
+                'old' => $oldSchema->version,
+                'new' => $newSchema->version,
+                'type' => match (true) {
+                    $oldSchema->version === null => 'added',
+                    $newSchema->version === null => 'removed',
+                    $newSchema->isNewerThan($oldSchema) => 'upgraded',
+                    default => 'downgraded',
+                },
             ];
         }
 

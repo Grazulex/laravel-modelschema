@@ -37,6 +37,17 @@ final class SchemaException extends Exception
         return new self('YAML extension is required to parse YAML files. Please install php-yaml extension.');
     }
 
+    public static function invalidVersion(mixed $version): self
+    {
+        $described = is_scalar($version)
+            ? "'".(is_bool($version) ? var_export($version, true) : (string) $version)."'"
+            : 'of type '.get_debug_type($version);
+
+        return new self(
+            "Invalid schema version {$described}: expected 'major', 'major.minor' or 'major.minor.patch' with numeric segments (e.g. '1.2.0')"
+        );
+    }
+
     public static function invalidFieldType(string $fieldName, string $type): self
     {
         return new self("Invalid field type '{$type}' for field '{$fieldName}'");

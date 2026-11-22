@@ -282,6 +282,7 @@ class SchemaService
             'relationships', // Relationship definitions (also 'relations')
             'options',    // Core options (timestamps, soft_deletes)
             'metadata',   // Metadata information
+            'version',    // Schema version (validated on read)
         ];
     }
 
@@ -654,7 +655,13 @@ class SchemaService
 
         // Create and validate core schema
         $modelName = $coreData['model'] ?? $coreData['name'] ?? 'UnknownModel';
-        $coreSchema = ModelSchema::fromArray($modelName, $coreData);
+
+        try {
+            $coreSchema = ModelSchema::fromArray($modelName, $coreData);
+        } catch (SchemaException $e) {
+            // Raised when the schema version is invalid: report it like any other validation error
+            return [$e->getMessage()];
+        }
 
         return $this->validateSchema($coreSchema);
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Grazulex\LaravelModelschema\Schema;
 
 use Exception;
+use Grazulex\LaravelModelschema\Exceptions\SchemaException;
 use InvalidArgumentException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -14,8 +15,21 @@ use Symfony\Component\Yaml\Yaml;
 final class ModelSchema
 {
     /**
+     * Accepted version formats: "major", "major.minor" or "major.minor.patch"
+     */
+    public const VERSION_PATTERN = '/^(0|[1-9]\d{0,8})(\.(0|[1-9]\d{0,8})){0,2}$/';
+
+    /**
+     * Schema version, normalized to "major.minor.patch" (null when the schema is not versioned)
+     */
+    public readonly ?string $version;
+
+    /**
      * @param  Field[]  $fields
      * @param  Relationship[]  $relationships
+     * @param  string|int|float|null  $version  Schema version ("1", "1.2" or "1.2.3"), null for an unversioned schema
+     *
+     * @throws SchemaException When the version is not a valid version number
      */
     public function __construct(
         public readonly string $name,
@@ -24,15 +38,72 @@ final class ModelSchema
         public readonly array $relationships = [],
         public readonly array $options = [],
         public readonly array $metadata = [],
-    ) {}
+        string|int|float|null $version = null,
+    ) {
+        $this->version = self::normalizeVersion($version);
+    }
+
+    /**
+     * Validate a version value and normalize it to "major.minor.patch"
+     *
+     * Returns null when no version is given. Integers and floats are accepted because
+     * YAML parses unquoted values such as `1` or `1.2` as numbers.
+     *
+     * @throws SchemaException When the value is not a valid version number
+     */
+    public static function normalizeVersion(mixed $version): ?string
+    {
+        if ($version === null) {
+            return null;
+        }
+
+        if (is_int($version) || (is_float($version) && is_finite($version))) {
+            $candidate = (string) $version;
+        } elseif (is_string($version)) {
+            $candidate = mb_trim($version);
+        } else {
+            throw SchemaException::invalidVersion($version);
+        }
+
+        if (preg_match(self::VERSION_PATTERN, $candidate) !== 1) {
+            throw SchemaException::invalidVersion($version);
+        }
+
+        $segments = array_pad(explode('.', $candidate), 3, '0');
+
+        return implode('.', $segments);
+    }
+
+    /**
+     * Check whether a value is a valid schema version
+     */
+    public static function isValidVersion(mixed $version): bool
+    {
+        if ($version === null) {
+            return false;
+        }
+
+        try {
+            self::normalizeVersion($version);
+        } catch (SchemaException) {
+            return false;
+        }
+
+        return true;
+    }
 
     /**
      * Create a ModelSchema from array configuration
+     *
+     * @throws SchemaException When the "version" key is present but invalid
      */
     public static function fromArray(string $name, array $config): self
     {
         $fields = [];
         $relationships = [];
+
+        // Validate the version first so an invalid one is reported before anything else
+        $version = self::normalizeVersion($config['version'] ?? null);
 
         // Parse fields
         foreach ($config['fields'] ?? [] as $fieldName => $fieldConfig) {
@@ -56,6 +127,7 @@ final class ModelSchema
             relationships: $relationships,
             options: $config['options'] ?? [],
             metadata: $config['metadata'] ?? [],
+            version: $version,
         );
     }
 
@@ -106,7 +178,7 @@ final class ModelSchema
      */
     public function toArray(): array
     {
-        return [
+        $data = [
             'model' => $this->name,
             'table' => $this->table,
             'fields' => array_map(fn (Field $field): array => $field->toArray(), $this->fields),
@@ -114,6 +186,56 @@ final class ModelSchema
             'options' => $this->options,
             'metadata' => $this->metadata,
         ];
+
+        // Only versioned schemas expose the key, so unversioned schemas keep their previous shape
+        if ($this->version !== null) {
+            $data['version'] = $this->version;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Check if the schema declares a version
+     */
+    public function hasVersion(): bool
+    {
+        return $this->version !== null;
+    }
+
+    /**
+     * Compare the schema version with another schema or version number
+     *
+     * Returns -1 when this schema is older, 0 when both versions are equal and 1 when this
+     * schema is newer. An unversioned schema is compared as "0.0.0".
+     *
+     * @throws SchemaException When the given version is not a valid version number
+     */
+    public function compareVersion(self|string|int|float|null $other): int
+    {
+        $otherVersion = $other instanceof self ? $other->version : self::normalizeVersion($other);
+
+        return version_compare($this->version ?? '0.0.0', $otherVersion ?? '0.0.0');
+    }
+
+    /**
+     * Check if this schema is newer than another schema or version number
+     *
+     * @throws SchemaException When the given version is not a valid version number
+     */
+    public function isNewerThan(self|string|int|float|null $other): bool
+    {
+        return $this->compareVersion($other) > 0;
+    }
+
+    /**
+     * Check if this schema is older than another schema or version number
+     *
+     * @throws SchemaException When the given version is not a valid version number
+     */
+    public function isOlderThan(self|string|int|float|null $other): bool
+    {
+        return $this->compareVersion($other) < 0;
     }
 
     /**

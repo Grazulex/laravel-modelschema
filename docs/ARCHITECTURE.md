@@ -242,6 +242,22 @@ core:
     soft_deletes: false
 ```
 
+### Schema Version
+The core section accepts an optional `version` key (`major`, `major.minor` or
+`major.minor.patch`):
+
+```yaml
+core:
+  model: User
+  version: "1.2.0"
+  table: users
+```
+
+The version is validated when the schema is read (an invalid value throws a `SchemaException`),
+normalized to `major.minor.patch` and exposed as `ModelSchema::$version`, together with
+`hasVersion()`, `compareVersion()`, `isNewerThan()` and `isOlderThan()`. `SchemaDiffService`
+reports version changes in `schema_changes.version`. See [Schema Versioning](SCHEMA_VERSIONING.md).
+
 ### Extension Format
 ```yaml
 # Extensions added by parent applications

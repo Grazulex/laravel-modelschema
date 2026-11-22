@@ -249,7 +249,7 @@ Le package Laravel ModelSchema dispose de **TOUTES les APIs essentielles** pour 
 
 ### Intégration et compatibilité
 - [x] **Package prêt pour toutes applications** ✅ - APIs universelles complètes
-- [ ] Support des schémas versionnés
+- [x] Support des schémas versionnés ✅ - `version` key validated on read (`ModelSchema::$version`, see `docs/SCHEMA_VERSIONING.md`)
 - [x] Migration automatique de schémas anciens ✅ - AlterMigrationGenerator (`GenerationService::generateAlterMigration()`)
 
 **Note importante** : Pas besoin d'adaptateurs spécifiques ! TurboMaker, Arc et autres applications utilisent directement les APIs du package.

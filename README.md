@@ -40,6 +40,7 @@ Laravel ModelSchema provides **schema parsing, validation, and fragment generati
 - **🔄 Multi-Generator Support** - Models, Migrations, Requests, Resources, Factories, Seeders, Controllers, Tests, Policies, Observers, Services, Actions, Rules
 - **📈 Schema Analysis** - Advanced schema comparison, optimization, and performance analysis
 - **🔁 Incremental Migrations** - Generate `Schema::table` alter migrations (add, drop, `change()`, `renameColumn`, indexes, foreign keys) from the diff between two schema versions
+- **🏷️ Schema Versioning** - Optional `version` key, validated and normalized on read, to order and compare schema revisions
 - **🔌 Plugin System** - Extensible field type plugins for custom functionality
 - **📊 Integration API** - Complete workflow for external packages (TurboMaker, Arc, etc.)
 - **✨ Extensible Design** - Custom field types, generators, and validation rules
@@ -94,6 +95,31 @@ turbomaker:
 arc:
   permissions: ['view', 'create', 'edit', 'delete']
 ```
+
+### Schema Versioning
+
+A schema can declare an optional `version` (`major`, `major.minor` or `major.minor.patch`). It is validated when the schema is read and normalized to `major.minor.patch`; an invalid version throws a `SchemaException`.
+
+```yaml
+core:
+  model: User
+  version: "1.2.0"
+  table: users
+  fields:
+    name:
+      type: string
+```
+
+```php
+$schema = $schemaService->parseAndSeparateSchema($yamlContent)['core_schema'];
+
+$schema->version;                   // '1.2.0' (null when the schema is not versioned)
+$schema->hasVersion();              // true
+$schema->isNewerThan($oldSchema);   // compare with another schema...
+$schema->isOlderThan('2.0');        // ...or with a version number
+```
+
+Schemas without a `version` key keep working unchanged. See the [Schema Versioning guide](docs/SCHEMA_VERSIONING.md).
 
 ## 🚀 Quick Start
 
@@ -553,6 +579,7 @@ composer test-coverage
 - **🔍 [Schema Optimization](docs/SCHEMA_OPTIMIZATION.md)** - Schema analysis and optimization tools
 - **🔀 [Schema Diff](docs/SCHEMA_DIFF.md)** - Comparing schema versions and analyzing impact
 - **🔁 [Incremental Migrations](docs/ALTER_MIGRATIONS.md)** - Alter migrations generated from the schema diff
+- **🏷️ [Schema Versioning](docs/SCHEMA_VERSIONING.md)** - Declaring, validating and comparing schema versions
 - **🔒 [Security Features](docs/SECURITY.md)** - Comprehensive security validation and protection
 
 ### Integration Examples
