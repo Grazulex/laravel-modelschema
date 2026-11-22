@@ -141,3 +141,6 @@ The `warnings` list flags changes that need attention before migrating:
 - Index names use Laravel's naming convention (`{table}_{column}_{type}`). Indexes created with
   custom names must be adjusted by hand.
 - Review the generated migration before running it, especially when `data_loss_risk` is not `none`.
+- The generator does not look at the schema `version`: the migration always goes from the first
+  schema to the second one. When your schemas are versioned, use `$newSchema->isNewerThan($oldSchema)`
+  to check the order before generating. See [Schema Versioning](SCHEMA_VERSIONING.md).

@@ -7,6 +7,7 @@ namespace Grazulex\LaravelModelschema\Services;
 use Exception;
 use Grazulex\LaravelModelschema\Schema\ModelSchema;
 use Illuminate\Support\Facades\Cache;
+use ReflectionProperty;
 
 /**
  * Cache service for schema operations
@@ -72,7 +73,7 @@ class SchemaCacheService
         $key = $this->generateContentKey($yamlContent, $modelName);
         $cached = Cache::get($key);
 
-        if ($cached && $cached instanceof ModelSchema) {
+        if ($cached instanceof ModelSchema && $this->isCompleteSchema($cached)) {
             return $cached;
         }
 
@@ -104,7 +105,7 @@ class SchemaCacheService
         $key = $this->generateFileKey($filePath);
         $cached = Cache::get($key);
 
-        if ($cached && $cached instanceof ModelSchema) {
+        if ($cached instanceof ModelSchema && $this->isCompleteSchema($cached)) {
             return $cached;
         }
 
@@ -280,5 +281,16 @@ class SchemaCacheService
             // For safety, we don't implement pattern deletion in the base version
             // Applications can extend this service to add driver-specific implementations
         }
+    }
+
+    /**
+     * Check that a cached schema carries every property of the current ModelSchema class
+     *
+     * Entries serialized before the "version" property existed are restored with that
+     * property uninitialized, so they are treated as cache misses and parsed again.
+     */
+    private function isCompleteSchema(ModelSchema $schema): bool
+    {
+        return (new ReflectionProperty(ModelSchema::class, 'version'))->isInitialized($schema);
     }
 }

@@ -35,6 +35,7 @@
 | `docs/YAML-OPTIMIZATION.md` | ✅ **CURRENT** | Complete YAML optimization guide | 269 lines |
 | `docs/MIGRATION.md` | ✅ **CURRENT** | Version migration guide | 390 lines |
 | `docs/STUB_API.md` | ✅ **CURRENT** | Stub system documentation | 153 lines |
+| `docs/SCHEMA_VERSIONING.md` | ✅ **CURRENT** | Schema `version` key: formats, validation, comparison | 150+ lines |
 
 ### ✅ Examples & Integration (Current)
 

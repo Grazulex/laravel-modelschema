@@ -219,6 +219,22 @@ $diff['relationship_changes'] = [
 ];
 ```
 
+### Schema version changes
+
+When the two schemas declare different versions (see [Schema Versioning](SCHEMA_VERSIONING.md)),
+the change is reported in `schema_changes`:
+
+```php
+$diff['schema_changes']['version'] = [
+    'old' => '1.2.0',
+    'new' => '1.3.0',
+    'type' => 'upgraded', // upgraded, downgraded, added or removed
+];
+```
+
+The entry is absent when both versions are equal or when neither schema is versioned. A version
+change is informational: it is never reported as a breaking change.
+
 ## Analyse d'impact
 
 ### Niveaux de compatibilité
