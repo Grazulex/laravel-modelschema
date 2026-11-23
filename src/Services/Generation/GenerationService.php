@@ -21,6 +21,7 @@ use Grazulex\LaravelModelschema\Services\Generation\Generators\RuleGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\SeederGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\ServiceGenerator;
 use Grazulex\LaravelModelschema\Services\Generation\Generators\TestGenerator;
+use Grazulex\LaravelModelschema\Services\Generation\Generators\TypeScriptGenerator;
 use Grazulex\LaravelModelschema\Services\LoggingService;
 use Grazulex\LaravelModelschema\Services\SchemaDiffService;
 use Grazulex\LaravelModelschema\Services\Validation\EnhancedValidationService;
@@ -35,6 +36,8 @@ class GenerationService
     protected LoggingService $logger;
 
     protected AlterMigrationGenerator $alterMigrationGenerator;
+
+    protected TypeScriptGenerator $typeScriptGenerator;
 
     public function __construct(
         protected ModelGenerator $modelGenerator = new ModelGenerator(),
@@ -51,9 +54,11 @@ class GenerationService
         protected ActionGenerator $actionGenerator = new ActionGenerator(),
         protected RuleGenerator $ruleGenerator = new RuleGenerator(),
         ?LoggingService $logger = null,
-        ?AlterMigrationGenerator $alterMigrationGenerator = null
+        ?AlterMigrationGenerator $alterMigrationGenerator = null,
+        ?TypeScriptGenerator $typeScriptGenerator = null
     ) {
         $this->logger = $logger ?? new LoggingService();
+        $this->typeScriptGenerator = $typeScriptGenerator ?? new TypeScriptGenerator();
         $this->alterMigrationGenerator = $alterMigrationGenerator ?? new AlterMigrationGenerator(new SchemaDiffService($this->logger));
     }
 
@@ -138,6 +143,7 @@ class GenerationService
                 'services' => ['enabled' => $options['services'] ?? false, 'generator' => 'serviceGenerator'],
                 'actions' => ['enabled' => $options['actions'] ?? false, 'generator' => 'actionGenerator'],
                 'rules' => ['enabled' => $options['rules'] ?? false, 'generator' => 'ruleGenerator'],
+                'typescript' => ['enabled' => $options['typescript'] ?? false, 'generator' => 'typeScriptGenerator'],
             ];
 
             foreach ($generatorOptions as $type => $config) {
@@ -155,7 +161,8 @@ class GenerationService
                                                               ($type === 'services' ? 'Services' :
                                                               ($type === 'actions' ? 'Actions' :
                                                               ($type === 'rules' ? 'Rules' :
-                                                              ucfirst($type))))))))));
+                                                              ($type === 'typescript' ? 'TypeScript' :
+                                                              ucfirst($type)))))))))));
 
                     try {
                         $result = $this->$generatorMethodName($schema, $options);
@@ -396,6 +403,16 @@ class GenerationService
                 }
             }
 
+            if ($options['typescript'] ?? false) {
+                $result = $this->generateTypeScript($schema, $options);
+                $results['typescript'] = $result;
+                if ($this->hasFragments($result)) {
+                    $generatedCount++;
+                } else {
+                    $errors[] = 'TypeScript generation failed';
+                }
+            }
+
             $totalTime = microtime(true) - $startTime;
 
             // Log generation performance
@@ -595,6 +612,26 @@ class GenerationService
     }
 
     /**
+     * Generate a TypeScript interface or type alias for the frontend (Inertia, Vue, React)
+     *
+     * Options:
+     *  - style:            'interface' (default) or 'type'
+     *  - type_name:        name of the generated type (default: the model name)
+     *  - relations:        include the relationships as optional properties (default: true)
+     *  - imports:          import the related types (default: true)
+     *  - import_path:      directory of the related type files (default: './')
+     *  - implicit_columns: add the implied id, timestamps and soft delete columns (default: true)
+     *  - exclude:          names of the properties to leave out
+     *  - type_map:         array<string, string> overriding the TypeScript type of a field type
+     *
+     * @return array{metadata: array, json: string, yaml: string, ts: string}
+     */
+    public function generateTypeScript(ModelSchema $schema, array $options = []): array
+    {
+        return $this->typeScriptGenerator->generate($schema, $options);
+    }
+
+    /**
      * Get all available generation types
      */
     public function getAvailableGenerators(): array
@@ -711,6 +748,7 @@ class GenerationService
             'services', 'service' => $this->generateServices($schema, $options),
             'actions', 'action' => $this->generateActions($schema, $options),
             'rules', 'rule' => $this->generateRules($schema, $options),
+            'typescript' => $this->generateTypeScript($schema, $options),
             default => throw new InvalidArgumentException("Unknown generator type: {$type}")
         };
     }
@@ -734,6 +772,7 @@ class GenerationService
             'services' => $this->serviceGenerator,
             'actions' => $this->actionGenerator,
             'rules' => $this->ruleGenerator,
+            'typescript' => $this->typeScriptGenerator,
             default => throw new InvalidArgumentException("Unknown generator type: {$type}")
         };
     }
@@ -817,6 +856,7 @@ class GenerationService
             'services' => 'Generates Laravel Service classes with business logic layer and CRUD operations',
             'actions' => 'Generates Laravel Action classes with single responsibility operations and workflows',
             'rules' => 'Generates Laravel custom Validation Rule classes with business validation logic',
+            'typescript' => 'Generates TypeScript interfaces or type aliases from the fields and relationships',
             default => "Generator for {$generatorName} components"
         };
     }
