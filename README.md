@@ -41,6 +41,7 @@ Laravel ModelSchema provides **schema parsing, validation, and fragment generati
 - **📈 Schema Analysis** - Advanced schema comparison, optimization, and performance analysis
 - **🔁 Incremental Migrations** - Generate `Schema::table` alter migrations (add, drop, `change()`, `renameColumn`, indexes, foreign keys) from the diff between two schema versions
 - **🏷️ Schema Versioning** - Optional `version` key, validated and normalized on read, to order and compare schema revisions
+- **🟦 TypeScript Types** - Generate TypeScript interfaces or type aliases from the fields and relationships, for Inertia, Vue or React
 - **🔌 Plugin System** - Extensible field type plugins for custom functionality
 - **📊 Integration API** - Complete workflow for external packages (TurboMaker, Arc, etc.)
 - **✨ Extensible Design** - Custom field types, generators, and validation rules
@@ -62,6 +63,7 @@ composer require grazulex/laravel-modelschema
 - **`SchemaOptimizationService`** - Performance analysis and optimization recommendations
 - **13 Specialized Generators** - Model, Migration, Request, Resource, Factory, Seeder, Controller, Test, Policy, Observer, Service, Action, Rule
 - **`AlterMigrationGenerator`** - Incremental migrations from the diff between two versions of a schema
+- **`TypeScriptGenerator`** - TypeScript interfaces or type aliases for the frontend
 - **`FieldTypePluginManager`** - Manages extensible field type plugins for custom functionality
 
 ### Schema Structure
@@ -267,6 +269,38 @@ $result['yaml'];  // same fragment in YAML
 
 Supported changes: added, dropped, modified (`->change()`) and renamed columns, unique/index changes, `belongsTo` foreign keys, timestamps, soft deletes and table renames. See the [Incremental Migrations guide](docs/ALTER_MIGRATIONS.md).
 
+### TypeScript Types
+
+Generate the TypeScript type of a model from its fields and relationships, ready for Inertia, Vue or React:
+
+```php
+$result = $generationService->generateTypeScript($schema, [
+    'style' => 'interface',            // or 'type'
+    'exclude' => ['password'],         // optional: properties to leave out
+]);
+
+$result['ts'];    // complete TypeScript file
+$result['json'];  // {"typescript": {name, style, file_name, properties, imports, code, ...}}
+$result['yaml'];  // same fragment in YAML
+```
+
+```ts
+import type { Post } from './Post';
+
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+    role: 'admin' | 'member';
+    created_at: string | null;
+    updated_at: string | null;
+    /** hasMany relationship */
+    posts?: Post[];
+}
+```
+
+Field types are mapped through the `FieldTypeRegistry` (aliases and custom field types included), nullable fields get `| null`, enum values become literal unions and relationships become optional properties. The generator is opt-in in `generateAll()` (`'typescript' => true`). See the [TypeScript Types guide](docs/TYPESCRIPT.md).
+
 ## 🔧 API Reference
 
 ### SchemaService
@@ -286,6 +320,7 @@ Supported changes: added, dropped, modified (`->change()`) and renamed columns, 
 | `generateAll()` | Generate all fragments for schema | `array` |
 | `generateSingle()` | Generate single generator fragment | `array` |
 | `generateAlterMigration()` | Generate an incremental migration from two schema versions | `array` (`metadata`, `json`, `yaml`, `php`) |
+| `generateTypeScript()` | Generate a TypeScript interface or type alias from a schema | `array` (`metadata`, `json`, `yaml`, `ts`) |
 | `getAvailableGenerators()` | List available generators | `array` |
 
 ## 🔌 Trait-Based Field Type Plugin System
@@ -580,6 +615,7 @@ composer test-coverage
 - **🔀 [Schema Diff](docs/SCHEMA_DIFF.md)** - Comparing schema versions and analyzing impact
 - **🔁 [Incremental Migrations](docs/ALTER_MIGRATIONS.md)** - Alter migrations generated from the schema diff
 - **🏷️ [Schema Versioning](docs/SCHEMA_VERSIONING.md)** - Declaring, validating and comparing schema versions
+- **🟦 [TypeScript Types](docs/TYPESCRIPT.md)** - TypeScript interfaces and type aliases generated from the schema
 - **🔒 [Security Features](docs/SECURITY.md)** - Comprehensive security validation and protection
 
 ### Integration Examples

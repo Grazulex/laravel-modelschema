@@ -173,6 +173,15 @@ Base class providing common functionality:
 12. **ActionGenerator** - Single-responsibility action class fragments *(New in v2.0)*
 13. **RuleGenerator** - Custom validation rule class fragments *(New in v2.0)*
 
+### Frontend Generator
+
+The `TypeScriptGenerator` produces a TypeScript `interface` or `type` alias from the fields and
+relationships of a schema (`GenerationService::generateTypeScript()`). Field types are mapped
+through the `FieldTypeRegistry`, so aliases and custom field types are supported. Besides the
+`json` and `yaml` fragments it returns the ready-to-save source in a `ts` output. It is opt-in in
+`generateAll()` and is not part of the 13 generators listed by `getAvailableGenerators()`. See
+[TypeScript Types](TYPESCRIPT.md).
+
 ## Analysis Services
 
 Laravel ModelSchema provides comprehensive analysis services for schema introspection and optimization:

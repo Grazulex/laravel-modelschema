@@ -14,6 +14,10 @@ The trait-based plugin system provides:
 - **Rich metadata**: Rich metadata system for plugins with trait support
 - **Flexible configuration**: Trait configuration via files or APIs
 
+> **TypeScript types**: the `TypeScriptGenerator` maps a plugin through its cast type. A plugin can
+> add an optional `getTypeScriptType(array $config): string` method to return its own TypeScript
+> type. See [TypeScript Types](TYPESCRIPT.md#custom-field-types).
+
 ## Trait-Based Architecture
 
 ### Key Concepts
