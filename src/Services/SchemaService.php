@@ -9,8 +9,11 @@ use Grazulex\LaravelModelschema\Exceptions\SchemaException;
 use Grazulex\LaravelModelschema\Schema\ModelSchema;
 use Grazulex\LaravelModelschema\Services\Validation\EnhancedValidationService;
 use Grazulex\LaravelModelschema\Support\FieldTypePluginManager;
+use Grazulex\LaravelModelschema\Support\YamlLineLocator;
 use Illuminate\Filesystem\Filesystem;
+use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
+use TypeError;
 
 /**
  * Core schema service for YAML management
@@ -667,6 +670,126 @@ class SchemaService
     }
 
     /**
+     * Validate YAML schema content and report each error with the line where it occurs
+     *
+     * Accepts the "core" structure and the flat structure. Returns a list of errors
+     * (empty when the schema is valid); each error is an array with:
+     * - message (string): the same message as validateFromCompleteAppYaml() / validateSchema()
+     * - line (int|null): 1-based line of the offending key (or of its closest declared parent)
+     * - path (string|null): dotted path of the offending key (e.g. "core.fields.title.type")
+     * - formatted (string): "Line N: message" (or the message alone when the line is unknown)
+     *
+     * @return list<array{message: string, line: int|null, path: string|null, formatted: string}>
+     */
+    public function validateYamlWithLineNumbers(string $yamlContent): array
+    {
+        try {
+            $data = Yaml::parse($yamlContent);
+        } catch (ParseException $e) {
+            $line = $e->getParsedLine();
+
+            return [$this->makeLocatedError('Invalid YAML format: '.$e->getMessage(), $line > 0 ? $line : null, null)];
+        }
+
+        $locator = new YamlLineLocator($yamlContent);
+
+        if (! is_array($data)) {
+            return [$this->makeLocatedError('No core schema data found in YAML', null, null)];
+        }
+
+        $prefix = isset($data['core']) && is_array($data['core']) ? ['core'] : [];
+        $coreData = $this->extractCoreSchemaData($data);
+
+        if ($coreData === []) {
+            return [$this->makeLocatedError(
+                'No core schema data found in YAML',
+                $prefix === [] ? null : $locator->getLine($prefix),
+                $prefix === [] ? null : 'core'
+            )];
+        }
+
+        $rawCore = $prefix === [] ? $data : $data['core'];
+        $relationsKey = isset($rawCore['relationships']) ? 'relationships' : 'relations';
+
+        $locate = fn (array $segments): array => [
+            'line' => $locator->getLine([...$prefix, ...$segments]),
+            'path' => implode('.', [...$prefix, ...$segments]),
+        ];
+
+        // Structural errors prevent building the schema: report them first
+        $structuralErrors = $this->collectStructuralErrors($coreData, $relationsKey);
+
+        if ($structuralErrors !== []) {
+            return array_map(function (array $error) use ($locate): array {
+                $location = $locate($error['path']);
+
+                return $this->makeLocatedError($error['message'], $location['line'], $location['path']);
+            }, $structuralErrors);
+        }
+
+        $modelName = $coreData['model'] ?? $coreData['name'] ?? 'UnknownModel';
+
+        try {
+            $coreSchema = ModelSchema::fromArray((string) $modelName, $coreData);
+        } catch (SchemaException $e) {
+            $location = $locate(['version']);
+
+            return [$this->makeLocatedError($e->getMessage(), $location['line'], $location['path'])];
+        } catch (TypeError $e) {
+            $location = $locate([]);
+
+            return [$this->makeLocatedError('Invalid schema structure: '.$e->getMessage(), $location['line'], $location['path'])];
+        }
+
+        $errors = [];
+
+        foreach ($this->validateSchema($coreSchema) as $message) {
+            // Messages that cannot be tied to a key are reported on the core section
+            $location = $locate($this->guessErrorPath($message, $relationsKey) ?? []);
+            $errors[] = $this->makeLocatedError($message, $location['line'], $location['path']);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate a YAML schema file and report each error with its line number
+     *
+     * @return list<array{message: string, line: int|null, path: string|null, formatted: string}>
+     *
+     * @throws SchemaException When the file does not exist
+     */
+    public function validateYamlFileWithLineNumbers(string $filePath): array
+    {
+        if (! $this->filesystem->exists($filePath)) {
+            throw SchemaException::fileNotFound($filePath);
+        }
+
+        return $this->validateYamlWithLineNumbers($this->filesystem->get($filePath));
+    }
+
+    /**
+     * Export the JSON Schema describing the YAML schema files
+     *
+     * @param  array<string, mixed>  $options  See JsonSchemaService::generate()
+     * @return array<string, mixed>
+     */
+    public function exportJsonSchema(array $options = []): array
+    {
+        return (new JsonSchemaService($this->filesystem))->generate($options);
+    }
+
+    /**
+     * Write the JSON Schema describing the YAML schema files to a file
+     *
+     * @param  array<string, mixed>  $options  See JsonSchemaService::generate()
+     */
+    public function exportJsonSchemaToFile(string $filePath, array $options = []): string
+    {
+        return (new JsonSchemaService($this->filesystem))->exportToFile($filePath, $options);
+    }
+
+    /**
      * Get structured generation data from complete app YAML
      * L'app parent peut envoyer son YAML et recevoir toutes nos données structurées
      * pour la génération de fichiers
@@ -1195,6 +1318,213 @@ class SchemaService
         }
 
         return 'Template stub';
+    }
+
+    /**
+     * Detect values that would make the schema impossible to build
+     *
+     * @return list<array{message: string, path: list<string>}>
+     */
+    private function collectStructuralErrors(array $coreData, string $relationsKey): array
+    {
+        $errors = [];
+
+        foreach (['model', 'name', 'table'] as $key) {
+            if (isset($coreData[$key]) && ! is_string($coreData[$key])) {
+                $errors[] = ['message' => "The '{$key}' key must be a string", 'path' => [$key]];
+            }
+        }
+
+        if (isset($coreData['version'])) {
+            try {
+                ModelSchema::normalizeVersion($coreData['version']);
+            } catch (SchemaException $e) {
+                $errors[] = ['message' => $e->getMessage(), 'path' => ['version']];
+            }
+        }
+
+        foreach (['options', 'metadata'] as $key) {
+            if (isset($coreData[$key]) && ! is_array($coreData[$key])) {
+                $errors[] = ['message' => "The '{$key}' key must be a mapping", 'path' => [$key]];
+            }
+        }
+
+        $fields = $coreData['fields'] ?? null;
+
+        if ($fields !== null && ! is_array($fields)) {
+            $errors[] = ['message' => "The 'fields' key must be a mapping of field names to field definitions", 'path' => ['fields']];
+        } elseif (is_array($fields)) {
+            foreach ($fields as $fieldName => $fieldConfig) {
+                $fieldPath = ['fields', (string) $fieldName];
+
+                if (! is_string($fieldName)) {
+                    $errors[] = ['message' => "The 'fields' key must be a mapping of field names to field definitions", 'path' => $fieldPath];
+
+                    continue;
+                }
+
+                if (! is_array($fieldConfig)) {
+                    $errors[] = ['message' => "Field '{$fieldName}' must be a mapping of field attributes", 'path' => $fieldPath];
+
+                    continue;
+                }
+
+                $errors = array_merge($errors, $this->collectAttributeTypeErrors("Field '{$fieldName}'", $fieldPath, $fieldConfig, [
+                    'type' => 'string',
+                    'nullable' => 'bool',
+                    'unique' => 'bool',
+                    'index' => 'bool',
+                    'length' => 'int',
+                    'precision' => 'int',
+                    'scale' => 'int',
+                    'rules' => 'array',
+                    'validation' => 'array',
+                    'comment' => 'string',
+                    'attributes' => 'array',
+                ]));
+            }
+        }
+
+        $relationships = $coreData['relationships'] ?? $coreData['relations'] ?? null;
+
+        if ($relationships !== null && ! is_array($relationships)) {
+            $errors[] = ['message' => "The '{$relationsKey}' key must be a mapping of relationship names to relationship definitions", 'path' => [$relationsKey]];
+        } elseif (is_array($relationships)) {
+            foreach ($relationships as $relationName => $relationConfig) {
+                $relationPath = [$relationsKey, (string) $relationName];
+
+                if (! is_string($relationName)) {
+                    $errors[] = ['message' => "The '{$relationsKey}' key must be a mapping of relationship names to relationship definitions", 'path' => $relationPath];
+
+                    continue;
+                }
+
+                if (! is_array($relationConfig)) {
+                    $errors[] = ['message' => "Relationship '{$relationName}' must be a mapping of relationship attributes", 'path' => $relationPath];
+
+                    continue;
+                }
+
+                $errors = array_merge($errors, $this->collectAttributeTypeErrors("Relationship '{$relationName}'", $relationPath, $relationConfig, [
+                    'type' => 'string',
+                    'model' => 'string',
+                    'foreign_key' => 'string',
+                    'foreignKey' => 'string',
+                    'local_key' => 'string',
+                    'localKey' => 'string',
+                    'pivot_table' => 'string',
+                    'pivotTable' => 'string',
+                    'pivot_fields' => 'array',
+                    'pivotFields' => 'array',
+                    'with_timestamps' => 'bool',
+                    'withTimestamps' => 'bool',
+                    'attributes' => 'array',
+                ]));
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Check the PHP type of known attributes (null values are ignored: defaults apply)
+     *
+     * @param  list<string>  $basePath
+     * @param  array<string, string>  $expectedTypes  attribute => string|bool|int|array
+     * @return list<array{message: string, path: list<string>}>
+     */
+    private function collectAttributeTypeErrors(string $subject, array $basePath, array $config, array $expectedTypes): array
+    {
+        $labels = [
+            'string' => 'a string',
+            'bool' => 'a boolean',
+            'int' => 'an integer',
+            'array' => 'a list or a mapping',
+        ];
+
+        $errors = [];
+
+        foreach ($expectedTypes as $attribute => $expected) {
+            if (! isset($config[$attribute])) {
+                continue;
+            }
+
+            $value = $config[$attribute];
+            $valid = match ($expected) {
+                'string' => is_string($value),
+                'bool' => is_bool($value),
+                'int' => is_int($value),
+                default => is_array($value),
+            };
+
+            if (! $valid) {
+                $errors[] = [
+                    'message' => "{$subject}: '{$attribute}' must be {$labels[$expected]}, ".get_debug_type($value).' given',
+                    'path' => [...$basePath, $attribute],
+                ];
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Find the path (relative to the core section) targeted by a validateSchema() error message
+     *
+     * @return list<string>|null
+     */
+    private function guessErrorPath(string $message, string $relationsKey): ?array
+    {
+        if (preg_match("/^Unknown field type '.*' in field '(.+)'$/s", $message, $matches) === 1) {
+            return ['fields', $matches[1], 'type'];
+        }
+
+        if (preg_match("/^Unknown relationship type '.*' in relationship '(.+)'$/s", $message, $matches) === 1) {
+            return [$relationsKey, $matches[1], 'type'];
+        }
+
+        if (str_ends_with($message, 'must have at least one field')) {
+            return ['fields'];
+        }
+
+        if (preg_match("/^Security issue: Security issue in schema (?:key|value) at '([^']+)'/", $message, $matches) === 1) {
+            $segments = explode('.', $matches[1]);
+
+            if ($segments[0] === 'core') {
+                array_shift($segments);
+            }
+
+            if (($segments[0] ?? null) === 'relationships') {
+                $segments[0] = $relationsKey;
+            } elseif (($segments[0] ?? null) === 'namespace') {
+                $segments = ['options', 'namespace'];
+            }
+
+            return $segments === [] ? null : $segments;
+        }
+
+        if (preg_match('/^Security issue: (?:Namespace|Invalid namespace part)/', $message) === 1) {
+            return ['options', 'namespace'];
+        }
+
+        if (preg_match('/^Security issue: Class name/', $message) === 1) {
+            return ['model'];
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{message: string, line: int|null, path: string|null, formatted: string}
+     */
+    private function makeLocatedError(string $message, ?int $line, ?string $path): array
+    {
+        return [
+            'message' => $message,
+            'line' => $line,
+            'path' => $path === '' ? null : $path,
+            'formatted' => $line !== null ? "Line {$line}: {$message}" : $message,
+        ];
     }
 
     /**

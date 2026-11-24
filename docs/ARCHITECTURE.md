@@ -182,6 +182,19 @@ through the `FieldTypeRegistry`, so aliases and custom field types are supported
 `generateAll()` and is not part of the 13 generators listed by `getAvailableGenerators()`. See
 [TypeScript Types](TYPESCRIPT.md).
 
+## Editor and CI Tooling
+
+- **`JsonSchemaService`** exports a JSON Schema (draft-07) of the YAML schema files, built from the
+  `FieldTypeRegistry` (field types and aliases) and the supported relationship types. Editors use it
+  for autocompletion and inline validation; CI pipelines can validate schema files with any JSON
+  Schema validator. Also available as `SchemaService::exportJsonSchema()` and
+  `SchemaService::exportJsonSchemaToFile()`.
+- **`YamlLineLocator`** (`Support`) maps each YAML key path (e.g. `core.fields.title.type`) to the
+  line where it is declared. `SchemaService::validateYamlWithLineNumbers()` uses it to attach a line
+  number and a path to every validation error.
+
+See [JSON Schema and Line Numbers](JSON_SCHEMA.md).
+
 ## Analysis Services
 
 Laravel ModelSchema provides comprehensive analysis services for schema introspection and optimization:

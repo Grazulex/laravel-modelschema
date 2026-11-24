@@ -36,6 +36,7 @@
 | `docs/MIGRATION.md` | ✅ **CURRENT** | Version migration guide | 390 lines |
 | `docs/STUB_API.md` | ✅ **CURRENT** | Stub system documentation | 153 lines |
 | `docs/SCHEMA_VERSIONING.md` | ✅ **CURRENT** | Schema `version` key: formats, validation, comparison | 150+ lines |
+| `docs/JSON_SCHEMA.md` | ✅ **CURRENT** | JSON Schema export for editors/CI, line numbers in validation errors | 190+ lines |
 
 ### ✅ Examples & Integration (Current)
 
