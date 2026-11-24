@@ -42,6 +42,7 @@ Laravel ModelSchema provides **schema parsing, validation, and fragment generati
 - **🔁 Incremental Migrations** - Generate `Schema::table` alter migrations (add, drop, `change()`, `renameColumn`, indexes, foreign keys) from the diff between two schema versions
 - **🏷️ Schema Versioning** - Optional `version` key, validated and normalized on read, to order and compare schema revisions
 - **🟦 TypeScript Types** - Generate TypeScript interfaces or type aliases from the fields and relationships, for Inertia, Vue or React
+- **🧭 JSON Schema & Line Numbers** - Export a JSON Schema of the YAML format for editor autocompletion and CI validation, and get the line of each validation error
 - **🔌 Plugin System** - Extensible field type plugins for custom functionality
 - **📊 Integration API** - Complete workflow for external packages (TurboMaker, Arc, etc.)
 - **✨ Extensible Design** - Custom field types, generators, and validation rules
@@ -64,6 +65,7 @@ composer require grazulex/laravel-modelschema
 - **13 Specialized Generators** - Model, Migration, Request, Resource, Factory, Seeder, Controller, Test, Policy, Observer, Service, Action, Rule
 - **`AlterMigrationGenerator`** - Incremental migrations from the diff between two versions of a schema
 - **`TypeScriptGenerator`** - TypeScript interfaces or type aliases for the frontend
+- **`JsonSchemaService`** - JSON Schema export of the YAML schema format, for editors and CI
 - **`FieldTypePluginManager`** - Manages extensible field type plugins for custom functionality
 
 ### Schema Structure
@@ -122,6 +124,38 @@ $schema->isOlderThan('2.0');        // ...or with a version number
 ```
 
 Schemas without a `version` key keep working unchanged. See the [Schema Versioning guide](docs/SCHEMA_VERSIONING.md).
+
+### Editor Validation (JSON Schema) and Line Numbers
+
+Export a JSON Schema of the YAML schema format and reference it from your editor for autocompletion and inline validation, or use it in CI:
+
+```php
+use Grazulex\LaravelModelschema\Services\JsonSchemaService;
+
+(new JsonSchemaService())->exportToFile(base_path('modelschema.schema.json'));
+// or: $schemaService->exportJsonSchemaToFile($path, ['strict' => true]);
+```
+
+```yaml
+# yaml-language-server: $schema=../modelschema.schema.json
+core:
+  model: Post
+  fields:
+    title:
+      type: string
+```
+
+Validation errors can also point at the offending line:
+
+```php
+$errors = $schemaService->validateYamlWithLineNumbers($yamlContent);
+// or: $schemaService->validateYamlFileWithLineNumbers('resources/schemas/post.yaml');
+
+// [['message' => "Unknown field type 'strng' in field 'title'", 'line' => 6,
+//   'path' => 'core.fields.title.type', 'formatted' => "Line 6: Unknown field type 'strng' in field 'title'"]]
+```
+
+See the [JSON Schema and Line Numbers guide](docs/JSON_SCHEMA.md).
 
 ## 🚀 Quick Start
 
@@ -312,6 +346,10 @@ Field types are mapped through the `FieldTypeRegistry` (aliases and custom field
 | `extractCoreContentForGeneration()` | Extract structured core data | `array` |
 | `generateCompleteYamlFromStub()` | Generate complete YAML from stub | `string` |
 | `getGenerationDataFromCompleteYaml()` | Extract all generation fragments | `array` |
+| `validateYamlWithLineNumbers()` | Validate YAML content, each error with its line and path | `array` (`message`, `line`, `path`, `formatted`) |
+| `validateYamlFileWithLineNumbers()` | Same, for a YAML file | `array` |
+| `exportJsonSchema()` | JSON Schema of the YAML schema format | `array` |
+| `exportJsonSchemaToFile()` | Write the JSON Schema to a file | `string` (path) |
 
 ### GenerationService
 
@@ -616,6 +654,7 @@ composer test-coverage
 - **🔁 [Incremental Migrations](docs/ALTER_MIGRATIONS.md)** - Alter migrations generated from the schema diff
 - **🏷️ [Schema Versioning](docs/SCHEMA_VERSIONING.md)** - Declaring, validating and comparing schema versions
 - **🟦 [TypeScript Types](docs/TYPESCRIPT.md)** - TypeScript interfaces and type aliases generated from the schema
+- **🧭 [JSON Schema and Line Numbers](docs/JSON_SCHEMA.md)** - Editor/CI validation of YAML schemas and located validation errors
 - **🔒 [Security Features](docs/SECURITY.md)** - Comprehensive security validation and protection
 
 ### Integration Examples
